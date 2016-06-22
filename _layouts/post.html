@@ -53,7 +53,12 @@ layout: default
       </div>
 
       <div class="content-panel content">
+        {% if page.draft %}
+        <h3>WARNING: This is an incomplete draft. There are likely many mistaeks and unfinished sections.</h3>
+        <hr/>
+        {% endif %}
 
+        
         {% if page.series %}
           This post is part of the series '{{ page.series }}':
           <ol class="series">

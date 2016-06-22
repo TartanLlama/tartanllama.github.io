@@ -29,14 +29,16 @@ make-smaller-titles: true
 
               <ul>
                   {% for post in site.posts | limit: site.post_limit %}
-
+                  {% unless post.draft %}
                       <li>
                           <a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
                           <small class="hidden-xs">{{ post.date | date: "%B %-d, %Y" }}</small>
                       </li>
-
+                  {% endunless %}
                   {% endfor %}
+                      
                   <li>
+
                       <small><i><a href="{{ site.baseurl }}/posts/">more...</a></i></small>
                   </li>
               </ul>

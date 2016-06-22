@@ -5,14 +5,11 @@ data:       2016-06-2016
 summary:    Using thumbnails in your Carte Noire articles.
 categories: c++ templates
 minutes: 20
+draft:      true
 tags:
  - c++ 
  - templates
 ---
-
-WARNING: Incomplete staging draft
-
-------------------
 
 C++ has a lot of cool stuff you can do at compile-time. You can automatically generate classes or functions for given a set of types, write meta-functions to operate on types, calculate anything which is calculable, explode tuples, walk type lists, and so much more. However, since C++ templates are essentially a pure functional language, you can't have things such as mutable variables. For example, the following code is invalid in C++:
 
