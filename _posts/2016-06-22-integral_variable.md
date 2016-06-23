@@ -45,7 +45,6 @@ static_assert(b.get() == 5, "wat");   //ensure that b is now 5 (ditto)
 This may seem a bit crazy; how can a `static_assert` on the same expression yield different values? Actually, this successfully compiles on both Clang and GCC (I haven't tested MSVC and am scared to). The rest of this post will detail how this works.
 
 This post is split into three sections:
-
 - Variable encoding
 - Constexpr counter
 - integral_variable
@@ -135,9 +134,11 @@ static constexpr size_type value_reader (int, ident<N>) {
   return N;
 }
 
-template<size_type N>
-static constexpr size_type value_reader (float, ident<N>,
-                                         size_type R = value_reader (0, ident<N-1> ())) {
+template <size_type N>
+static constexpr size_type 
+value_reader (float, ident<N>,
+              size_type R = value_reader (0, ident<N-1> ())) 
+{
   return R;
 }
 
@@ -158,17 +159,20 @@ Finally, some public helper functions:
 
 {% highlight cpp %}
 template<size_type Max = 64>
-static constexpr size_type value (size_type R = value_reader (0, ident<Max> {})) {
+static constexpr size_type 
+value (size_type R = value_reader (0, ident<Max> {})) {
   return R;
 }
 
 template<size_type N = 1, class H = meta_counter>
-static constexpr size_type next (size_type R = writer<ident<N + H::value ()>>::value) {
+static constexpr size_type 
+next (size_type R = writer<ident<N + H::value ()>>::value) {
   return R;
 }
 
 template<size_type N, class H = meta_counter>
-static constexpr size_type write (size_type R = writer<ident<N + H::value() - H::value()>>::value) {
+static constexpr size_type 
+write (size_type R = writer<ident<N + H::value() - H::value()>>::value) {
   return R;
 }
 {% endhighlight %}
@@ -216,12 +220,14 @@ class integral_variable {
   struct assign_tag_{};
 
   template <class C = atch::meta_counter<var_tag>, size_type R = C::value()>
-  static constexpr auto assign_tag(assign_tag_<var_tag::value, R> tag = {}) {
+  static constexpr auto 
+  assign_tag(assign_tag_<var_tag::value, R> tag = {}) {
     return tag;
   }
 
   template <class C = atch::meta_counter<var_tag>, size_type R = C::next()>
-  static constexpr auto next_assign_tag(assign_tag_<var_tag::value, R> tag = {}) {
+  static constexpr auto 
+  next_assign_tag(assign_tag_<var_tag::value, R> tag = {}) {
     return tag;
   }
 
@@ -236,13 +242,15 @@ Finally, a couple of member functions to get and set the variable:
 {% highlight cpp %}
 template <class VarCount = atch::meta_counter<var_tag>, 
           class Tag = decltype(assign_tag<VarCount>())>
-constexpr size_type get(size_type R = atch::meta_counter<Tag>::template value()) {
+constexpr size_type 
+get(size_type R = atch::meta_counter<Tag>::template value()) {
   return R;
 }
 
 template <size_type N, class VarCount = atch::meta_counter<var_tag>, 
           class Tag = decltype(next_assign_tag<VarCount>())>
-constexpr size_type set (size_type Written = atch::meta_counter<Tag>::template write<N>()) {
+constexpr size_type 
+set (size_type Written = atch::meta_counter<Tag>::template write<N>()) {
   return Written;
 }    
 {% endhighlight %}
@@ -255,18 +263,18 @@ That covers the code for `integer_variable`.
 
 Since each generated variable is a new type and the core functionality works through static functions, we get copy semantics similar to `std::reference_wrapper`. For example:
 
-   template <typename Var>
-   void setVar (Var v) {
-     v.set<4>();
-   }
-
-   int main() {
-    auto var = make_integral_variable();
-    static_assert(var.get() == 0, "wat");
-
-    setVar(v);
-    static_assert(var.get() == 4, "wat");
-  }
+    template <typename Var>
+    void setVar (Var v) {
+      v.set<4>();
+    }
+     
+    int main() {
+      auto var = make_integral_variable();
+      static_assert(var.get() == 0, "wat");
+     
+      setVar(v);
+      static_assert(var.get() == 4, "wat");
+    }
 
 -------------------
 
