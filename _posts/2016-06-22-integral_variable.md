@@ -2,8 +2,8 @@
 layout:     post
 title:      "integral_variable: A compile-time assignable variable"
 data:       2016-06-2016
-summary:    Using thumbnails in your Carte Noire articles.
-categories: c++ templates
+summary:    An integral variable which can be mutated at compile-time.
+category:   c++
 minutes: 20
 draft:      true
 tags:
