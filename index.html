@@ -25,7 +25,7 @@ make-smaller-titles: true
 
             <div class="articles">
 
-              <h2>Latest Articles</h2>
+              <h2>Latest Blog Articles</h2>
 
               <ul>
                   {% for post in site.posts | limit: site.post_limit %}
@@ -47,5 +47,91 @@ make-smaller-titles: true
 
         </div>
 
+          <div class="col-md-12 main content-panel">
+
+            <div class="about">
+
+              <h2>About Me</h2>
+              I am a C++ enthusiast with experience in compilers, debuggers, and heterogeneous systems.
+              <br/>
+              <br/>
+              
+              I am active in various community areas:
+              
+              <ul>
+                <li>Specification editor for the HSA Tools and Runtime groups</li>
+                <li>Frequent attendee of Edinburgh C++ Meetup</li>
+                <li>Gold C++ badge holder on Stack Overflow</li>
+                <li>Member of C++ Standards Committee (BSI)</li>
+              </ul>
+
+              
+	      <section id="cd-timeline" class="cd-container">
+		<div class="cd-timeline-block">
+			<div class="cd-timeline-img cd-picture">
+	
+			</div> <!-- cd-timeline-img -->
+
+			<div class="cd-timeline-content">
+				<h2>HSA Debugger and v1.1 Specs Released</h2>
+				<p>I was the spec editor for the runtime and tools groups, and wrote the profiling APIs. I also ported LLDB to AMD's HSA implementation.</p>
+				<span class="cd-date">Jun 2016</span>
+			</div> <!-- cd-timeline-content -->
+		</div> <!-- cd-timeline-block -->
+
+		<div class="cd-timeline-block">
+			<div class="cd-timeline-img cd-movie">
+
+			</div> <!-- cd-timeline-img -->
+
+			<div class="cd-timeline-content">
+				<h2>Start at Codeplay</h2>
+				<p></p>
+				<span class="cd-date">July 2013</span>
+			</div> <!-- cd-timeline-content -->
+		</div> <!-- cd-timeline-block -->
+
+		<div class="cd-timeline-block">
+			<div class="cd-timeline-img cd-picture">
+
+			</div> <!-- cd-timeline-img -->
+
+			<div class="cd-timeline-content">
+				<h2>BSc (Hons) 1st Class</h2>
+				<p></p>
+				<span class="cd-date">June 2013</span>
+			</div> <!-- cd-timeline-content -->
+		</div> <!-- cd-timeline-block -->
+
+		<div class="cd-timeline-block">
+			<div class="cd-timeline-img cd-location">
+
+			</div> <!-- cd-timeline-img -->
+
+			<div class="cd-timeline-content">
+				<h2>Internship at eeGeo</h2>
+				<p></p>
+				<span class="cd-date">June 2011</span>
+			</div> <!-- cd-timeline-content -->
+		</div> <!-- cd-timeline-block -->
+
+		<div class="cd-timeline-block">
+			<div class="cd-timeline-img cd-location">
+
+			</div> <!-- cd-timeline-img -->
+
+			<div class="cd-timeline-content">
+				<h2>Internship at IBM</h2>
+				<p></p>
+				<span class="cd-date">June 2010</span>
+			</div> <!-- cd-timeline-content -->
+		</div> <!-- cd-timeline-block -->
+              </section> <!-- cd-timeline -->
+            </div>
+          </div>
+          
     </div>
 </div>
+
+<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="{{ site.baseurl }}/js/timeline.js" type="text/javascript"></script>
