@@ -45,6 +45,7 @@ static_assert(b.get() == 5, "wat");   //ensure that b is now 5 (ditto)
 This may seem a bit crazy; how can a `static_assert` on the same expression yield different values? Actually, this successfully compiles on both Clang and GCC (I haven't tested MSVC and am scared to). The rest of this post will detail how this works.
 
 This post is split into three sections:
+
 - Variable encoding
 - Constexpr counter
 - integral_variable
@@ -263,18 +264,20 @@ That covers the code for `integer_variable`.
 
 Since each generated variable is a new type and the core functionality works through static functions, we get copy semantics similar to `std::reference_wrapper`. For example:
 
-    template <typename Var>
-    void setVar (Var v) {
-      v.set<4>();
-    }
+{% highlight cpp %}
+template <typename Var>
+void setVar (Var v) {
+  v.set<4>();
+}
      
-    int main() {
-      auto var = make_integral_variable();
-      static_assert(var.get() == 0, "wat");
+int main() {
+  auto var = make_integral_variable();
+  static_assert(var.get() == 0, "wat");
      
-      setVar(v);
-      static_assert(var.get() == 4, "wat");
-    }
+  setVar(v);
+  static_assert(var.get() == 4, "wat");
+}
+{% endhighlight %}
 
 -------------------
 
