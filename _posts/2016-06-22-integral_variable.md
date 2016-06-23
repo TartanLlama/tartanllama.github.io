@@ -44,7 +44,15 @@ static_assert(b.get() == 5, "wat");   //ensure that b is now 5 (ditto)
 
 This may seem a bit crazy; how can a `static_assert` on the same expression yield different values? Actually, this successfully compiles on both Clang and GCC (I haven't tested MSVC and am scared to). The rest of this post will detail how this works.
 
- Before I get into the gory details, I should note that this work is all based off of [Filip Roséen](http://stackoverflow.com/users/1090079/filip-ros%C3%A9en-refp)'s series of posts about non-constant constant expressions. These posts can be found [here](http://b.atch.se/). Filip goes into a lot of the details about why this is all technically standards-conformant, with all the necessary standardese included in the post. I'll be writing at a higher level and glossing over some of the more complex details, so if you want to know the rest, go read Filip's blog.
+This post is split into three sections:
+
+- Variable encoding
+- Constexpr counter
+- integral_variable
+
+Since there are some fairly advanced concepts at work here, it might help to read each section a couple of times over before moving on to the next one.
+
+Before I get into the gory details, I should note that this work is all based off of [Filip Roséen](http://stackoverflow.com/users/1090079/filip-ros%C3%A9en-refp)'s series of posts about non-constant constant expressions. These posts can be found [here](http://b.atch.se/). Filip goes into a lot of the details about why this is all technically standards-conformant, with all the necessary standardese included in the post. I'll be writing at a higher level and glossing over some of the more complex details, so if you want to know the rest, go read Filip's blog.
 
 
 -------------------
@@ -241,11 +249,29 @@ constexpr size_type set (size_type Written = atch::meta_counter<Tag>::template w
 
 As you might imagine, `get` returns the current value of the variable, while `set` sets it.
 
-That covers the code for `integer_variable`. I'll now outline some interesting aspects of this class.
+That covers the code for `integer_variable`.
 
 --------------------
-[insert interesting stuff here]
+
+Since each generated variable is a new type and the core functionality works through static functions, we get copy semantics similar to `std::reference_wrapper`. For example:
+
+   template <typename Var>
+   void setVar (Var v) {
+     v.set<4>();
+   }
+
+   int main() {
+    auto var = make_integral_variable();
+    static_assert(var.get() == 0, "wat");
+
+    setVar(v);
+    static_assert(var.get() == 4, "wat");
+  }
 
 -------------------
-[insert why you should never use this here]
 
+So, when should we actually use this in practice?
+
+*Never.*
+
+Really, this is pretty awful. It probably totally breaks across translation units, and the Standards Committee wants to outlaw this kind of thing. However, it's still pretty fascinating and I hope that you've got some ideas on how to abuse this yourself.
