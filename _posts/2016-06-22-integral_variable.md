@@ -11,6 +11,8 @@ tags:
  - templates
 ---
 
+<h3>Introduction</h3>
+
 C++ has a lot of cool stuff you can do at compile-time. You can automatically generate classes or functions for given a set of types, write meta-functions to operate on types, calculate anything which is calculable, explode tuples, walk type lists, and so much more. However, since C++ templates are essentially a pure functional language, you can't have things such as mutable variables. For example, the following code is invalid in C++:
 
 {% highlight cpp %}
@@ -46,35 +48,36 @@ This may seem a bit crazy; how can a `static_assert` on the same expression yiel
 
 
 -------------------
+<h3>Variable encoding</h3>
 
-One of the most important considerations for this class is how we encode the state of a variable. The following encoding may seem a bit overcomplex at first, but for now, all you need to know is that it can be represented at compile-time. You can think of integral_variable as being encoded by a two-dimensional collection of buttons and a single cursor. Each button starts in the "not pressed" (0) state, and we can press it to change to the "pressed" (1) state.  Once a button has been pressed, it cannot be unpressed. At a given time, only one column in the variable state will be "active". The cursor tracks this active column. Here is the starting state for a variable which has a maximum value of two and can be assigned to twice (the first column is just the row numbers for clarity):
+One of the most important considerations for this class is how we encode the state of a variable. The following encoding may seem a bit overcomplex at first, but for now, all you need to know is that it can be represented at compile-time. You can think of the encoding of `integral_variable` as a punch card. The punch card is a 2D table, where each cell is a location which can be punched out. Each cell starts in the "whole" (0) state, and we can punch it to change to the "punched" (1) state. At a given time, only one column in the table will be "active", so there is a cursor to keep track of this column. Here is the starting state for a variable which has a maximum value of two and can be assigned to twice (the first column is just the row numbers for clarity):
 
 
-    0 1 0 0
-    1 0 0 0
-    2 0 0 0
-      ^ (cursor)
+    0 | 1 0 0
+    1 | 0 0 0
+    2 | 0 0 0
+        ^ (cursor)
 
 Given this encoding, we need to know two things: how do we read this variable and how do we assign a number to it.
 
-The variable value is read by starting at the cell closest to the cursor and reading up until we find a button which is pressed. For this starting state, the value is 0, because the closest pressed button to the cursor is in the 0 row.
+The variable value is read by starting at the cell closest to the cursor and tracking up the column until we find a cell which is punched. For this starting state, the value is `0`, because the closest punched cell to the cursor is in the `0` row.
 
-Assigning to the variable is just pressing a button, possibly advancing the cursor beforehand. There are two cases to consider: is the value we want to set greater than or lesser than the current value?
+Assigning to the variable is just punching a cell, possibly advancing the cursor beforehand. There are two cases to consider: is the value we want to set greater than or lesser than the current value?
 
-If the desired value is greater than the current value, we don't need to advance the cursor at all; we just press the button in the current cursor row which corresponds to the value we want. So if we set the above variable to 2, it will look like this:
+If the desired value is greater than the current value, we don't need to advance the cursor at all; we just punch the cell in the current cursor row which corresponds to the value we want. So if we set the above variable to `2`, it will look like this:
 
-    0 1 0 0
-    1 0 0 0
-    2 1 0 0
-        ^
+    0 | 1 0 0
+    1 | 0 0 0
+    2 | 1 0 0
+          ^
 
-As you can see, the value of this variable is 2, because the closest pressed button to the cursor is in the 2 row.
+As you can see, the value of this variable is `2`, because the closest punched cell to the cursor is in the `2` row.
 
-If the desired value is lesser than the current value, we advance the cursor one position and press the relevant button in that new column. So if we now want to assign 1 to the above variable, it will look like this:
+If the desired value is lesser than the current value, we advance the cursor one position and punch the relevant cell in that new column. So if we now want to assign `1` to the above variable, it will look like this:
 
-    0 1 0 0
-    1 0 1 0
-    2 1 0 0
+    0 | 1 0 0
+    1 | 0 1 0
+    2 | 1 0 0
         ^
 
 Hopefully you now have an idea of how this variable operates and how it might scale to more assignments and higher values, simply by extending the array in either direction.
@@ -82,6 +85,7 @@ Hopefully you now have an idea of how this variable operates and how it might sc
 Now that we have a way to encode these variables, we just need to implement this at compile time.
 
 ----------------------
+<h3>Constexpr counter</h3>
 
 To implement this in C++ I used a collection of constexpr counters from Filip's post, slightly modified to allow writing of arbitrary values.
 
@@ -89,7 +93,7 @@ Each column in the variable encoding is represented by a constexpr counter, the 
 
 Here is a high-level overview of how these counters work (all code is from Filip's blog):
 
-Our "buttons" are represented by functions. A function is "not pressed" when it is declared and "pressed" when it is defined.
+Our punch card cells are represented by functions. A function is "whole" when it is declared and "punched" when it is defined.
 
 {% highlight cpp %}
 template<size_type N>
@@ -99,9 +103,9 @@ struct ident {
 };
 {% endhighlight %}
 
-In the above code, `adl_lookup` is the button function. Since it is a friend declaration, the function is only visible through [Argument Dependent Lookup](http://en.cppreference.com/w/cpp/language/adl), hence the argument. Note that it is currently declared, but not defined.
+In the above code, `adl_lookup` is the function used as the punch card cell. Since it is a friend declaration, the function is only visible through [Argument Dependent Lookup](http://en.cppreference.com/w/cpp/language/adl), hence the argument. Note that it is currently declared, but not defined.
 
-Now we press the button by injecting the definition of `adl_lookup` through template instantiation:
+Injecting the definition of `adl_lookup` through template instantiation carries out the cell punch action:
 
 {% highlight cpp %}
 template<class Ident>
@@ -138,7 +142,7 @@ The first overload is the case where we have found the value. For some `N`, if `
 
 The second overload is the recursive case. It keeps calling value_reader until we've found the value or hit the last element.
 
-The third overload is the base case, just returning 0 if we get to the last element.
+The third overload is the base case, just returning `0` if we get to the last element.
 
 Each of the overloads has a dummy `int` or `float` parameter; this is just to force the first overload to be selected during overload resolution if it's not SFINAEd out.
 
@@ -166,6 +170,7 @@ These do pretty much what you would expect: `value` gets the current value by wa
 Now that we've gone over the meta counter, we need to use it to build our variables.
 
 --------------------------
+<h3>integral_variable</h3>
 
 The most simple thing is `make_integral_variable`, which uses a global counter to create new variables:
 
@@ -239,10 +244,8 @@ As you might imagine, `get` returns the current value of the variable, while `se
 That covers the code for `integer_variable`. I'll now outline some interesting aspects of this class.
 
 --------------------
-
 [insert interesting stuff here]
 
 -------------------
-
 [insert why you should never use this here]
 
