@@ -283,6 +283,6 @@ int main() {
 
 So, when should we actually use this in practice?
 
-*Never.*
+**Never.**
 
 Really, this is pretty awful. It probably totally breaks across translation units, and the Standards Committee wants to outlaw this kind of thing. However, it's still pretty fascinating and I hope that you've got some ideas on how to abuse this yourself.

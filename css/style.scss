@@ -562,10 +562,11 @@ ul {
 				list-style-type: decimal;
 			}
 
+
 			blockquote {
 				position: relative;
 				width: 100%;
-		    margin-left: -15px;
+		                margin-left: -15px;
 				padding-right: 10px;
 				background-color: $darker;
 				color: white;
@@ -580,24 +581,39 @@ ul {
 				}
 
 				p {
-			    margin: 0;
-			    padding: 15px;
-					z-index: 0;
+			            margin: 0;
+			            padding: 15px;
+				    z-index: 0;
 				}
-
-				:before {
-    			font-family: "Times New Roman";
-					color: $light-medium;
-			    content: "“";
-			    position: absolute;
-			    top: 15px;
-			    left: 15px;
-			    font-size: 65px;
-			    font-weight: bold;
-				}
-
+                                
 			}
 
+			blockquote.standards {
+				position: relative;
+				width: 100%;
+		                margin-left: -15px;
+				padding-right: 10px;
+				background-color: $darker;
+				color: white;
+				box-sizing: content-box;
+				border: none;
+				font-size: 20px;
+
+				@media (min-width: $screen-sm-min) {
+					margin-left: -30px;
+					padding-left: 45px;
+					padding-right: 15px;
+				}
+
+				p {
+			            margin: 0;
+			            padding: 15px;
+                                    position: relative;
+                                    z-index: 1;
+				}
+			}
+
+                        
 			.alignright {
 				float: right;
 			}
@@ -854,5 +870,29 @@ ul {
 
 td{
     border:2px solid #000000;
+}
+
+blockquote::before {
+    font-family: "Times New Roman";
+    color: $light-medium;
+    content: "“";
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 65px;
+    font-weight: bold;
+}
+
+blockquote.standards::before {
+    font-family: "Times New Roman";
+    color: $light-medium;
+    content: "C++";
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 60px;
+    font-weight: bold;
+    opacity: 0.1;
+    z-index:0;
 }
 
