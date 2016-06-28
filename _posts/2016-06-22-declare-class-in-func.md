@@ -25,7 +25,11 @@ int main() {
 }
 {% endhighlight %}
 
+I thought this was pretty odd and interesting, so went searching for the applicable rules from the standard. Here is the breakdown on how this works.
+
 -------------
+
+`class A` or `struct A` is called an *elaborated-type-specifier*.
 
 [basic.lookup.elab]/2:
 
