@@ -42,7 +42,7 @@ static_assert(a.get() == 12, "wat");  //ensure that a is now 12 (at compile-time
 static_assert(b.get() == 5, "wat");   //ensure that b is now 5 (ditto)
 {% endhighlight %}
 
-This may seem a bit crazy; how can a `static_assert` on the same expression yield different values? Actually, this successfully compiles on both Clang and GCC (I haven't tested MSVC and am scared to). The rest of this post will detail how this works.
+This may seem a bit crazy; how can a `static_assert` on the same expression yield different values? Actually, this successfully compiles on both Clang 3.7 and GCC 6.1 (it doesn't work on MSVC due to a number of compiler bugs). The rest of this post will detail how this works.
 
 This post is split into three sections:
 
@@ -286,3 +286,5 @@ So, when should we actually use this in practice?
 **Never.**
 
 Really, this is pretty awful. It probably totally breaks across translation units, and the Standards Committee wants to outlaw this kind of thing. However, it's still pretty fascinating and I hope that you've got some ideas on how to abuse this yourself.
+
+If you want to play around with it, you can get the code [here](https://gist.github.com/TartanLlama/3aa4541c12538d1d6cf5cf244cc5d724].
