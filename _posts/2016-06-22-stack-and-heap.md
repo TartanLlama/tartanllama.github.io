@@ -281,7 +281,7 @@ When should we refer to the storage duration and when should we refer to the sto
 
 I would advise the following:
 
-**Only refer to the storage location if you need to discuss where a variable is physically located. In all other cases, refer to the storage location.**
+**Only refer to the storage location if you need to discuss where a variable is physically located. In all other cases, refer to the storage duration.**
 
 
 
