@@ -58,7 +58,7 @@ Before I get into the gory details, I should note that this work is all based of
 -------------------
 <h3>Variable encoding</h3>
 
-One of the most important considerations for this class is how we encode the state of a variable. The following encoding may seem a bit overcomplex at first, but for now, all you need to know is that it can be represented at compile-time. You can think of the encoding of `integral_variable` as a punch card. The punch card is a 2D table, where each cell is a location which can be punched out. Each cell starts in the "whole" (0) state, and we can punch it to change to the "punched" (1) state. At a given time, only one column in the table will be "active", so there is a cursor to keep track of this column. Here is the starting state for a variable which has a maximum value of two and can be assigned to twice (the first column is just the row numbers for clarity):
+One of the most important considerations for this class is how we encode the state of a variable. The following encoding may seem a bit overcomplex at first, but for now, all you need to know is that it can be represented at compile-time. You can think of the encoding of `integral_variable` as a punch card. The punch card is a 2D table, where each cell is a location which can be punched out. Each cell starts in the "intact" (0) state, and we can punch it to change to the "punched" (1) state. At a given time, only one column in the table will be active, so there is a cursor to keep track of this column. Here is the starting state for a variable which has a maximum value of two and can be assigned to twice (the first column is just the row numbers for clarity):
 
 
     0 | 1 0 0
@@ -68,18 +68,18 @@ One of the most important considerations for this class is how we encode the sta
 
 Given this encoding, we need to know two things: how do we read this variable and how do we assign a number to it.
 
-The variable value is read by starting at the cell closest to the cursor and tracking up the column until we find a cell which is punched. For this starting state, the value is `0`, because the closest punched cell to the cursor is in the `0` row.
+The variable value is read by starting at the cell closest to the cursor and tracking up the column until we find a cell which is punched. The value is the row index of this cell. For this starting state, the value is `0`, because the closest punched cell to the cursor is in the `0` row.
 
-Assigning to the variable is just punching a cell, possibly advancing the cursor beforehand. There are two cases to consider: is the value we want to set greater than or lesser than the current value?
+Assigning to the variable is acheived by punching a cell, and possibly advancing the cursor beforehand. There are two cases to consider: is the value we want to set greater than or lesser than the current value?
 
-If the desired value is greater than the current value, we don't need to advance the cursor at all; we just punch the cell in the current cursor row which corresponds to the value we want. So if we set the above variable to `2`, it will look like this:
+If the desired value is greater than the current value, we don't need to advance the cursor at all; we just punch the cell where the current cursor column and desired value row intersect. So if we set the above variable to `2`, it will look like this:
 
     0 | 1 0 0
     1 | 0 0 0
     2 | 1 0 0
           ^
 
-As you can see, the value of this variable is `2`, because the closest punched cell to the cursor is in the `2` row.
+The value of this variable is `2`, because the closest punched cell to the cursor is in the `2` row.
 
 If the desired value is lesser than the current value, we advance the cursor one position and punch the relevant cell in that new column. So if we now want to assign `1` to the above variable, it will look like this:
 
@@ -95,13 +95,11 @@ Now that we have a way to encode these variables, we just need to implement this
 ----------------------
 <h3>Constexpr counter</h3>
 
-To implement this in C++ I used a collection of constexpr counters from Filip's post, slightly modified to allow writing of arbitrary values.
+To implement this in C++ I used a collection of constexpr counters, slightly modified to allow writing of arbitrary values. Each column in the variable encoding is represented by a constexpr counter, the cursor is a constexpr counter, and there is one global one to allow you to generate new variables.
 
-Each column in the variable encoding is represented by a constexpr counter, the cursor is a constexpr counter, then there is one global one to allow you to generate new variables.
+I'll now give a high-level overview of how these counters work (all code is from Filip's blog).
 
-Here is a high-level overview of how these counters work (all code is from Filip's blog):
-
-Our punch card cells are represented by functions. A function is "whole" when it is declared and "punched" when it is defined.
+Our punch card cells are represented by functions. A function is "intact" when it is declared and "punched" when it is defined.
 
 {% highlight cpp %}
 template<size_type N>
@@ -111,7 +109,7 @@ struct ident {
 };
 {% endhighlight %}
 
-In the above code, `adl_lookup` is the function used as the punch card cell. Since it is a friend declaration, the function is only visible through [Argument Dependent Lookup](http://en.cppreference.com/w/cpp/language/adl), hence the argument. Note that it is currently declared, but not defined.
+In the above code, `adl_lookup` is the function used as the punch card cell. Since it is a friend declaration, the function is only visible through [Argument Dependent Lookup](http://en.cppreference.com/w/cpp/language/adl), hence the argument. Note that it is currently declared, but not defined, so is in the "intact" state.
 
 Injecting the definition of `adl_lookup` through template instantiation carries out the cell punch action:
 
@@ -150,11 +148,11 @@ static constexpr size_type value_reader (float, ident<0>) {
 
 The first overload is the case where we have found the value. For some `N`, if `ident<N>::adl_lookup` has not been defined yet by instantiating `writer<ident<N>>`, then `adl_lookup(ident<N>{})` will not be a constant expression, so the overload will be [SFINAE](http://en.cppreference.com/w/cpp/language/sfinae)d out.
 
-The second overload is the recursive case. It keeps calling value_reader until we've found the value or hit the last element.
+The second overload is the recursive case. It keeps calling `value_reader` until it finds the value or hits the last element.
 
-The third overload is the base case, just returning `0` if we get to the last element.
+The third overload is the base case; it just returns `0` if we get to the last element.
 
-Each of the overloads has a dummy `int` or `float` parameter; this is just to force the first overload to be selected during overload resolution if it's not SFINAEd out.
+Each of the overloads has a dummy `int` or `float` parameter. This is just to force the first overload to be selected during overload resolution if it's not SFINAEd out.
 
 Finally, some public helper functions:
 
@@ -185,7 +183,9 @@ Now that we've gone over the meta counter, we need to use it to build our variab
 --------------------------
 <h3>integral_variable</h3>
 
-The most simple thing is `make_integral_variable`, which uses a global counter to create new variables:
+As noted above, an `integral_variable` is a collection of constexpr counters. It mostly operates using static functions, but provides a value wrapper interface for ease of use. 
+
+The simplest aspect is `make_integral_variable`, which uses a global counter to create new variables:
 
 {% highlight cpp %}
 //A short helper
@@ -236,9 +236,9 @@ class integral_variable {
 };
 {% endhighlight %}
 
-`assign_tag` is a template class which we will use to name our assign counter for this variable. It takes two template parameters; the global variable index and a local assignment count. `assign_tag` returns a tag encoding the current value of the assignment counter for this variable, `next_assign_tag` increments the counter before returning the same thing.
+`assign_tag` is a template class which we will use to name our assign counter for this variable. It takes two template parameters: the global variable index and a local assignment count. `assign_tag` returns a tag encoding the current value of the assignment counter for this variable. `next_assign_tag` increments the counter before returning the same thing.
 
-Finally, a couple of member functions to get and set the variable:
+Finally, a couple of non-static member functions to get and set the variable:
 
 {% highlight cpp %}
 template <class VarCount = atch::meta_counter<var_tag>, 
@@ -258,7 +258,7 @@ set (size_type Written = atch::meta_counter<Tag>::template write<N>()) {
 
 As you might imagine, `get` returns the current value of the variable, while `set` sets it.
 
-That covers the code for `integer_variable`.
+That covers the code for `integer_variable`. Feel free to [tweet](http://www.twitter.com/TartanLlama) or [email](mailto://tartanllama@gmail.com) me wth any questions you have about it. You can get all the code [here](www.brokenlink.com).
 
 --------------------
 
