@@ -571,7 +571,8 @@ ul {
 				background-color: $darker;
 				color: white;
 				box-sizing: content-box;
-				border: none;
+                                border: none;
+
 				font-size: 28px;
 
 				@media (min-width: $screen-sm-min) {
@@ -886,13 +887,12 @@ blockquote::before {
 blockquote.standards::before {
     font-family: "Times New Roman";
     color: $light-medium;
-    content: "C++";
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    font-size: 60px;
+    content: attr(para) ":";
+    position: relative;
+    top: 7px;
+    left: 0px;
+    font-size: 20px;
     font-weight: bold;
-    opacity: 0.1;
     z-index:0;
 }
 

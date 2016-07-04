@@ -1,21 +1,21 @@
 ---
 layout:     post
-title:      "Stack and Heap: Commonly Abused Terms"
+title:      "Stack and Heap: Commonly Misused Terms"
 data:       2016-06-2016
-summary:    Stop abusing "stack" and "heap".
+summary:    Stop misusing "stack" and "heap".
 category:   c++
-minutes: 20
-draft:      true
+minutes: 10
+draft: true
 tags:
  - c++
  - rants
 ---
 
-The terms "stack" and "heap" are often used in C++ writings incorrectly. Stop it.
+The terms "stack" and "heap" are often used in C++ writings inaccurately and unnecessarily. This article will show why the usage is incorrect and what terms should be used instead.
 
 -----------
 
-Have a look at the following code sample and have a think about where the variables are stored. Write down the answers if you feel like it.
+Have a look at the following code sample and have a think about where the `int`s are stored. Write down the answers if you feel like it.
 
 {% highlight cpp %}
 static int a;
@@ -37,7 +37,7 @@ A common answer might look like this:
     b -> .data binary section
     c -> register
     d -> stack
-    e -> heap
+    *e -> heap
 
 This is certainly a possibility. It mostly holds for an unoptimised compilation on my x86_64 Arch Linux system.
 
@@ -87,7 +87,7 @@ main:
         .cfi_endproc
 {% endhighlight %}
 
-So `e` is stored on the "free store", which is where `new` allocates from. This is the official name for what is often inaccurately referred to as the "heap". The argument for the `c` parameter is stored in the `edi` register.
+So `*e` is stored on the "free store", which is where `new` allocates from. This is the official name for what is often inaccurately referred to as the "heap"; the data structure used to represent this construct doesn't need to be a heap. The argument for the `c` parameter is stored in the `edi` register.
 
 {% highlight nasm %}
 _Z3fooi:                                   ;start of foo
@@ -115,7 +115,7 @@ So a more realistic answer for this system is:
     b -> .data binary section
     c -> passed through register, stored on stack
     d -> stack
-    e -> free store
+    *e -> free store
 
 What if we turn on optimisations?
 
@@ -151,7 +151,7 @@ main:
         .cfi_endproc
 {% endhighlight %}
 
-The calls to `foo` are removed. `e` is allocated, but not initialized.
+The calls to `foo` are removed. `*e` is allocated, but not initialized.
 
 So for this example, the answers are:
 
@@ -159,9 +159,11 @@ So for this example, the answers are:
     b -> none
     c -> none
     d -> none
-    e -> free store
+    *e -> free store
 
-It should be obvious now that regardless of how a variable is declared and initialized in C++, you can't determine how it will be stored in a generic manner. `d` could be allocated on the stack, or stored in a register, or optimised out, or in some other uncommon architecture-specific area. Sometimes you might not even *have* a stack, let alone a heap (very early BIOS code, for example).
+What if we used a different operating system? Or a different compiler? The answers could be completely different again.
+
+It should be obvious now that regardless of how a variable is declared and initialized in C++, you can't determine how it will be stored in a generic manner. `d` could be allocated on the stack, or stored in a register, or optimised out, or put in some other uncommon architecture-specific area. Sometimes you might not even *have* a stack, let alone a heap (very early BIOS code, for example).
 
 ---------------
 
@@ -169,17 +171,15 @@ So what does the C++ standard have to say about stacks and heaps and suchlike?
 
 **Nothing.**
 
-The standard says nothing about how or where things are stored. The words "stack" and "heap" are used at various points, but only in reference to things like stack unwinding, `std::stack`, and heap operations (`std::make_heap` and friends).
+The standard says nothing about how or where things are stored. The words "stack" and "heap" are used at various points, but only in reference to things like stack unwinding, `std::stack`, and heap data structure operations (`std::make_heap` and friends).
 
 So what does the standard say?
 
 -------------
 
-C++, like any other programming language, is built up of abstractions. The specification defines an abstract machine which implementations are to emulate. So long as an implementation executes a well-formed program with the same observable behaviour as a possible abstract machine execution, it's free to model things however it wishes.
+C++, like any other programming language, is built up of abstractions. The specification defines an abstract machine which implementations are to emulate. So long as an implementation executes a well-formed program with the same observable behaviour as a possible abstract machine execution, it's free to model things however it wishes. This is another area in which the standard uses an abstraction to avoid peppering architecture-specific terms across the document.
 
-The specification does not define storage *location*. It defines storage *duration*.
-
-From C++14 `[basic.stc]/1`:
+**The standard does not define storage *location*. It defines storage *duration*.**
 
 >Storage duration is the property of an object that defines the minimum potential lifetime of the storage containing the object. The storage duration is determined by the construct used to create the object and is one of the following:
 >
@@ -187,7 +187,7 @@ From C++14 `[basic.stc]/1`:
 > - thread storage duration
 > - automatic storage duration
 > - dynamic storage duration
-{:.standards}
+{:.standards para="[basic.stc]/1"}
 
 The descriptions of each of these durations are aptly precise and verbose, so I'll explain with some examples.
 
@@ -246,7 +246,7 @@ void foo() {
 }
 {% endhighlight %}
 
-`a` and `b` have dynamic storage duration. The storage for them will last until it is reclaimed using `delete`.
+`*a` and `*b` have dynamic storage duration. The storage for them will last until it is reclaimed using `delete`.
 
 
 -------------
@@ -273,13 +273,11 @@ int main() {
     b -> static
     c -> automatic
     d -> automatic
-    e -> dynamic
+    *e -> dynamic
 
 -------------
 
-When should we refer to the storage duration and when should we refer to the storage location?
-
-I would advise the following:
+When should we refer to the storage duration and when should we refer to the storage location? I would advise the following:
 
 **Only refer to the storage location if you need to discuss where a variable is physically located. In all other cases, refer to the storage duration.**
 
