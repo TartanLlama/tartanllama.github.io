@@ -1,11 +1,10 @@
 ---
 layout:     post
 title:      "Stack and Heap: Commonly Misused Terms"
-data:       2016-06-2016
-summary:    Stop misusing "stack" and "heap".
+data:       2016-07-18
+summary:    A rant on the misuse of "stack" and "heap".
 category:   c++
 minutes: 10
-draft: true
 tags:
  - c++
  - rants
@@ -54,7 +53,7 @@ _ZL1b:
         .long   97
 {% endhighlight %}
 
-Don't worry if you can't read assembly. Essentially, that `.comm` directive says to allocate space for a "common" symbol, which on a platform which uses ELF (like Linux), generally means to put it in the `.bss` section. That `.data` directive says "I'm going to declare some data. Put it into the `.data` section of the binary".
+Don't worry if you can't read assembly. Essentially, that `.comm` directive says to allocate space for a "common" symbol, which on a platform which uses ELF (like Linux), generally means to put it in the `.bss` section. That `.data` directive tells the assembler to put the subsequently declared data into the `.data` section.
 
 {% highlight nasm %}
 main:
@@ -68,7 +67,7 @@ main:
         sub     rsp, 16
         mov     edi, 4
         call    _Znwm                     ;allocate e with new
-        mov     DWORD PTR [rax], 314      ;store 314 at location
+        mov     DWORD PTR [rax], 314      ;store 314 at *e
         mov     QWORD PTR [rbp-8], rax    ;put pointer on stack
         mov     eax, DWORD PTR _ZL1a[rip] 
         mov     edi, eax                  ;argument put in register
@@ -87,7 +86,7 @@ main:
         .cfi_endproc
 {% endhighlight %}
 
-So `*e` is stored on the "free store", which is where `new` allocates from. This is the official name for what is often inaccurately referred to as the "heap"; the data structure used to represent this construct doesn't need to be a heap. The argument for the `c` parameter is stored in the `edi` register.
+`*e` is stored on the *free store*, which is where `new` allocates from. This is the official name for what is often inaccurately referred to as the "heap" (the data structure used to represent this construct doesn't even need to be a heap). The argument for the `c` parameter is stored in the `edi` register.
 
 {% highlight nasm %}
 _Z3fooi:                                   ;start of foo
@@ -109,7 +108,7 @@ _Z3fooi:                                   ;start of foo
 
 Although `c` is passed in through a register, it is placed on the stack at the beginning of the function. `d` is allocated on the stack.
 
-So a more realistic answer for this system is:
+A more accurate answer for this particular compilation is:
 
     a -> .bss binary section
     b -> .data binary section
@@ -173,11 +172,11 @@ So what does the C++ standard have to say about stacks and heaps and suchlike?
 
 The standard says nothing about how or where things are stored. The words "stack" and "heap" are used at various points, but only in reference to things like stack unwinding, `std::stack`, and heap data structure operations (`std::make_heap` and friends).
 
-So what does the standard say?
+In that case what *does* the standard say?
 
 -------------
 
-C++, like any other programming language, is built up of abstractions. The specification defines an abstract machine which implementations are to emulate. So long as an implementation executes a well-formed program with the same observable behaviour as a possible abstract machine execution, it's free to model things however it wishes. This is another area in which the standard uses an abstraction to avoid peppering architecture-specific terms across the document.
+C++, like any programming language, is built on abstractions. The specification defines an abstract machine which implementations are to emulate, and so long as an implementation executes a well-formed program with the same observable behaviour as a possible abstract machine execution, it's free to model the machine however it wishes. Storage is another area in which the standard uses an abstraction to avoid peppering architecture-specific terms across the document.
 
 **The standard does not define storage *location*. It defines storage *duration*.**
 
@@ -268,6 +267,8 @@ int main() {
     foo(*e);
 }
 {% endhighlight %}
+
+The answers:
 
     a -> static
     b -> static
