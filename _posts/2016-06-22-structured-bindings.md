@@ -23,6 +23,16 @@ This is a very powerful and expressive feature, but the most interesting element
 
 -----------------------
 
+The great news is that structured bindings are supported out-of-the-box for classes with non-static member variables which are solely public (or have all public-only non-statc members in a single direct base class). So a class like this can be decomposed with no additional code:
+
+{% highlight cpp %}
+struct yay {
+    int a;
+    float b;
+    std::string c;
+};
+{% endhighlight %}
+
 Adding support for structured bindings is surprisingly easy; you just need to specialize three existing template classes to express how to destructure your class. These three template classes are `std::tuple_size` (number of variables), `std::tuple_element` (types of the variables), and `std::get` (values of the variables).
 
 For demonstration purposes we'll write a small `triple` implementation, which is like a `std::pair`, but with three elements.
