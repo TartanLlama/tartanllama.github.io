@@ -886,7 +886,7 @@ blockquote::before {
 
 blockquote.standards::before {
     font-family: "Times New Roman";
-    color: $dark-green;
+    color: $green;
     content: attr(para) ":";
     position: relative;
     top: 7px;
