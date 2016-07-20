@@ -50,6 +50,8 @@ auto [a, b, c] = bar();
 
 If you have more complex classes, or want to wrap/process members before exposing them, you'll need to add structured binding support yourself. Fortunately, this is rather elegantly built on top of existing mechanisms. All you need to do is tell the compiler how many variables you want to expose, the types of them, and how to get at the values. This is done through the `std::tuple_size`, `std::tuple_element`, and `get` utilities.
 
+-------------------------------------
+
 For demonstration purposes we'll write a small class named `Config`, which stores some immutable configuration data. We'll be returning `name` as a C++17 `std::string_view`, `id` by value, and `data` by reference to const. 
 
 {% highlight cpp %}
