@@ -4,7 +4,6 @@ title:      "Adding C++17 structured binding support to your classes"
 date:       2016-07-20
 summary:    Tutorial for adding structured binding support to classes
 category:   c++
-draft:      true
 tags:
  - c++
  - c++17
