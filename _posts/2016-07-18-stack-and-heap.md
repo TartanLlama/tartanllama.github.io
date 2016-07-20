@@ -18,7 +18,7 @@ Have a look at the following code sample and have a think about where the `int`s
 
 {% highlight cpp %}
 static int a;
-static int b = 4;
+static int b = 97;
 
 void foo (int c) {
     int d = 42;
@@ -69,15 +69,9 @@ main:
         call    _Znwm                     ;allocate e with new
         mov     DWORD PTR [rax], 314      ;store 314 at *e
         mov     QWORD PTR [rbp-8], rax    ;put pointer on stack
-        mov     eax, DWORD PTR _ZL1a[rip] 
-        mov     edi, eax                  ;argument put in register
-        call    _Z3fooi
-        mov     eax, DWORD PTR _ZL1b[rip]
-        mov     edi, eax                  ;argument put in register
-        call    _Z3fooi
         mov     rax, QWORD PTR [rbp-8]
-        mov     eax, DWORD PTR [rax]   
-        mov     edi, eax                  ;argument put in register
+        mov     eax, DWORD PTR [rax]      ;put *e in register
+        mov     edi, eax                  ;put *e in argument register
         call    _Z3fooi
         mov     eax, 0
         leave
@@ -256,7 +250,7 @@ What is the storage duration of the variables in the following example?
 
 {% highlight cpp %}
 static int a;
-static int b = 4;
+static int b = 97;
 
 void foo (int c) {
     int d = 42;

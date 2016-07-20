@@ -2,7 +2,7 @@
 layout:     post
 title:      "Adding C++17 structured binding support to your classes"
 data:       2016-06-2016
-summary:    How to
+summary:    Tutorial for adding structured binding support to classes
 category:   c++
 draft:      true
 tags:
@@ -31,18 +31,35 @@ struct yay {
     float b;
     std::string c;
 };
+
+yay foo();
+
+auto [a, b, c] = foo();
 {% endhighlight %}
 
-Adding support for structured bindings is surprisingly easy; you just need to specialize three existing template classes to express how to destructure your class. These three template classes are `std::tuple_size` (number of variables), `std::tuple_element` (types of the variables), and `std::get` (values of the variables).
-
-For demonstration purposes we'll write a small `triple` implementation, which is like a `std::pair`, but with three elements.
+So can this:
 
 {% highlight cpp %}
-template <typename A, typename B, typename C>
-struct triple {
-	A a;
-	B b;
-	C c;
+struct yay_wrapper : yay {
+    static int count;
+};
+
+yay_wrapper bar();
+
+auto [a, b, c] = bar();
+{% endhighlight %}
+
+If you have more complex classes, or want to wrap/process members before exposing them, you'll need to add structured binding support yourself. Fortunately, this is rather elegantly built on top of existing mechanisms. All you need to do is tell the compiler how many variables you want to expose, the types of them, and how to get at the values. This is done through the `std::tuple_size`, `std::tuple_element`, and `get` utilities.
+
+For demonstration purposes we'll write a small class named `Config`, which stores some immutable configuration data. We'll be returning `name` as a C++17 `std::string_view`, `id` by value, and `data` by reference to const. 
+
+{% highlight cpp %}
+class Config {
+    std::string name;
+    std::size_t id;
+    std::vector<std::string> data;
+    
+    //constructors and such
 };
 {% endhighlight %}
 
@@ -50,32 +67,56 @@ The simplest specialization is `std::tuple_size`. Since there are three elements
 
 {% highlight cpp %}
 namespace std {
-    template<typename... Ts> struct tuple_size<triple<Ts...>>
+    struct tuple_size<Config>
         : std::integral_constant<std::size_t, 3> {};
 }
 {% endhighlight %}
 
-Next is `std::tuple_element`. For this we just need to return the type corresponding to the index passed in, so `A` for `0`, `B` for `1`, and `C` for `2`. You could cheat and just wrap the types in a `std::tuple` and use `std::tuple_element` on that, but we'll do this the long way.
+Next is `get`. We'll use C++17's `if constexpr` for brevity. I've just added this as a member function to avoid the headache of template friends, but you can also have it as a non-member function found through ADL.
+
+{% highlight cpp %}
+class Config {
+    //...
+    
+   template <std::size_t N>
+   decltype(auto) get() const {
+       if      constexpr (N == 0) return std::string_view{name};
+       else if constexpr (N == 1) return id;
+       else if constexpr (N == 2) return (data); //parens needed to get reference
+   }
+};
+
+{% endhighlight %}
+
+Finally we need to specialize `std::tuple_element`. For this we just need to return the type corresponding to the index passed in, so `std::string_view` for `0`, `std::size_t` for `1`, and `const std::vector<std::string>&` for `2`. We'll cheat and get the compiler to work out the types for us using the `get` function we wrote above. This way, we don't need to touch this specialization if we want to change the types we return later, or want to add more variables to the class.
 
 {% highlight cpp %}
 namespace std {
-    template <typename A, typename B, typename C> 
-    struct tuple_element<0, triple<A,B,C>> { using type = A; };
-    
-    template <typename A, typename B, typename C> 
-    struct tuple_element<1, triple<A,B,C>> { using type = B; };
-    
-    template <typename A, typename B, typename C> 
-    struct tuple_element<2, triple<A,B,C>> { using type = C; };
+    template<std::size_t N> 
+    struct tuple_element<N, Config> { 
+        using type = decltype(std::declval<Config>().get<N>()); 
+    };
 }
 {% endhighlight %}
 
-And finally `std::get`. We'll use C++17's `if constexpr` for brevity.
+You could do this the long way if you aren't comfortable with the `decltype` magic:
 
 {% highlight cpp %}
 namespace std {
-    template <typename A, typename B, typename C>
-    auto get  	
-}
+    template<> struct tuple_element<0,Config> { using type = std::string_view; };
+    template<> struct tuple_element<1,Config> { using type = std::size_t; };
+    template<> struct tuple_element<2,Config> { using type = const std::vector<std::string>&; };
 }
 {% endhighlight %}
+
+--------------------------------
+
+With all of that done, we can now decompose `Config` like so:
+
+{% highlight cpp %}
+Config get_config();
+
+auto [name, id, data] = get_config();
+{% endhighlight %}
+
+
