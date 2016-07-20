@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "Stack and Heap: Commonly Misused Terms"
-data:       2016-07-18
+date:       2016-07-18
 summary:    A rant on the misuse of "stack" and "heap".
 category:   c++
 minutes: 10

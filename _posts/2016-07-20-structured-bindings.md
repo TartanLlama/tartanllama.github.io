@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "Adding C++17 structured binding support to your classes"
-data:       2016-06-2016
+date:       2016-07-20
 summary:    Tutorial for adding structured binding support to classes
 category:   c++
 draft:      true
@@ -23,7 +23,7 @@ This is a very powerful and expressive feature, but the most interesting element
 
 -----------------------
 
-The great news is that structured bindings are supported out-of-the-box for classes with non-static member variables which are solely public (or have all public-only non-statc members in a single direct base class). So a class like this can be decomposed with no additional code:
+The great news is that structured bindings are supported out-of-the-box for classes where all the non-static member variables are public (or all public-only non-statc members are in a single direct base class). So a class like this can be decomposed with no additional code:
 
 {% highlight cpp %}
 struct yay {
@@ -118,5 +118,4 @@ Config get_config();
 
 auto [name, id, data] = get_config();
 {% endhighlight %}
-
 
