@@ -296,3 +296,9 @@ So, when should we actually use this in practice?
 Really, this is pretty awful. It probably totally breaks across translation units, and the Standards Committee wants to outlaw this kind of thing. However, it's still pretty fascinating and I hope that you've got some ideas on how to abuse this yourself.
 
 If you want to play around with it, you can get the code [here](https://gist.github.com/TartanLlama/3aa4541c12538d1d6cf5cf244cc5d724).
+
+----------------
+
+<h3>Further work</h3>
+
+This class could be adapted to work with other integral types, kind of like `std::integral_constant`. Alternatively, the whole thing could be thrown in the sea.
