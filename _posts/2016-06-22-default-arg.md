@@ -70,3 +70,121 @@ Cons:
 - `Options<>` and `Options<int, long, std::string>` are different types.
 - `use_default` has to be repeated quite a lot.
 - Can't tell the default arguments by looking at the template declaration.
+- Requires significantly altering the class
+
+-----------------------------------
+
+Another option is to provide member alias templates which handle modifying the template arguments.
+
+{% highlight cpp %}
+template <typename T0 = int, typename T1 = long, typename StringT = std::string>
+struct Options {
+    template <typename T> 
+    using WithT0 = Options<T, T1, StringT>;
+
+    template <typename T>
+    using WithT1 = Options<T0, T, StringT>;
+
+    template <typename T>
+    using WithStringT = Options<T0, T1, T>;
+};
+
+Options<>::WithT0<double> a; //Options<double,long,std::string>
+Options<>::WithT1<float>::WithStringT<std::wstring> b; //Options<int,float,std::wstring>
+{% endhighlight %}
+
+Pros:
+- Very terse usage.
+- Default arguments are in the declaration.
+
+Cons:
+- Requires significantly altering the class.
+- Need to repeat the other arguments in all the `WithX` alias templates.
+
+---------------------------------
+
+It would be good to have a solution which doesn't require heavily altering the class (especially when there are many parameters). The following code is pretty complex, but does the job.
+
+
+{% highlight cpp %}
+namespace detail {
+    //given an index to replace at, a type to replace with and a tuple to replace in
+    //return a tuple of the same type as given, with the type at ReplaceAt set to ReplaceWith
+    template <size_t ReplaceAt, typename ReplaceWith, size_t... Idxs, typename... Args>
+    auto replace_type (std::index_sequence<Idxs...>, std::tuple<Args...>)
+        -> std::tuple<std::conditional_t<ReplaceAt==Idxs, ReplaceWith, Args>...>;
+
+    //instantiates a template with the types held in a tuple
+    template <template <typename...> class T, typename Tuple>
+    struct type_from_tuple;
+
+    template <template <typename...> class T, typename... Ts>
+    struct type_from_tuple<T, std::tuple<Ts...>>
+    {
+        using type = T<Ts...>;
+    };
+
+    //replaces the type used in a template instantiation of In at index ReplateAt with the type ReplaceWith
+    template <size_t ReplaceAt, typename ReplaceWith, class In>
+    struct with_n;
+
+    template <size_t At, typename With, template <typename...> class In, typename... InArgs>
+    struct with_n<At, With, In<InArgs...>>
+    {
+        using tuple_type = decltype(replace_type<At,With>
+                (std::index_sequence_for<InArgs...>{}, std::tuple<InArgs...>{}));
+
+        using type = typename type_from_tuple<In,tuple_type>::type;
+    };
+}
+
+//convenience alias
+template <size_t ReplaceAt, typename ReplaceWith, class In>
+using with_n = typename detail::with_n<ReplaceAt, ReplaceWith, In>::type;
+
+with_n<0, float, Options<>> a; //Options<float, int, std::string>
+with_n<2, std::wstring, 
+   with_n<0, float, Options<>>> b; //Options<float, int, std::wstring>
+{% endhighlight %}
+
+Pros:
+- Doesn't require changing the class.
+- Little repetition
+
+Cons:
+- Syntax isn't as nice as the previous solution.
+
+--------------------------------
+
+What we really want is a solution which combines the advantages of the above two options. We can achieve this by wrapping `with_n` in a template class and inheriting from it.
+
+
+{% highlight cpp %}
+template <typename T>
+struct EnableDefaultSetting {
+    template <size_t ReplaceAt, typename ReplaceWith>
+    using with_n = typename detail::with_n<ReplaceAt, ReplaceWith, T>::type;
+     
+    //Some convenience helpers (optional)
+    template <typename ReplaceWith> using with_0 = with_n<0, ReplaceWith>;
+    template <typename ReplaceWith> using with_1 = with_n<1, ReplaceWith>;
+    template <typename ReplaceWith> using with_2 = with_n<2, ReplaceWith>;
+    template <typename ReplaceWith> using with_3 = with_n<3, ReplaceWith>;
+    template <typename ReplaceWith> using with_4 = with_n<4, ReplaceWith>;
+};
+
+Options<>::with_n<0, float> a; //Options<float, int, std::string>
+Options<>::with_0<float>::with_2<std::wstring> b; //Options<float, int, std::wstring>
+{% endhighlight %}
+
+Pros:
+- Terse syntax.
+- Adding support only requires inheriting from a type.
+
+Cons:
+- Traits don't have descriptive names.
+- Requires modifying the class.
+
+--------------------------------
+
+If you find yourself needing this functionality, hopefully one of the above solutions works for you. Feel free to suggest others in the comments below.
