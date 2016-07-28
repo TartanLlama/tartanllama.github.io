@@ -1,11 +1,10 @@
 ---
 layout:     post
 title:      "integral_variable: A compile-time assignable variable"
-data:       2016-06-2016
+date:       2016-07-28
 summary:    An integral variable which can be mutated at compile-time.
 category:   c++
 minutes: 20
-draft:      true
 tags:
  - c++ 
  - templates
@@ -70,7 +69,7 @@ Given this encoding, we need to know two things: how do we read this variable an
 
 The variable value is read by starting at the cell closest to the cursor and tracking up the column until we find a cell which is punched. The value is the row index of this cell. For this starting state, the value is `0`, because the closest punched cell to the cursor is in the `0` row.
 
-Assigning to the variable is acheived by punching a cell, and possibly advancing the cursor beforehand. There are two cases to consider: is the value we want to set greater than or lesser than the current value?
+Assigning to the variable is acheived by punching a cell, possibly advancing the cursor beforehand. There are two cases to consider: is the value we want to set greater than or lesser than the current value?
 
 If the desired value is greater than the current value, we don't need to advance the cursor at all; we just punch the cell where the current cursor column and desired value row intersect. So if we set the above variable to `2`, it will look like this:
 
@@ -86,7 +85,16 @@ If the desired value is lesser than the current value, we advance the cursor one
     0 | 1 0 0
     1 | 0 1 0
     2 | 1 0 0
-        ^
+          ^
+
+Advancing the counter is necessary because if we omitted it, the value would remain unchanged. For example, if we punch `0` in the second column of the above state, it will look like this:
+
+    0 | 1 1 0
+    1 | 0 1 0
+    2 | 1 0 0
+          ^
+
+The value is still `1`, because that's the punched cell closest to the cursor in the active column.
 
 Hopefully you now have an idea of how this variable operates and how it might scale to more assignments and higher values, simply by extending the array in either direction.
 
@@ -116,9 +124,9 @@ Injecting the definition of `adl_lookup` through template instantiation carries 
 {% highlight cpp %}
 template<class Ident>
 struct writer {
-friend constexpr size_type adl_lookup (Ident) {
-  return Ident::value;
-}
+  friend constexpr size_type adl_lookup (Ident) {
+    return Ident::value;
+  }
   static constexpr size_type value = Ident::value;
 };
 {% endhighlight %}
@@ -152,7 +160,7 @@ The second overload is the recursive case. It keeps calling `value_reader` until
 
 The third overload is the base case; it just returns `0` if we get to the last element.
 
-Each of the overloads has a dummy `int` or `float` parameter. This is just to force the first overload to be selected during overload resolution if it's not SFINAEd out.
+Each of the overloads has a dummy `int` or `float` parameter. This is just to force the first overload to be selected during overload resolution if it's not SFINAEd out (see [here](https://rmf.io/cxx11/overload-ranking/) for more details and a cleaner approach).
 
 Finally, some public helper functions:
 
@@ -258,11 +266,11 @@ set (size_type Written = atch::meta_counter<Tag>::template write<N>()) {
 
 As you might imagine, `get` returns the current value of the variable, while `set` sets it.
 
-That covers the code for `integer_variable`. Feel free to [tweet](http://www.twitter.com/TartanLlama) or [email](mailto://tartanllama@gmail.com) me wth any questions you have about it. You can get all the code [here](www.brokenlink.com).
+That covers the code for `integer_variable`.
 
 --------------------
 
-Since each generated variable is a new type and the core functionality works through static functions, we get copy semantics similar to `std::reference_wrapper`. For example:
+Before we finish up, here's a quick interesting facet of this class. Since each generated variable is a new type and the core functionality works through static functions, we get copy semantics similar to `std::reference_wrapper`. For example:
 
 {% highlight cpp %}
 template <typename Var>
@@ -287,4 +295,4 @@ So, when should we actually use this in practice?
 
 Really, this is pretty awful. It probably totally breaks across translation units, and the Standards Committee wants to outlaw this kind of thing. However, it's still pretty fascinating and I hope that you've got some ideas on how to abuse this yourself.
 
-If you want to play around with it, you can get the code [here](https://gist.github.com/TartanLlama/3aa4541c12538d1d6cf5cf244cc5d724].
+If you want to play around with it, you can get the code [here](https://gist.github.com/TartanLlama/3aa4541c12538d1d6cf5cf244cc5d724).
