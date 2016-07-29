@@ -76,7 +76,7 @@ If the desired value is greater than the current value, we don't need to advance
     0 | 1 0 0
     1 | 0 0 0
     2 | 1 0 0
-          ^
+        ^
 
 The value of this variable is `2`, because the closest punched cell to the cursor is in the `2` row.
 

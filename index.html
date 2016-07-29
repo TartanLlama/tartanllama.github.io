@@ -28,14 +28,14 @@ make-smaller-titles: true
               <h2>Latest Blog Articles</h2>
 
               <ul>
-                  {% for post in site.posts | limit: site.post_limit %}
+                {% for post in site.posts  %}
                   {% unless post.draft %}
                       <li>
                           <a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
                           <small class="hidden-xs">{{ post.date | date: "%B %-d, %Y" }}</small>
                       </li>
                   {% endunless %}
-                  {% endfor %}
+                {% endfor %}
                       
                   <li>
 
