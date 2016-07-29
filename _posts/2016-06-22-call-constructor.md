@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "You can't call a constructor in C++"
-data:       2016-06-2016
+date:       2016-06-23
 summary:    Stop saying that.
 category:   c++
 minutes: 20
