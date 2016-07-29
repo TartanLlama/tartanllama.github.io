@@ -69,7 +69,7 @@ Given this encoding, we need to know two things: how do we read this variable an
 
 The variable value is read by starting at the cell closest to the cursor and tracking up the column until we find a cell which is punched. The value is the row index of this cell. For this starting state, the value is `0`, because the closest punched cell to the cursor is in the `0` row.
 
-Assigning to the variable is acheived by punching a cell, possibly advancing the cursor beforehand. There are two cases to consider: is the value we want to set greater than or lesser than the current value?
+Assigning to the variable is acheived by punching a cell, possibly advancing the cursor beforehand. There are two cases to consider: is the value we want to set greater than or less than the current value?
 
 If the desired value is greater than the current value, we don't need to advance the cursor at all; we just punch the cell where the current cursor column and desired value row intersect. So if we set the above variable to `2`, it will look like this:
 
@@ -80,7 +80,7 @@ If the desired value is greater than the current value, we don't need to advance
 
 The value of this variable is `2`, because the closest punched cell to the cursor is in the `2` row.
 
-If the desired value is lesser than the current value, we advance the cursor one position and punch the relevant cell in that new column. So if we now want to assign `1` to the above variable, it will look like this:
+If the desired value is less than the current value, we advance the cursor one position and punch the relevant cell in that new column. So if we now want to assign `1` to the above variable, it will look like this:
 
     0 | 1 0 0
     1 | 0 1 0
