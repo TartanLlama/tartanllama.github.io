@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "void C::C::C::A::A::A::foo() - standards conformant"
+title:      "void C::C::C::A::A::A::foo() - valid syntax monstrosity"
 date:       2016-07-29
 summary:    Some strange syntax which is valid in C++
 category:   c++
@@ -8,6 +8,8 @@ draft: true
 tags:
  - c++ 
 ---
+
+Here's an odd bit of C++ syntax for you. Say we have the following class structure:
 
 {% highlight cpp %}
 class A {
@@ -24,7 +26,11 @@ class C : public A, public B {
 public:
     virtual void foo();
 };
+{% endhighlight %}
 
+The following definitions are all well-formed:
+
+{% highlight cpp %}
 void C::foo(){
   std::cout << "C" << std::endl;
 }
@@ -35,6 +41,8 @@ void C::B::foo(){
   std::cout << "B" << std::endl;
 }
 {% endhighlight %}
+
+The first one defines `C::foo`, the second defines `A::foo` and the third defines `B::foo`. This is valid because of an entity known as the *injected-type-name*:
 
 > A *class-name* is inserted into the scope in which it is declared immediately after the *class-name* is seen. The *class-name* is also inserted into the scope of the class itself; this is known as the *injected-class-name*. For purposes of access checking, the *injected-class-name* is treated as if it were a public member name. [...]
 {:.standards para="[class]/2"}
@@ -48,3 +56,5 @@ void C::C::C::A::A::A::foo(){
     std::cout << "A" << std::endl;
 }
 {% endhighlight %}
+
+Yeah, don't do that.

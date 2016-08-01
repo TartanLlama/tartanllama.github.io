@@ -37,6 +37,10 @@ struct decode_type
 };
 {% endhighlight %}
 
+Since this just uses template instantiation, if you write `encode_type<AType>` twice, then it will only be encoded once.
+
+I had to make a couple of changes to the constexpr counter to make this easier. First was to make `meta_list::push` return the size of the meta-container *before* the push:
+
 {% highlight cpp %}
 template<class T, class H = meta_list, std::size_t Size = counter::value()>
 static constexpr std::size_t push (
@@ -46,10 +50,15 @@ static constexpr std::size_t push (
 ) { return Size; }
 {% endhighlight %}
 
+Second was to add a small `decltype` helper to hide all the dependent name mess. 
+
 {% highlight cpp %}
 template<size_type Idx, class H = meta_list>
 static constexpr auto at () -> typename H::template value<>::template at<Idx>::result;
 {% endhighlight %}
+
+
+A quick text to make sure everything works:
 
 {% highlight cpp %}
 int main () {
@@ -76,6 +85,8 @@ int main () {
   std::cout << std::endl;
 }
 {% endhighlight %}
+
+Clang 3.7 prints out this:
 
     Encoding: 0, 1, 2, 3, 
     Decoding: i, d, NSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE, f,
