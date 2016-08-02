@@ -1,11 +1,8 @@
 ---
 layout:     post
 title:      "Selective default template arguments"
-data:       2016-06-2016
 summary:    A flexible way to chose default template arguments.
 category:   c++
-minutes: 20
-draft:      true
 tags:
  - c++
  - templates

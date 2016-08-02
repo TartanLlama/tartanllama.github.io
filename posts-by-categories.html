@@ -27,7 +27,7 @@ make-smaller-titles: true
         <ul>
           {% for posts in category %}
             {% for post in posts %}
-              {% unless post.draft %}
+              {% unless post.pubdraft %}
               <li>
                 <a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
                 <small class="hidden-xs">{{ post.date | date: "%B %-d, %Y" }}</small>

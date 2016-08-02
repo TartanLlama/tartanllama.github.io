@@ -1,10 +1,8 @@
 ---
 layout:     post
 title:      "void C::C::C::A::A::A::foo() - valid syntax monstrosity"
-date:       2016-07-29
 summary:    Some strange syntax which is valid in C++
 category:   c++
-draft: true
 tags:
  - c++ 
 ---
@@ -49,7 +47,7 @@ The first one defines `C::foo`, the second defines `A::foo` and the third define
 
 Since `A` is a base class of `C` and the name `A` is injected into the scope of `A`, `A` is also visible from `C`.
 
-Given the above, we can do horribly perverse things like:
+The *injected-class-name* exists to ensure that the class is found during name lookup instead of entities in an enclosing scope. It also makes referring to the class name in a template instantiation easier. But since we're awful people, we can use this perfectly reasonable feature do horribly perverse things like this:
 
 {% highlight cpp %}
 void C::C::C::A::A::A::foo(){

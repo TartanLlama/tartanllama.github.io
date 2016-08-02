@@ -1,12 +1,8 @@
 ---
 layout:     post
 title:      "Declaring classes in funtion declarations"
-data:       2016-06-2016
 summary:    Don't do this.
 category:   c++
-minutes: 20
-draft: true
-series:    "Dark corners of C++"
 tags:
  - c++
 

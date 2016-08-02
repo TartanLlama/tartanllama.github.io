@@ -4,8 +4,6 @@ title:      "You can't call a constructor in C++"
 date:       2016-06-23
 summary:    Stop saying that.
 category:   c++
-minutes: 20
-draft:      true
 tags:
  - c++ 
  - rant

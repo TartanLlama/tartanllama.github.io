@@ -1,10 +1,8 @@
 ---
 layout:     post
 title:      "Compile-time type registry"
-date:       2016-07-29
 summary:    Giving ids to types at compile time
 category:   c++
-draft: true
 tags:
  - c++ 
  - templates
@@ -50,7 +48,7 @@ static constexpr std::size_t push (
 ) { return Size; }
 {% endhighlight %}
 
-Second was to add a small `decltype` helper to hide all the dependent name mess. 
+Second was to add a small `decltype` helper to hide all the dependent name mess:
 
 {% highlight cpp %}
 template<size_type Idx, class H = meta_list>
@@ -58,7 +56,7 @@ static constexpr auto at () -> typename H::template value<>::template at<Idx>::r
 {% endhighlight %}
 
 
-A quick text to make sure everything works:
+A quick test to make sure everything works:
 
 {% highlight cpp %}
 int main () {
@@ -86,7 +84,7 @@ int main () {
 }
 {% endhighlight %}
 
-Clang 3.7 prints out this:
+Success! Clang 3.7 prints out this:
 
     Encoding: 0, 1, 2, 3, 
     Decoding: i, d, NSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE, f,

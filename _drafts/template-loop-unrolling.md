@@ -1,10 +1,8 @@
 ---
 layout:     post
 title:      "Unrolling loops with templates"
-data:       2016-06-29
 summary:    An implementation of loop unrolling using templates.
 category:   c++
-draft: true
 tags:
  - c++ 
  - templates
@@ -105,4 +103,23 @@ Now we can pass a lambda or anything which acts like a function to `f`:
 C<2,3>::f([](int i, int j){
     std::cout << "i " << i << " j " << j << '\n';
 });
+{% endhighlight %}
+
+-----------------------
+
+Alternatively, we could use a metaprogramming library like `boost::hana`:
+
+{% highlight cpp %}
+template <typename Func>
+void unroll (const Func& func) {
+    func();
+}
+
+template <std::size_t I1, std::size_t... Is, typename Func>
+void unroll (const Func& func) {
+    hana::for_each(hana::range_c<std::size_t, 0, I1>,
+                   [&](auto x) {
+                       unroll<Is...>([x, &func] (auto... xs) { func(x,xs...); });
+                   });
+}
 {% endhighlight %}

@@ -23,7 +23,7 @@ make-smaller-titles: true
     </small></h2>
 
       {% for post in site.posts %}
-      {% unless post.draft %}
+      {% unless post.pubdraft %}
       {% capture this_year %}{{ post.date | date: "%Y" }}{% endcapture %}
       {% capture next_year %}{{ post.previous.date | date: "%Y" }}{% endcapture %}
 
