@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "You can't call a constructor in C++"
-date:       2016-06-23
 summary:    Stop saying that.
 category:   c++
 tags:
@@ -44,8 +43,8 @@ type or the (possibly cv-qualified) `void` type, creates a prvalue of the specif
 
 `Foo{}` is similarly defined:
 
-> Similarly, a simple-type-specifier or typename-specifier followed by a braced-init-list creates a temporary
-object of the specified type direct-list-initialized (8.5.4) with the specified braced-init-list, and its value is
+> Similarly, a *simple-type-specifier* or *typename-specifier* followed by a *braced-init-list* creates a temporary
+object of the specified type *direct-list-initialized* (8.5.4) with the specified *braced-init-list*, and its value is
 that temporary object as a prvalue.
 {:.standards para="[expr.type.conv]/3"}
 
