@@ -1,13 +1,13 @@
 ---
 layout:     post
-title:      "Try-catch-rethrow vs nothing"
+title:      "The effect of a try-catch-rethrow"
 summary:    A try-catch-rethrow does more than code without.
 category:   c++
 tags:
  - c++ 
 ---
 
-Code with try-catch-rethrow is not equivalent to code without. Here's what I mean:
+A try-catch-rethrow with an empty handler does more than a standard block. Here's what I mean:
 
 {% highlight cpp %}
 {
