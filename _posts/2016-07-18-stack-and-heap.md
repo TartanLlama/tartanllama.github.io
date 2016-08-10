@@ -80,7 +80,7 @@ main:
         .cfi_endproc
 {% endhighlight %}
 
-`*e` is stored on the *free store*, which is where `new` allocates from. This is the official name for what is often inaccurately referred to as the "heap" (the data structure used to represent this construct doesn't even need to be a heap). The argument for the `c` parameter is stored in the `edi` register.
+`*e` is stored on the *free store*, which is where `new` allocates from. This is the "official" name for what is often referred to as the "heap"; some think that using it is just pendantry, but I wish more would use it, as the term "heap" is unhelpfully overloaded in programming. The argument for the `c` parameter is stored in the `edi` register.
 
 {% highlight nasm %}
 _Z3fooi:                                   ;start of foo
@@ -272,7 +272,9 @@ The answers:
 
 -------------
 
-When should we refer to the storage duration and when should we refer to the storage location? I would advise the following:
+Is all of this just needless pedantry? I don't believe so. As programmers we all know the value of abstraction, precicion, clarity, unambiguity. Using these terms is in aid of these goals, and is particularly helpful for those learning the language. 
+
+My final question is this: when should we refer to the storage duration and when should we refer to the storage location? I would advise the following:
 
 **Only refer to the storage location if you need to discuss where a variable is physically located. In all other cases, refer to the storage duration.**
 
