@@ -126,7 +126,8 @@ namespace detail {
         using type = T<Ts...>;
     };
 
-    //replaces the type used in a template instantiation of In at index ReplateAt with the type ReplaceWith
+    //replaces the type used in a template instantiation of In 
+    //at index ReplateAt with the type ReplaceWith
     template <size_t ReplaceAt, typename ReplaceWith, class In>
     struct with_n;
 
