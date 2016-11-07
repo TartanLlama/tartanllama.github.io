@@ -3,6 +3,7 @@ layout:     post
 title:      "Check if T::value is constexpr"
 summary:    Template trickery
 category:   c++
+pubdraft:      true
 tags:
  - c++
  - templates
@@ -30,6 +31,7 @@ constexpr bool is_valid(int) {
 template <typename T>
 constexpr bool is_valid(...) {
     return true;
+}
 {% endhighlight %}
 
 If `T::value` is a constant expression, `is_valid` will return whether or not it is positive. Otherwise it will unconditionally return `true`. This works through [SFINAE](http://en.cppreference.com/w/cpp/language/sfinae); if `T::value` is not a constant expression, then `int N = T::value` in a template parameter is ill-formed and that first overload is removed from the candidate set. This allows us to write the following:
