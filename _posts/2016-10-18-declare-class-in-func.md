@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Declaring classes in funtion declarations"
+title:      "Declaring classes in function declarations"
 summary:    Don't do this.
 category:   c++
 tags:

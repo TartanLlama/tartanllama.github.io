@@ -3,6 +3,7 @@ layout:     post
 title:      "Selective default template arguments"
 summary:    A flexible way to chose default template arguments.
 category:   c++
+minutes:       10
 tags:
  - c++
  - templates
@@ -16,7 +17,7 @@ template<typename T0 = int, typename T1 = long, typename StringT = std::string>
 struct Options;
 {% endhighlight %}
 
-This class has three template parameters to select gnerate specialised code for certain types. I've limited it to three for the sake of brevity, but there could be many more parameters than this. Client code wil be very simple if it just wants to use the defaults:
+This class has three template parameters to select specialised code for certain types. I've limited it to three for the sake of brevity, but there could be many more parameters than this. If client code just wants to use the defaults, then the code is very simple:
 
 {% highlight cpp %}
 Options<> defaults{};
@@ -35,7 +36,7 @@ But what if we want to set just the last argument:
 Options<int, long, MyString> last_changed{};
 {% endhighlight %}
 
-In the above example, we still need to specify the first two arguments, even though we just want the defaults. This is a maintenance issue even with just three parameters, as all these uses of the template must be changed if the default arguments change. With more than three arguments it's even worse, and needlessly verbose to boot. What we would like is a flexible, generic, terse way to selectively change default arguments. This post will outline a few different possibilities.
+In the above example, we still need to specify the first two arguments, even though we just want the defaults. This is a maintenance issue even with just three parameters, as all these uses of the template must be changed if the default arguments change. With more than three arguments it's even worse, and needlessly verbose to boot. What we would like is a flexible, generic, terse way to selectively change default arguments. Read on for a few possible solutions.
 
 This post is based on answers from myself and others in [this StackOverflow question](http://stackoverflow.com/questions/29694299/explicitly-use-defaults-for-some-parameters-in-class-template-instantiation/29694738#29694738).
 
@@ -61,9 +62,11 @@ Options<use_default, use_default, std::wstring> b; //RT0 = int, RT1 = long, RStr
 {% endhighlight %}
 
 Pros:
+{:.listhead}
 - Easy to understand and implement.
 
 Cons:
+{:.listhead}
 - `Options<>` and `Options<int, long, std::string>` are different types.
 - `use_default` has to be repeated quite a lot.
 - Can't tell the default arguments by looking at the template declaration.
@@ -91,16 +94,18 @@ Options<>::WithT1<float>::WithStringT<std::wstring> b; //Options<int,float,std::
 {% endhighlight %}
 
 Pros:
+{:.listhead}
 - Very terse usage.
 - Default arguments are in the declaration.
 
 Cons:
+{:.listhead}
 - Requires significantly altering the class.
 - Need to repeat the other arguments in all the `WithX` alias templates.
 
 ---------------------------------
 
-It would be good to have a solution which doesn't require heavily altering the class (especially when there are many parameters). The following code is pretty complex, but does the job.
+It would be good to have a solution which doesn't require heavily altering the class (especially when there are many parameters). The following code is pretty complex, but does the job (you could use your favourite metaprogramming library to make it more simple).
 
 
 {% highlight cpp %}
@@ -121,7 +126,8 @@ namespace detail {
         using type = T<Ts...>;
     };
 
-    //replaces the type used in a template instantiation of In at index ReplateAt with the type ReplaceWith
+    //replaces the type used in a template instantiation of In 
+    //at index ReplateAt with the type ReplaceWith
     template <size_t ReplaceAt, typename ReplaceWith, class In>
     struct with_n;
 
@@ -145,10 +151,12 @@ with_n<2, std::wstring,
 {% endhighlight %}
 
 Pros:
+{:.listhead}
 - Doesn't require changing the class.
 - Little repetition
 
 Cons:
+{:.listhead}
 - Syntax isn't as nice as the previous solution.
 
 --------------------------------
@@ -170,15 +178,20 @@ struct EnableDefaultSetting {
     template <typename ReplaceWith> using with_4 = with_n<4, ReplaceWith>;
 };
 
+template<typename T0 = int, typename T1 = long, typename StringT = std::string>
+struct Options : EnableDefaultSetting<Options<T0,T1,StringT>>{/*...*/};
+
 Options<>::with_n<0, float> a; //Options<float, int, std::string>
 Options<>::with_0<float>::with_2<std::wstring> b; //Options<float, int, std::wstring>
 {% endhighlight %}
 
 Pros:
+{:.listhead}
 - Terse syntax.
 - Adding support only requires inheriting from a type.
 
 Cons:
+{:.listhead}
 - Traits don't have descriptive names.
 - Requires modifying the class.
 
