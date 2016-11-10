@@ -4,26 +4,27 @@ title:      "Exploding tuples with fold expressions"
 summary:    "Fold expressions are pretty cool"
 category:   c++
 minutes:    10
+pubdraft:   true
 tags:
  - c++ 
  - templates
 ---
 
-Generic programming in C++ has been made much easier with C++11's addition of [`std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple). It allows us to store objects of different types in the same container and index them at compile time. Support for algorithms over heterogeneous types like `std::tuple` is pretty thin in the standard library; programmers tend to look to libraries such as [`boost::hana`](https://github.com/boostorg/hana) to do all of the heavy lifting. Sometimes we just want to do some operation over the elements in a tuple without needing to pull down a bunch of library dependencies; this post will show you how to accomplish this.
+Generic programming in C++ has been made much easier with C++11's addition of [`std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple). It allows us to store objects of different types in the same container and index them at compile time. Support for algorithms over heterogeneous types like `std::tuple` is pretty thin in the standard library; programmers tend to look to libraries such as [`boost::hana`](https://github.com/boostorg/hana) to do all of the heavy lifting. Sometimes we just want to do some operation over the elements in a tuple without needing to pull down a bunch of library dependencies. This post will show you how to accomplish this.
 
-So, say we have a tuple and we want to print out every element of it. If there was a function to call some function on every element of a tuple, you might use it like this:
+So, say we have a tuple and we want to print out every element of it. If there was a utility to call some function on every element of a tuple, you might use it like this:
 
 {% highlight cpp %}
-call_on_tuple(std::make_tuple(1, 42.1, "hi"),
+for_each(std::make_tuple(1, 42.1, "hi"),
               [](auto&& e) { std::cout << e; });
 {% endhighlight %}
 
-The implementation of `call_on_tuple` would typically rely on the *indices trick*. This involves generating a compile-time sequence of indices for the tuple, then passing them as variadic non-type template arguments to another template function and expanding the resulting parameter pack. If that all sounds gibberish to you, don't worry, I'll explain.
+The implementation of `for_each` would typically rely on the *indices trick*. This involves generating a compile-time sequence of indices for the tuple, then passing them as variadic non-type template arguments to another template function and expanding the resulting parameter pack. If that all sounds gibberish to you, don't worry, I'll explain.
 
 {% highlight cpp %}
 template <typename... Args, typename Func>
-void call_on_tuple(const std::tuple<Args...>& t, Func&& f) {
-    call_on_tuple(t, f, std::index_sequence_for<Args...>{});
+void for_each(const std::tuple<Args...>& t, Func&& f) {
+    for_each(t, f, std::index_sequence_for<Args...>{});
 }
 {% endhighlight %}
 
@@ -33,12 +34,12 @@ The above code generates the index sequence and passes it on to to the helper fu
 
 {% highlight cpp %}
 template <typename... Args, typename Func, std::size_t... Idx>
-void call_on_tuple(const std::tuple<Args...>& t, Func&& f, std::index_sequence<Idx...>) {
+void for_each(const std::tuple<Args...>& t, Func&& f, std::index_sequence<Idx...>) {
     f(std::get<Idx>(t))...;
 }
 {% endhighlight %}
 
-In case you aren't familiar with some of the constructs here, I'll break this code down. `std::get<Idx>(t)` gets the `Idx`th element from the tuple `t`. `f(std::get<Idx>(t))` calls the functor `f` with that element. `f(std::get<Idx>(t))...` expands the parameter pack `Idx` over that expression. So if `call_on_tuple` is called with `std::index_sequence<0,1,2>`, it generates this code:
+In case you aren't familiar with some of the constructs here, I'll break this code down. `std::get<Idx>(t)` gets the `Idx`th element from the tuple `t`. `f(std::get<Idx>(t))` calls the functor `f` with that element. `f(std::get<Idx>(t))...` expands the parameter pack `Idx` over that expression. So if `for_each` is called with `std::index_sequence<0,1,2>`, it generates this code:
 
 {% highlight cpp %}
     f(std::get<0>(t));
@@ -49,11 +50,13 @@ In case you aren't familiar with some of the constructs here, I'll break this co
 Hopefully you'll see that now, when we call this:
 
 {% highlight cpp %}
-call_on_tuple(std::make_tuple(1, 42.1, "hi"),
+for_each(std::make_tuple(1, 42.1, "hi"),
               [](auto&& e) { std::cout << e; });
 {% endhighlight %}
 
-then `std::index_sequence<0,1,2>` will be generated in `call_on_tuple`, everything will be passed on to the helper, and it'll generate code to call our closure for each element of the tuple. Unfortunately, that's not what happens.
+then `std::index_sequence<0,1,2>` will be generated in `for_each`, everything will be passed on to the helper, and it'll generate code to call our closure for each element of the tuple.
+
+Unfortunately, that's not what happens.
 
 ----------------------------------
 
@@ -61,7 +64,7 @@ Keen readers might have noticed that I lied in the above section. `f(std::get<Id
 
 {% highlight cpp %}
 template <typename... Args, typename Func, std::size_t... Idx>
-void call_on_tuple(const std::tuple& t, Func&& f, std::index_sequence<Idx...>) {
+void for_each(const std::tuple& t, Func&& f, std::index_sequence<Idx...>) {
     (void)std::initializer_list<int> { 
         (f(std::get<Idx>(t)), 0)...
     };
@@ -72,11 +75,11 @@ The above successfully [compiles and runs](http://coliru.stacked-crooked.com/a/6
 
 --------------------------
 
-As noted above, C++17 has a nicer solution for this in the form of [fold expressions](http://en.cppreference.com/w/cpp/language/fold). Fold expressions allow the expansion of parameter packs over operators, of which `,` is one. As such, we can write the following code to get rid of our previous hack:
+As noted above, C++17 has a nicer solution for this in the form of [fold expressions](http://en.cppreference.com/w/cpp/language/fold). Fold expressions allow the expansion of parameter packs over operators, of which `,` is one. With this feature we can write the following code to get rid of our previous hack:
 
 {% highlight cpp %}
 template <typename... Args, typename Func, std::size_t... Idx>
-void call_on_tuple(const std::tuple<Args...>& t, Func&& f, std::index_sequence<Idx...>) {
+void for_each(const std::tuple<Args...>& t, Func&& f, std::index_sequence<Idx...>) {
     (f(std::get<Idx>(t)), ...);
 }
 {% endhighlight %}
@@ -87,7 +90,7 @@ I think you'll agree that this is a huge improvement.
 
 Even though fold expressions make writing this code easier and less guru-only, the indices trick can still be difficult for beginners. It turns out that we can actually abstract this pattern to give "normal" users access to this power.
 
-Our abstraction function will be called `make_index_dispatcher`, and it'll produce a closure for dispatching indices based on and index sequence size. 
+Our abstraction function will be called `make_index_dispatcher`, and it'll produce a closure for dispatching indices based on an index sequence size.
 
 {% highlight cpp %}
 template <std::size_t... Idx>
@@ -101,13 +104,13 @@ auto make_index_dispatcher() {
 }
 {% endhighlight %}
 
-The first template takes in an index sequence returns a closure taking a functor argument, which will be called with a compile-time `std::size_t` constant for each index in the parameter pack. The second template just generates the index sequence from the given sequence size.
+The first template takes in an index sequence and returns a closure. This closure takes a functor argument which will be called with a compile-time `std::size_t` constant for each index in the parameter pack. The second template just generates the index sequence from the given sequence size.
 
-`call_on_tuple` can now be implemented in a single function without any weird tricks. Here's a simple implementation:
+`for_each` can now be implemented in a single function without any weird tricks. Here's a simple implementation:
 
 {% highlight cpp %}
 template <typename... Args, typename Func>
-void call_on_tuple(const std::tuple<Args...>& t, const Func& f) {
+void for_each(const std::tuple<Args...>& t, const Func& f) {
     auto dispatcher = make_index_dispatcher<sizeof...(Args)>();
     dispatcher([&](auto idx) { f(std::get<idx>(t)); });
 }
@@ -117,10 +120,10 @@ Here's a more generic version which uses perfect forwarding:
 
 {% highlight cpp %}
 template <typename Tuple, typename Func>
-void call_on_tuple(Tuple&& t, Func&& f) {
+void for_each(Tuple&& t, Func&& f) {
     constexpr auto n = std::tuple_size<std::decay_t<Tuple>>::value;
     auto dispatcher = make_index_dispatcher<n>();
-    dispatcher([&](auto idx) { f(std::get<idx>(std::forward<Tuple>(t))); });
+    dispatcher([&f,&t](auto idx) { f(std::get<idx>(std::forward<Tuple>(t))); });
 }
 {% endhighlight %}
 
