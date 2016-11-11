@@ -66,12 +66,12 @@ Keen readers might have noticed that I lied in the above section. `f(std::get<Id
 template <typename... Args, typename Func, std::size_t... Idx>
 void for_each(const std::tuple& t, Func&& f, std::index_sequence<Idx...>) {
     (void)std::initializer_list<int> { 
-        (f(std::get<Idx>(t)), 0)...
+        (f(std::get<Idx>(t)), void(), 0)...
     };
 }
 {% endhighlight %}
 
-The above successfully [compiles and runs](http://coliru.stacked-crooked.com/a/65353c2114a2187b). The trick is the `, 0` inside the `initializer_list` initializer, which evaluates the function call, and uses `0` as the initializer value.
+The above successfully [compiles and runs](http://coliru.stacked-crooked.com/a/32f5cd5194fef6c6). The trick is the `, 0` inside the `initializer_list` initializer, which evaluates the function call, and uses `0` as the initializer value. The `void()` is there just incase some has been perverse enough to call this with types with overloaded `operator,`.
 
 --------------------------
 
@@ -116,7 +116,7 @@ void for_each(const std::tuple<Args...>& t, const Func& f) {
 }
 {% endhighlight %}
 
-Here's a more generic version which uses perfect forwarding:
+Here's a more generic version which uses perfect forwarding ([live demo](http://coliru.stacked-crooked.com/a/cc57b2f481a88c9d) to play with):
 
 {% highlight cpp %}
 template <typename Tuple, typename Func>
