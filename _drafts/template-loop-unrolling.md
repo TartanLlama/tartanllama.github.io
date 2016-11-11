@@ -77,7 +77,7 @@ struct C<int_pack<Is...>> {
     //This is now a template which takes in a functor
     template <typename Func>
     static void f(const Func& func) {
-        func(Is...);
+        func(std::integral_constant<std::size_t, Is>{}...);
     }
 };
 
@@ -100,7 +100,7 @@ struct C<int_pack<PIs...>, I,Is...> {
 Now we can pass a lambda or anything which acts like a function to `f`:
 
 {% highlight cpp %}
-C<2,3>::f([](int i, int j){
+C<2,3>::f([](auto i, auto j){
     std::cout << "i " << i << " j " << j << '\n';
 });
 {% endhighlight %}
