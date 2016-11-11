@@ -900,3 +900,9 @@ blockquote.standards::before {
 .listhead {
     margin-bottom: 0px !important;
 }
+
+a {
+    code {
+        color: inherit !important;
+    }
+}
