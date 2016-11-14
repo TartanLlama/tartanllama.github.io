@@ -4,13 +4,12 @@ title:      "Exploding tuples with fold expressions"
 summary:    "Fold expressions are pretty cool"
 category:   c++
 minutes:    10
-pubdraft:   true
 tags:
  - c++ 
  - templates
 ---
 
-Generic programming in C++ has been made much easier with C++11's addition of [`std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple). It allows us to store objects of different types in the same container and index them at compile time. Support for algorithms over heterogeneous types like `std::tuple` is pretty thin in the standard library; programmers tend to look to libraries such as [`boost::hana`](https://github.com/boostorg/hana) to do all of the heavy lifting. Sometimes we just want to do some operation over the elements in a tuple without needing to pull down a bunch of library dependencies. This post will show you how to accomplish this.
+Generic programming in C++ has been made much easier with C++11's addition of [`std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple). It allows us to store objects of different types in the same container and index them at compile time. Support for algorithms over heterogeneous types like `std::tuple` is pretty thin in the standard library, so some programmers tend to pull in dependencies such as the excellent [`boost::hana`](https://github.com/boostorg/hana) to hide away all the crazy template metaprogramming tricks. I'll show you how you can use fold expressions to ease the implementation such functions, and I'll demonstrate a very small abstraction function for rolling your own heterogenous algorithms.
 
 So, say we have a tuple and we want to print out every element of it. If there was a utility to call some function on every element of a tuple, you might use it like this:
 
@@ -129,4 +128,4 @@ void for_each(Tuple&& t, Func&& f) {
 
 --------------------
 
-There you have it; a generic utility for compile-time dispatching on index-based containers, and the knowhow to implement variations yourself. Let me know if you find any uses or improvements for this.
+There you have it; a generic utility for compile-time dispatching on index-based containers, and the know-how to implement variations yourself. Let me know if you find any uses or improvements for this, or if you have any questions about the nitty-gritty of these techniques.
