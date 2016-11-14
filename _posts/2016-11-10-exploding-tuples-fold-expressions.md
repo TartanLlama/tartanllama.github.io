@@ -15,7 +15,7 @@ So, say we have a tuple and we want to print out every element of it. If there w
 
 {% highlight cpp %}
 for_each(std::make_tuple(1, 42.1, "hi"),
-              [](auto&& e) { std::cout << e; });
+         [](auto&& e) { std::cout << e; });
 {% endhighlight %}
 
 The implementation of `for_each` would typically rely on the *indices trick*. This involves generating a compile-time sequence of indices for the tuple, then passing them as variadic non-type template arguments to another template function and expanding the resulting parameter pack. If that all sounds gibberish to you, don't worry, I'll explain.
@@ -41,16 +41,16 @@ void for_each(const std::tuple<Args...>& t, Func&& f, std::index_sequence<Idx...
 In case you aren't familiar with some of the constructs here, I'll break this code down. `std::get<Idx>(t)` gets the `Idx`th element from the tuple `t`. `f(std::get<Idx>(t))` calls the functor `f` with that element. `f(std::get<Idx>(t))...` expands the parameter pack `Idx` over that expression. So if `for_each` is called with `std::index_sequence<0,1,2>`, it generates this code:
 
 {% highlight cpp %}
-    f(std::get<0>(t));
-    f(std::get<1>(t));
-    f(std::get<2>(t));
+f(std::get<0>(t));
+f(std::get<1>(t));
+f(std::get<2>(t));
 {% endhighlight %}
 
 Hopefully you'll see that now, when we call this:
 
 {% highlight cpp %}
 for_each(std::make_tuple(1, 42.1, "hi"),
-              [](auto&& e) { std::cout << e; });
+         [](auto&& e) { std::cout << e; });
 {% endhighlight %}
 
 then `std::index_sequence<0,1,2>` will be generated in `for_each`, everything will be passed on to the helper, and it'll generate code to call our closure for each element of the tuple.
