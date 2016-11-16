@@ -29,3 +29,5 @@ kramdown:
 permalink: pretty
 exclude: [vendor]
 
+#RSS
+name: "Simon Brand's Blog"
