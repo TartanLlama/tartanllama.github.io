@@ -23,7 +23,7 @@ f = b{};
 foo(f);
 {% endhighlight %}
 
-Note that the only thing which connects `A` and `B` is that they expose the same interface. They don't inherit from each other, yet we can store either of them in this `fooable` type and call the relevant version of `foo`. There are no strange edge cases or gotchas with this; it acts just as you would expect. We can happily return `fooable` objects from functions, pass them around, dynamically allocate them, whatever.
+Note that the only thing which connects `A` and `B` is that they expose the same interface. They don't inherit from each other, yet we can store either of them in this `fooable` type and call the relevant version of `foo`. There are no strange edge cases with this; it acts just as you would expect. We can happily return `fooable` objects from functions, pass them around, dynamically allocate them, whatever.
 
 One example of this in the standard library is `std::function`. So long as you give it some object which can be called with the arguments specified and which returns the right type, you can store closures, function pointers, functors, anything.
 
