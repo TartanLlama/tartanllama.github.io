@@ -14,16 +14,16 @@ tags:
 Type erasure bridges the gap between compile-time and runtime polymorphism. It allows us to generate code for a range of types without inheritance relationships at compile-time, then and choose between these behaviours at runtime. As a simple example:
 
 {% highlight cpp %}
-struct a { void foo(); }
-struct b { void foo(); }
+struct A { void foo(); }
+struct B { void foo(); }
 
-fooable f = a{};
+Fooable f = A{};
 foo(f);
-f = b{};
+f = B{};
 foo(f);
 {% endhighlight %}
 
-Note that the only thing which connects `A` and `B` is that they expose the same interface. They don't inherit from each other, yet we can store either of them in this `fooable` type and call the relevant version of `foo`.  We can happily return `fooable` objects from functions, pass them around, dynamically allocate them, whatever; the erasure container acts pretty much as you would expect.
+Note that the only thing which connects `A` and `B` is that they expose the same interface. They don't inherit from each other, yet we can store either of them in this `Fooable` type and call the relevant version of `foo`.  We can happily return `Fooable` objects from functions, pass them around, dynamically allocate them, whatever; the erasure container acts pretty much as you would expect.
 
 One example of this in the standard library is `std::function`. So long as you give it some object which can be called with the arguments specified and which returns the right type, you can store closures, function pointers, functors, anything.
 
@@ -39,18 +39,18 @@ f = bar{};
 
 Of course, type erasure comes at a cost. Usually, you'll incur a dynamic allocation on construction and assignment, and virtual function call on using the type-erased object. As such, you should consider the trade-off between flexibility and performance for your application when type erasure is proposed.
 
-Thus ends our crash-course in type erasure. Later in this post we'll be implementing a `fooable` class, but with support for *unified call syntax*. Before we put these two concepts together, I'll briefly explain what I mean by this term.
+Thus ends our crash-course in type erasure. Later in this post we'll be implementing a `Fooable` class, but with support for *unified call syntax*. Before we put these two concepts together, I'll briefly explain what I mean by this term.
 
 -------------------------------------
 
-If we have a class `toddler` and want to write a function called `take_a_nap` which operates on it, we have two main options for our implementation: a member function or a non-member function.
+If we have a class `Toddler` and want to write a function called `take_a_nap` which operates on it, we have two main options for our implementation: a member function or a non-member function.
 
 {% highlight cpp %}
-struct toddler {
+struct Toddler {
     void take_a_nap(); //member function
 };
 
-void take_a_nap(const toddler&); //non-member function
+void take_a_nap(const Toddler&); //non-member function
 {% endhighlight %}
 
 If we declare it as a member function, we need to call it like `my_toddler.take_a_nap()`, and if we declare it as a non-member, we need to call it like `take_a_nap(my_toddler)`. You *cannot* use these two forms interchangeably, i.e. you can't call a member function like `take_a_nap(my_toddler)`, or a non-member function like `my_toddler.take_a_nap()`. Unified call syntax relaxes this constraint in some direction. [D](https://dlang.org/spec/function.html#pseudo-member)  allows you to write `my_toddler.take_a_nap()` even if `take_a_nap` is declared as a non-member, but not the other way around. [Rust](https://doc.rust-lang.org/beta/book/ufcs.html) allows non-member call syntax for members. A few proposals have been written for C++[^2][^3][^4][^5][^6][^7] but they have been rejected for now.
@@ -64,44 +64,44 @@ If we declare it as a member function, we need to call it like `my_toddler.take_
 
 ---------------------------------
 
-Putting the two concepts together, by "type erasure with uniform call syntax", I mean allowing both non-member and member call syntax for types which supply either. An example with our `fooable` class from before:
+Putting the two concepts together, by "type erasure with uniform call syntax", I mean allowing both non-member and member call syntax for types which supply either. An example with our `Fooable` class from before:
 
 {% highlight cpp %}
-struct member {
+struct Member {
     void foo();
 };
 
-struct non_member{};
+struct NonMember{};
 
-void foo(const non_member&);
+void foo(const NonMember&);
 
-fooable member_erased {member{}};
+Fooable member_erased {Member{}};
 foo(member_erased);
 member_erased.foo();
 
-fooable non_member_erased {non_member{}};
+Fooable non_member_erased {non_member{}};
 foo(non_member_erased);
 non_member_erased.foo();
 {% endhighlight %}
 
-Note again that `member` and `non_member` are not related by inheritance, but this time they even declare `foo` in different ways. `fooable` does some magic which allows both of them to be called in either way.
+Note again that `Member` and `NonMember` are not related by inheritance, but this time they even declare `foo` in different ways. `Fooable` does some magic which allows both of them to be called in either way.
 
 Now for the magic.
 
 -------------------------------
 
-The usual way to do this kind of type erasure is to have some `storage` class with a pure virtual function, and a template class which inherits from `storage` and forwards the virtual call to the type-erased object.
+The usual way to do this kind of type erasure is to have some `Storage` class with a pure virtual function, and a template class which inherits from `Storage` and forwards the virtual call to the type-erased object.
 
 {% highlight cpp %}
-struct storage {
+struct Storage {
     virtual void docall() = 0;  
 };
 
 template <typename T>
-struct storage_impl : storage {
+struct StorageImpl : Storage {
     T m_t;
     
-    storage_impl (T t) : m_t {std::move(t)} {}
+    StorageImpl (T t) : m_t {std::move(t)} {}
     
     void docall() override {
         m_t.foo();
@@ -109,35 +109,35 @@ struct storage_impl : storage {
 };
 {% endhighlight %}
 
-Note that the above storage calls `foo` using the member syntax, so it won't work with the `non_member` class. I call the function `docall` rather than `foo`, because using the same name as the function we're trying to call will get us into trouble with argument dependent lookup when we try to support non-member syntax.
+Note that the above Storage calls `foo` using the member syntax, so it won't work with the `NonMember` class. I call the function `docall` rather than `foo`, because using the same name as the function we're trying to call will get us into trouble with argument dependent lookup when we try to support non-member syntax.
 
-In `fooable`, we store a `std::unique_ptr` to `storage`, and forward our call to `foo` on to that pointee:
+In `Fooable`, we store a `std::unique_ptr` to `Storage`, and forward our call to `foo` on to that pointee:
 
 {% highlight cpp %}
-class fooable {
+class Fooable {
 public:
     void foo() { m_storage->docall(); }
 
 private:
-    std::unique_ptr<storage> m_storage;
+    std::unique_ptr<Storage> m_storage;
 };
 {% endhighlight %}
 
-The clever bit is the constructor to `fooable`. We make this a template, and dynamically allocate a `storage_impl<T>` based on what got passed in:
+The clever bit is the constructor to `Fooable`. We make this a template, and dynamically allocate a `StorageImpl<T>` based on what got passed in:
 
 {% highlight cpp %}
     template <typename T>
-    fooable (T t) 
-        : m_storage {std::make_unique<storage_impl<T>>(std::move(t))}
+    Fooable (T t) 
+        : m_storage {std::make_unique<StorageImpl<T>>(std::move(t))}
     {}
 {% endhighlight %}
 
-When we construct a `fooable` with some `T`, `m_storage` will hold a `storage_impl<T>`. Calls to `foo` will be forwarded through `storage`, down to `storage_impl` through the virtual function, ending up at `T` through the implementation of `storage_impl<member>::foo`.
+When we construct a `Fooable` with some `T`, `m_storage` will hold a `StorageImpl<T>`. Calls to `foo` will be forwarded through `Storage`, down to `StorageImpl` through the virtual function, ending up at `T` through the implementation of `StorageImpl<member>::foo`.
 
-Supporting both ways of calling `foo` on `fooable` is pretty simple: we just add a non-member function which calls `m_storage->foo()`:
+Supporting both ways of calling `foo` on `Fooable` is pretty simple: we just add a non-member function which calls `m_storage->foo()`:
 
 {% highlight cpp %}
-    friend void foo(const fooable& f) { f.m_storage->foo(); }
+    friend void foo(const Fooable& f) { f.m_storage->foo(); }
 {% endhighlight %}
 
 Now both `my_fooable.foo()` and `foo(my_fooable)` are supported!
@@ -160,14 +160,14 @@ This is a rather gorgeous/horrific trick which uses [expression SFINAE](http://s
 
 [^1]: The lib fundamentals v2 TS also has the [detection idiom](http://en.cppreference.com/w/cpp/experimental/is_detected) which abstracts this pattern.
 
-We'll then write two versions of `storage_impl`: one for when the type has a `foo` member, and one for when it does not.
+We'll then write two versions of `StorageImpl`: one for when the type has a `foo` member, and one for when it does not.
 
 {% highlight cpp %}
 template <typename T, bool HasMemberFoo = has_member_foo<T>::value>
-struct storage_impl : storage {
+struct StorageImpl : Storage {
    T m_t;
     
-    storage_impl (T t) : m_t {std::move(t)} {}
+    StorageImpl (T t) : m_t {std::move(t)} {}
     
     void docall() override {
         m_t.foo();
@@ -175,10 +175,10 @@ struct storage_impl : storage {
 };
 
 template <typename T>
-struct fooable::storage_impl<T,false> : storage {
+struct Fooable::StorageImpl<T,false> : Storage {
     T m_t;
         
-    storage_impl (T t) : m_t {std::move(t)} {}
+    StorageImpl (T t) : m_t {std::move(t)} {}
     
     void docall() override {
         foo(m_t);
