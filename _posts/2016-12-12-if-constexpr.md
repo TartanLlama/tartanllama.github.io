@@ -288,8 +288,34 @@ void do_something() {
 }
 {% endhighlight %}
 
+One last point of interest is that you need to be sure to look after your `else` blocks. In runtime code, it's pretty common to write this:
+
+{% highlight cpp %}
+int foo() {
+    if (condition())
+        return 1;
+
+    // No else block, just an unconditional return    
+    return 2;
+}
+{% endhighlight %}
+
+The above pattern does not work with `if constexpr` in some cases. Consider a modified version of our original example:
+
+{% highlight cpp %}
+template <typename T>
+auto get_value(T t) {
+    if constexpr (std::is_pointer_v<T>)
+        return *t;
+
+    return t;
+}
+{% endhighlight %}
+
+The above code will not compile, if `T` is a pointer, because the second return statement will not be discarded, so there will be two return statements which return objects with different types. 
+
 -------
 
-And we're done! If you want to try out `constexpr if`, it is currently supported in [Clang 3.9](http://clang.llvm.org/cxx_status.html) and [GCC 7](https://gcc.gnu.org/projects/cxx-status.html). I think that this feature will clean up generic programming significantly and should make anyone decrying the lack of new C++17 features think twice.
+We're done! If you want to try out `constexpr if`, it is currently supported in [Clang 3.9](http://clang.llvm.org/cxx_status.html) and [GCC 7](https://gcc.gnu.org/projects/cxx-status.html). I think that this feature will clean up generic programming significantly and should make anyone decrying the lack of new C++17 features think twice.
 
 -------
