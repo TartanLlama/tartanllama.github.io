@@ -31,7 +31,7 @@ One example of this in the standard library is `std::function`. So long as you g
 std::function<int()> f = [] { return 1; };
 
 int foo() { return 2; };
-f = foo();
+f = foo;
 
 struct bar { int operator()() { return 3; } }
 f = bar{};
