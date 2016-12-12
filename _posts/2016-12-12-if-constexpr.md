@@ -274,7 +274,7 @@ void do_something() {
 }
 {% endhighlight %}
 
-Nor can you put in a `static_assert(false,...)`, just like with normal template specializations:
+Nor can you put in a `static_assert(false,...)`, just like with normal template specializations (of course you can use the usual [`dependent_false`](http://stackoverflow.com/a/25654759/496161) workaround):
 
 {% highlight cpp %}
 template <typename T>
