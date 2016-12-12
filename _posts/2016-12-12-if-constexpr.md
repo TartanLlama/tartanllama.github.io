@@ -89,7 +89,9 @@ auto get_value(T t) {
 
 
 
-Recursive templates are also much easier to specify:
+Recursive templates are also much easier to specify[^3]:
+
+[^3]: Although you'd be better off using [fold expressions](http://en.cppreference.com/w/cpp/language/fold) instead.
 
 {% highlight cpp %}
 // Without if constexpr
@@ -274,7 +276,9 @@ void do_something() {
 }
 {% endhighlight %}
 
-Nor can you put in a `static_assert(false,...)`, just like with normal template specializations (of course you can use the usual [`dependent_false`](http://stackoverflow.com/a/25654759/496161) workaround):
+Nor can you put in a `static_assert(false,...)`, just like with normal template specializations[^2]:
+
+[^2]: You can use the usual [`dependent_false`](http://stackoverflow.com/a/25654759/496161) workaround to solve this. 
 
 {% highlight cpp %}
 template <typename T>
