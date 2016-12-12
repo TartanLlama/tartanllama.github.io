@@ -9,7 +9,9 @@ tags:
  - templates
 ---
 
-`if constexpr` is a C++17 feature which allows conditionally compiling code based on template parameters in a clear and minimal fashion. It is essentially an `if` statement where the branch is chosen at compile-time, and any not taken branches are discarded without being instantiated. An example:
+### Introduction
+
+`if constexpr` is a C++17 feature which allows conditionally compiling code based on template parameters in a clear and minimal fashion. It is essentially an `if` statement where the branch is chosen at compile-time, and any not-taken branches are discarded without being instantiated. An example:
 
 {% highlight cpp %}
 template <typename T>
@@ -40,6 +42,8 @@ auto get_value(int* t) {
 This post will show how to use `if constexpr` to simplify your template code and replace horrible macro code.
 
 ----------------
+
+### Simplifying template code
 
 The major win from `if constexpr` is in writing code which is predicated on some trait of a template argument, without having to write verbose specializations. Consider our `get_value` example above. Without `if constexpr`, we would need to implement it using SFINAE or tag dispatching:
 
@@ -72,7 +76,17 @@ auto get_value(T t) {
 }
 {% endhighlight %}
 
-Our `if constexpr` version is far more simple and understandable than the above.
+Our `if constexpr` version is far more simple and understandable than the above:
+
+{% highlight cpp %}
+template <typename T>
+auto get_value(T t) {
+    if constexpr (std::is_pointer_v<T>) return *t;
+    else return t;
+}
+{% endhighlight %}
+
+
 
 Recursive templates are also much easier to specify:
 
@@ -150,7 +164,9 @@ Not only is this a win in terms of lines of code, it also decreases syntactic no
 
 ---------
 
-The other main use of `constexpr if` is to replace horrible `#ifdef` blocks. Consider an application which needs to act in different ways depending on the operating system. Without `if constexpr` you could write the code like this:
+### Replacing #ifdef blocks
+
+Another great use-case of `constexpr if` is to replace horrible `#ifdef` blocks. Consider an application which needs to act in different ways depending on the operating system. Without `if constexpr` you could write the code like this:
 
 {% highlight cpp %}
 void do_something() {
@@ -209,6 +225,8 @@ One difference between the code with macros and the code with `if constexpr` is 
 
 ------
 
+### Caveats
+
 Before we finish, a couple of notes about subtleties of this feature. The use of `constexpr` in `if constexpr` is *not quite* equivalent to `constexpr` functions. `constexpr` functions can be executed at both compile-time *and* run-time, and this choice depends on the context in which they are called.
 
 {% highlight cpp %}
@@ -230,7 +248,7 @@ In the above code, the first call to `max` is used as a template argument, so is
 
 The condition for an `if constexpr` is *always* executed at compile-time. As such, you can only put constant expressions in the condition.
 
-Note also that although any not-taken branches are discarded, they still need to be valid for some instantiation, otherwise the code is ill-formed. For example, you can't write nonsese in a never-taken branch:
+Note also that although any not-taken branches are discarded, they still need to be valid for some instantiation, otherwise the code is ill-formed. For example, you can't write nonsense in a never-taken branch:
 
 {% highlight cpp %}
 void do_something() {
@@ -248,7 +266,7 @@ Nor can you put in a `static_assert(false,...)`, just like with normal template 
 {% highlight cpp %}
 template <typename T>
 void do_something() {
-     if constexpr (std::is_arithmetic<T>{}) {
+     if constexpr (std::is_arithmetic_v<T>) {
          //do some maths
      }
      else {
@@ -256,5 +274,9 @@ void do_something() {
      }
 }
 {% endhighlight %}
+
+-------
+
+And we're done! If you want to try out `constexpr if`, it is currently supported in [Clang 3.9](http://clang.llvm.org/cxx_status.html) and [GCC 7](https://gcc.gnu.org/projects/cxx-status.html). I think that this feature will clean up generic programming significantly and should make anyone decrying the lack of new C++17 features think twice.
 
 -------
