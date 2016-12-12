@@ -312,7 +312,7 @@ auto get_value(T t) {
 }
 {% endhighlight %}
 
-The above code will not compile, if `T` is a pointer, because the second return statement will not be discarded, so there will be two return statements which return objects with different types. 
+The above code will not compile, if `T` is a pointer, because the second return statement will not be discarded, so there will be two return statements which return objects with different types. In such a case, you need to make sure you wrap that last statement in an `else` block.
 
 -------
 
