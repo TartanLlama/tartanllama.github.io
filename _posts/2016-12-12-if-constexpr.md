@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Simplifying template code and #ifdefs with if constexpr"
+title:      "Simplifying templates and #ifdefs with if constexpr"
 summary:    Using if constexpr to simplify templates and remove #ifdef
 category:   c++
 date:       2016-12-12
