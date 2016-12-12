@@ -10,6 +10,7 @@ tags:
  - templates
 ---
 
+### Introduction
 
 Type erasure bridges the gap between compile-time and runtime polymorphism. It allows us to generate code for a range of types without inheritance relationships at compile-time, then and choose between these behaviours at runtime. As a simple example:
 
@@ -43,6 +44,8 @@ Thus ends our crash-course in type erasure. Later in this post we'll be implemen
 
 -------------------------------------
 
+### Unified call syntax
+
 If we have a class `Toddler` and want to write a function called `take_a_nap` which operates on it, we have two main options for our implementation: a member function or a non-member function.
 
 {% highlight cpp %}
@@ -63,6 +66,8 @@ If we declare it as a member function, we need to call it like `my_toddler.take_
 [^7]: [Call syntax: `x.f(y) vs. `f(x,y)`](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4174.pdf)
 
 ---------------------------------
+
+### Smushing them together
 
 Putting the two concepts together, by "type erasure with uniform call syntax", I mean allowing both non-member and member call syntax for types which supply either. An example with our `Fooable` class from before:
 
@@ -89,6 +94,8 @@ Note again that `Member` and `NonMember` are not related by inheritance, but thi
 Now for the magic.
 
 -------------------------------
+
+### Implementing the type erasure
 
 The usual way to do this kind of type erasure is to have some `Storage` class with a pure virtual function, and a template class which inherits from `Storage` and forwards the virtual call to the type-erased object.
 
@@ -145,6 +152,8 @@ Now both `my_fooable.foo()` and `foo(my_fooable)` are supported!
 The tricky bit comes in supporting erasure of types with both declaration types. We'll need some template metaprogramming trickery for this.
 
 -------------------------
+
+### Erasure both ways
 
 First, we'll write a trait to check if a type has a member function called `foo`. I'll use [`std::void_t`](http://en.cppreference.com/w/cpp/types/void_t) from C++17, which you can trivially implement yourself for older versions[^1]:
 

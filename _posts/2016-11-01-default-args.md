@@ -9,6 +9,7 @@ tags:
  - templates
 ---
 
+### Introduction
 
 When writing code which relies heavily on templates for choosing functionality at compile time (e.g. using [Policy-Based Design](https://en.wikipedia.org/wiki/Policy-based_design)), it is important to find a sweet spot between flexibility and expressibility. These techniques can often be highly generic, but incredibly verbose and syntactically noisy. Consider the following:
 
@@ -42,6 +43,8 @@ This post is based on answers from myself and others in [this StackOverflow ques
 
 -----------------------------------
 
+### Dummy tags
+
 One option would be to use a dummy tag to stand in for the default, then choose the real template argument value based on whether it is equal to that dummy or not.
 
 {% highlight cpp %}
@@ -74,6 +77,8 @@ Cons:
 
 -----------------------------------
 
+### Manual member aliases
+
 Another option is to provide member alias templates which handle modifying the template arguments.
 
 {% highlight cpp %}
@@ -104,6 +109,8 @@ Cons:
 - Need to repeat the other arguments in all the `WithX` alias templates.
 
 ---------------------------------
+
+### Don't touch my class
 
 It would be good to have a solution which doesn't require heavily altering the class (especially when there are many parameters). The following code is pretty complex, but does the job (you could use your favourite metaprogramming library to make it more simple).
 
@@ -160,6 +167,8 @@ Cons:
 - Syntax isn't as nice as the previous solution.
 
 --------------------------------
+
+### Frankenstien
 
 What we really want is a solution which combines the advantages of the above two options. We can achieve this by wrapping `with_n` in a template class and inheriting from it.
 

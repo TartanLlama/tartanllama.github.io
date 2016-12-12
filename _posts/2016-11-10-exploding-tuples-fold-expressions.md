@@ -9,6 +9,8 @@ tags:
  - templates
 ---
 
+### Introduction
+
 Generic programming in C++ has been made much easier with C++11's addition of [`std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple). It allows us to store objects of different types in the same container and index them at compile time. Support for algorithms over heterogeneous types like `std::tuple` is pretty thin in the standard library, so some programmers tend to pull in dependencies such as the excellent [`boost::hana`](https://github.com/boostorg/hana) to hide away all the crazy template metaprogramming tricks. I'll show you how you can use fold expressions to ease the implementation such functions, and I'll demonstrate a very small abstraction function for rolling your own heterogenous algorithms.
 
 So, say we have a tuple and we want to print out every element of it. If there was a utility to call some function on every element of a tuple, you might use it like this:
@@ -59,6 +61,8 @@ Unfortunately, that's not what happens.
 
 ----------------------------------
 
+### Everything is awful
+
 Keen readers might have noticed that I lied in the above section. `f(std::get<Idx>(t))...;` does *not* generate that sequence of calls to `f`. In fact, it doesn't even compile. The problem is that parameter packs can only be expanded in contexts which expect a syntactic list, such as initializers and function call arguments. You can't just expand them bare in a function body. In C++17, this problem has a nice solution, but prior to that we need to use some pretty horrible hacks. Here's one possibility which uses `std::initializer_list` to create a context in which the parameter pack can be expanded.
 
 {% highlight cpp %}
@@ -74,6 +78,8 @@ The above successfully [compiles and runs](http://coliru.stacked-crooked.com/a/3
 
 --------------------------
 
+### Fold expressions are less awful
+
 As noted above, C++17 has a nicer solution for this in the form of [fold expressions](http://en.cppreference.com/w/cpp/language/fold). Fold expressions allow the expansion of parameter packs over operators, of which `,` is one. With this feature we can write the following code to get rid of our previous hack:
 
 {% highlight cpp %}
@@ -86,6 +92,8 @@ void for_each(const std::tuple<Args...>& t, Func&& f, std::index_sequence<Idx...
 I think you'll agree that this is a huge improvement.
 
 -------------------
+
+### Abstracting it
 
 Even though fold expressions make writing this code easier and less guru-only, the indices trick can still be difficult for beginners. It turns out that we can actually abstract this pattern to give "normal" users access to this power.
 
@@ -129,3 +137,5 @@ void for_each(Tuple&& t, Func&& f) {
 --------------------
 
 There you have it; a generic utility for compile-time dispatching on index-based containers, and the know-how to implement variations yourself. Let me know if you find any uses or improvements for this, or if you have any questions about the nitty-gritty of these techniques.
+
+------------
