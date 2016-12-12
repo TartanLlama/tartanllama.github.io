@@ -220,9 +220,21 @@ void do_something() {
 
 This technique replaces the macros with real C++ constructs and lets us write all of our conditionally-compiled code without relying on the preprocessor, which is A Good Thing&trade;. For one, if we misspell the enum name or something, we'll get a descriptive compiler error rather than things just breaking. Additionally, the `if constexpr` introduces a proper C++ scope, so any extra variables we declare in it will have their lifetimes limited to the OS-specific code.
 
-One difference between the code with macros and the code with `if constexpr` is that the code in the `if constexpr` branches is still parsed when the condition fails (see the next section), so if you are using some Objective C++ or C++/CX in one of the OS-specific blocks and your compiler doesn't support it, then compilation will fail[^2].
+One difference between the code with macros and the code with `if constexpr` is that the code in the `if constexpr` branches is parsed and has non-dependent names looked up, even when the condition fails (see the next section), so if you are using some OS-specific libraries in one of the blocks, then compilation will fail. This could be solved by providing declarations for the functions used, so you should consider which option is more maintainable for your use-case if the header files you include will be different depending on preprocessor definitions.
 
-[^2]: Thanks to [Peter Bindels](https://github.com/dascandy) for pointing this out.
+This technique could also be used for things like debugging or profiling code, by translating your relevant preprocessor definition to a `constexpr bool` or similar.
+
+{% highlight cpp %}
+#ifdef _DEBUG
+constexpr bool debug_mode = true;
+#else
+constexpr bool debug_mode = false;
+#endif
+
+if constexpr (debug_mode) {
+   //debug code
+}
+{% endhighlight %}
 
 ------
 
