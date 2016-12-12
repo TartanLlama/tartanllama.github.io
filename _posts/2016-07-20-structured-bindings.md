@@ -1,28 +1,32 @@
 ---
 layout:     post
-title:      "Adding C++17 structured binding support to your classes"
+title:      "Adding C++17 decomposition declaration support to your classes"
 date:       2016-07-20
-summary:    Tutorial for adding structured binding support to classes
+summary:    Tutorial for adding decomposition declaration support to classes
 category:   c++
 tags:
  - c++
  - c++17
 ---
 
-Structured bindings (proposals [here](https://isocpp.org/files/papers/P0144R1.pdf) and [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0217r2.html)) is a C++17 feature which allows you to declare multiple variables initialised from a tuple-like object, like this:
+### Introduction
+
+C++17 adds decomposition declarations (proposals [here](https://isocpp.org/files/papers/P0144R1.pdf) and [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0217r2.html)) to the language, which allow you to declare multiple variables initialised from a tuple-like object:
 
 {% highlight cpp %}
 tuple<T1,T2,T3> f(/*...*/) { /*...*/ return {a,b,c}; }
 auto [x,y,z] = f(); // x has type T1, y has type T2, z has type T3
 {% endhighlight %}
 
-This is a very powerful and expressive feature, but the most interesting element for me is the ability to add structured binding support to your own classes. This post is a short tutorial on how to do this, mostly for my own future reference.
+This is a very powerful and expressive feature, but the most interesting element for me is the ability to add support for this to your own classes. This post is a short tutorial on how to do this, mostly for my own future reference.
 
 (Note: currently there aren't any implementations available to play with, so this is theory for now. I plan to update this post as things change.)
 
 -----------------------
 
-The great news is that structured bindings are supported out-of-the-box for classes where all the non-static member variables are public (or all public-only non-statc members are in a single direct base class). So a class like this can be decomposed with no additional code:
+### Built-in support
+
+The great news is that decomposition declarations are supported out-of-the-box for classes where all the non-static member variables are public (or all public-only non-statc members are in a single direct base class). So a class like this can be decomposed with no additional code:
 
 {% highlight cpp %}
 struct yay {
@@ -48,9 +52,11 @@ yay_wrapper bar();
 auto [a, b, c] = bar();
 {% endhighlight %}
 
-If you have more complex classes, or want to wrap/process members before exposing them, you'll need to add structured binding support yourself. Fortunately, this is rather elegantly built on top of existing mechanisms. All you need to do is tell the compiler how many variables you want to expose, the types of them, and how to get at the values. This is done through the `std::tuple_size`, `std::tuple_element`, and `get` utilities.
+If you have more complex classes, or want to wrap/process members before exposing them, you'll need to add support yourself. Fortunately, this is rather elegantly built on top of existing mechanisms. All you need to do is tell the compiler how many variables you want to expose, the types of them, and how to get at the values. This is done through the `std::tuple_size`, `std::tuple_element`, and `get` utilities.
 
 -------------------------------------
+
+### Supporting other classes
 
 For demonstration purposes we'll write a small class named `Config`, which stores some immutable configuration data. We'll be returning `name` as a C++17 `std::string_view`, `id` by value, and `data` by reference to const. 
 
