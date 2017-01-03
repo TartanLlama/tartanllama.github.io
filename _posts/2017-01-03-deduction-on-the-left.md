@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Lazy generators: template deduction on the left hand side"
+title:      "Lazy generators: template deduction on the left-hand side"
 date:       2017-01-03
 summary:    Lazily generating objects with left-hand side template deduction
 category:   c++
@@ -9,14 +9,14 @@ tags:
  - templates
 ---
 
-If you are constructing or assigning to a variable from some function template call, the template magic usually occurs on the right hand side of the expression. For example:
+If you are constructing or assigning to a variable from some function template call, the template magic usually occurs on the right-hand side of the expression. For example:
 
 {% highlight cpp %}
 auto i = parse<int>();
 auto s = parse<std::string>();
 {% endhighlight %}
 
-But what if we could get `parse` to deduce the type we want to parse from the *left hand side* of the construction? I.e. what if we could write this:
+But what if we could get `parse` to deduce the type we want to parse from the *left-hand side* of the construction? I.e. what if we could write this:
 
 {% highlight cpp %}
 int i = parse();
