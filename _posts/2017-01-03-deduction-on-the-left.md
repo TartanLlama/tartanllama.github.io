@@ -131,7 +131,7 @@ private:
 };
 {% endhighlight %}
 
-Particularly deviant users can still take a reference to it with `auto&& p = parse()` and implicitly convert using `std::move(p)`, but they deserve whatever befals them as a result.
+Particularly deviant users can still take a reference to it with `auto&& p = parse()` and implicitly convert using `std::move(p)`, but they deserve whatever befalls them as a result.
 
 ----------------------------
 
