@@ -64,7 +64,7 @@ void foo (int, std::string, float);
 foo(42, parse(), parse());
 {% endhighlight %}
 
-If you wanted, you could add some `static_assert`s or `std::enable_if` tricks to limit the types which your proxy converts to:
+If you wanted, you could add some `static_assert`s or `std::enable_if` tricks to limit the types which your generator converts to:
 
 {% highlight cpp %}
 template <typename T, typename=void>
@@ -135,7 +135,7 @@ Particularly deviant users can still take a reference to it with `auto&& p = par
 
 ----------------------------
 
-Perhaps you think that this trick is more trouble than its worth for a small example like the above. Mostly I just thought it was a cool trick to have in one's arsenal, but here are some real-world examples of templated conversion operators, some of which also use proxy objects.
+Perhaps you think that this trick is more trouble than its worth for a small example like the above. Mostly I just thought it was a cool trick to have in one's arsenal, but here are some real-world examples of templated conversion operators, some of which also use lazy generators.
 
 * [`boost::nfp::named_parameter`](http://www.boost.org/doc/libs/1_62_0/libs/test/doc/html/header/boost/test/utils/named_params_hpp.html) uses this trick to trace misuses of invalid parameters.
 * [`boost::python::override`](http://www.boost.org/doc/libs/1_50_0/libs/python/doc/v2/wrapper.html) uses it to implicitly convert objects returned from Python.
