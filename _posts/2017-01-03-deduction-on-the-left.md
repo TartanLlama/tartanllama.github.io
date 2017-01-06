@@ -57,12 +57,12 @@ int i = parse();         // returns a parser, implicitly converts it to int
 std::string s = parse(); // ditto with std::string
 {% endhighlight %}
 
-You can also pass the parser as an argument to functions which expect parsable types:
+You can also pass the parser as an argument to functions which expect parsable types (although be careful if doing so multiple times in a function call due to unspecified evaluation order):
 
 {% highlight cpp %}
 void foo (int, std::string, float);
 
-foo(42, parse(), parse());
+foo(42, parse(), 12.12);
 {% endhighlight %}
 
 If you wanted, you could add some `static_assert`s or `std::enable_if` tricks to limit the types which your generator converts to:
