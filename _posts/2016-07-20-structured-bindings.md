@@ -2,7 +2,6 @@
 layout:     post
 title:      "Adding C++17 decomposition declaration support to your classes"
 date:       2016-07-20
-summary:    Tutorial for adding decomposition declaration support to classes
 category:   c++
 tags:
  - c++

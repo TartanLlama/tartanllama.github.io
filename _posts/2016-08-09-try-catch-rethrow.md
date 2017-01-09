@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "The effect of a try-catch-rethrow"
-summary:    A try-catch-rethrow does more than code without.
 category:   c++
 tags:
  - c++ 

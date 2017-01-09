@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "Type erasure with unified call syntax"
-summary:    Doing cool stuff with templates and type erasure.
 category:   c++
 minutes:    10
 date:       2016-12-02

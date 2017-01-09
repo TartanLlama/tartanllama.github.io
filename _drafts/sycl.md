@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "Accelerating your C++ on GPU with SYCL"
-summary:    Using SYCL to accelerate your C++ code on the GPU
 category:   c++
 tags:
  - c++

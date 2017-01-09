@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "Initialization in C++ is bonkers"
-summary:    It really is
 category:   c++
 tags:
  - c++ 

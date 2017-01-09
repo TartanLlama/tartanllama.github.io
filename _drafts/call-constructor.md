@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "You can't call a constructor in C++"
-summary:    Stop saying that.
 category:   c++
 tags:
  - c++ 

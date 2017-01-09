@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "Unrolling loops with templates"
-summary:    An implementation of loop unrolling using templates.
 category:   c++
 tags:
  - c++ 
