@@ -2,7 +2,6 @@
 layout:     post
 title:      "integral_variable: A compile-time assignable variable"
 date:       2016-07-28
-summary:    An integral variable which can be mutated at compile-time.
 category:   c++
 minutes: 20
 tags:

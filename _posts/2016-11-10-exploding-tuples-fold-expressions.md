@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "Exploding tuples with fold expressions"
-summary:    "Fold expressions are pretty cool"
 category:   c++
 minutes:    10
 tags:

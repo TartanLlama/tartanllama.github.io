@@ -2,7 +2,6 @@
 layout:     post
 title:      "Lazy generators: template deduction on the left-hand side"
 date:       2017-01-03
-summary:    Lazily generating objects with left-hand side template deduction
 category:   c++
 minutes:    10
 tags:

@@ -1,9 +1,7 @@
 ---
 layout:     post
 title:      "Check if T::value is constexpr"
-summary:    Template trickery
 category:   c++
-pubdraft:      true
 tags:
  - c++
  - templates

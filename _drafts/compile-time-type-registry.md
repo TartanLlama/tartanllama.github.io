@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "Compile-time type registry"
-summary:    Giving ids to types at compile time
 category:   c++
 tags:
  - c++ 

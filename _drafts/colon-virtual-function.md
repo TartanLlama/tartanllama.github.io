@@ -1,7 +1,6 @@
 ---
 layout:     post
 title:      "void C::C::C::A::A::A::foo() - valid syntax monstrosity"
-summary:    Some strange syntax which is valid in C++
 category:   c++
 tags:
  - c++ 
