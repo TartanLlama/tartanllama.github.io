@@ -112,8 +112,35 @@ int main(){
 }
 {% endhighlight %}
 
+----------------------------
+
+### Lightning intro to GPGPU
+
+Before I get started on how to use SYCL, I'll give a brief outline of why you might want to run compute jobs on the GPU for those who are unfamiliar. I've you've already used OpenCL, CUDA or similar, feel free to skip.
+
+The key difference between a GPU and a CPU is that, rather than having a small number of complex, powerful cores (1-8 for common consumer desktop hardware), a GPU has a huge number of small, simple processing elements.
+
+![CPU architecture]({{site.url}}/assets/cpu.png)
+
+Above is a comically simplified diagram of a CPU with four cores. Each core has a set of registers and is attached to various levels of cache (some might be shared, some not), and then main memory.
+
+![GPU architecture]({{site.url}}/assets/gpu.png)
+
+In the GPU, tiny processing elements are grouped into execution units. Each processing element has a bit of memory attached to it, and each execution unit has some memory shared between its processing elements. After that, there's some GPU-wide memory, then the same main memory which the CPU uses. The elements within an execution unit execute in *lockstep*, where each element executes the same instruction on a different piece of data.
+
+There are many aspects of GPGPU programming which make it an entirely different beast to everyday CPU programming. For example, transferring data from main memory to the GPU is *slow*. *Really* slow. Like, kill all your performance and get you fired slow. The tradeoff with GPU programming, therefore is to make as much of the ridiculously high throughput of your accelerator to hide the latency of shipping the data to and from it.
+
+There are other issues which might not be immediately apparent, like the cost of branching. Since the processing elements in an execution unit work in lockstep, nested branches which cause them to take different paths (divergent control flow) is a real problem. Most GPUs solve this by just executing all branches for all elements and masking out the unneeded results. That's an exponential explosion in complexity based on the level of nesting, which is A Bad Thing &trade;. Of course, there are optimizations which can aid this, but the idea stands: simple assumptions and knowledge you bring from the CPU world might cause you big problems in the GPU world.
+
+Before we get back to SYCL, some short pieces of terminology. The *host* is the main CPU running on your machine which executes
+
+--------------------------
+
+### Back to SYCL
 
 There are currently two implementations of SYCL available; "triSYCL", an experimental open source version by Xilinx (mostly used as a testbed for the standard), and "ComputeCpp", an industry-strength implementation by Codeplay[^1] (currently in open Beta). We'll be using ComputeCpp in this post.
+
+Step 1 is to get ComputeCpp up and running on your machine. The main components are a runtime library which implements the SYCL API, and a Clang-based compiler which compiles both your host code and your device code. At the time of writing, Intel CPUs and some AMD GPUs are officially supported on Ubuntu and CentOS. It should be pretty easy to get it working on other Linux distributions (I got it running on my Arch system, for instance. Support for more hardware and operating systems are being worked on, so check the [supported platforms document](https://www.codeplay.com/products/computesuite/computecpp/reference/platform-support-notes) for an up-to-date list. The dependencies and components are listed [here](https://www.codeplay.com/products/computesuite/computecpp/reference/release-notes/). You might also want to download the [SDK](https://github.com/codeplaysoftware/computecpp-sdk), which contains samples, documentation, build system integration files, and more. I'll be using the [SYCL Parallel STL](https://github.com/KhronosGroup/SyclParallelSTL) in this post, so get that if you want to play along at home.
 
 
 
