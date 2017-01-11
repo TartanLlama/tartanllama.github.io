@@ -19,7 +19,7 @@ struct pair {
 };
 {% endhighlight %}
 
-Since there's no argument deduction for that constructor, we need to explicitly specify the template arguments when constructing the `pair`, like `pair<int,float> a {0, 42.42};`. The common solution is to supply a helper function which does the deduction for you:
+Since there's no argument deduction for that constructor, we need to explicitly specify the template arguments when constructing the `pair`, like `pair<int,float> a {0, 42.42};`. It would be handy to be able to write `pair a {0, 42.42};`, but that's not currently possible. The common solution is to supply a helper function which does the deduction for you:
 
 {% highlight cpp %}
 template <typename T, typename U>
@@ -28,9 +28,9 @@ pair<T,U> make_pair (const T& t, const U& u) {
 }
 {% endhighlight %}
 
-This isn't a particularly attractive option. It means you have different ways of constructing class template specializations and normal class , you'll often need to look at the documentation to see if it's doing anything other than construct the object, non-copyable and non-moveable classes become a pain, etc. It would be better if we could just deduce the template arguments in the constructor.
+Now we can write `auto p = make_pair(0, 42.42);`. However, this isn't a particularly attractive option. It means you have different ways of constructing class template specializations and normal classes, you'll often need to look at the documentation to see if it's doing anything other than constructing the object, non-copyable and non-moveable classes become a pain, etc. It would be better if we could just deduce the template arguments in the constructor.
 
-Fortunately, this feature is coming in C++17! This will let us avoid the `make` functions and just construct the objects directly:
+Fortunately, this feature is coming in C++17! This will let us avoid the `make_` functions and just construct the objects directly:
 
 {% highlight cpp %}
 pair a{0, 42.42};
@@ -58,7 +58,7 @@ struct pair {
 };
 {% endhighlight %}
 
-In all three of those cases, both of the template arguments for `pair` are deducible from the constructor parameters, so we don't need to do anything. The following code will work out-of-the-box[^1]:
+In all three of those cases, both of the template arguments for `pair` (`T` and `U`) are deducible from the constructor parameters, so we don't need to do anything. The following code will work out-of-the-box[^1]:
 
 [^1]: Of course, you could use `auto` for `b` and `c`, this is just for purposes of demonstration.
 
@@ -68,15 +68,15 @@ pair b = a;
 pair c = std::move(b);
 {% endhighlight %}
 
-If your class doesn't fulfil the critera and you still want to deduce the class template arguments automatically, you can give your compiler a bit of help.
+If your class doesn't fulfil the critera for implicit deduction guides and you still want to deduce the class template arguments automatically, you can give your compiler a bit of help.
 
 -----------------
 
 ### Explicitly specified deduction guides
 
-Deduction guides can be explicitly specified to tell the compiler how to work out the template arguments for the class template from the constructor arguments if they can't be simply matched together.
+Deduction guides can be explicitly specified to tell the compiler how to work out the template arguments from the constructor arguments if they can't be simply matched together.
 
-Say we have a simple `vector` class and want to construct a `vector` from the first 10 elements of another. We could do this:
+Say we have a simple `vector` class and want to construct a `vector` from the first three elements of another. We could do this:
 
 {% highlight cpp %}
 template <typename T>
@@ -90,8 +90,9 @@ struct vector {
     int* end();
 };
 
-vector a({1,2,3});           // Uses implicit deduction guide
-vector b{a.begin(), a.end()) // Implicit guide won't work
+vector a({1,2,3,4,5,6,7}); // Uses implicit deduction guide
+auto it = a.begin();
+vector b{it, it+3);        // Implicit guide will not work
 {% endhighlight %}
 
 Looking back at my rule of thumb from before, the second constructor cannot deduce `T`, so we need to provide an explicit deduction guide. This looks like the following:
@@ -102,5 +103,9 @@ vector(Iter b, Iter e) -> vector<typename std::iterator_traits<Iter>::value_type
 {% endhighlight %}
 
 The above deduction guide says that the constructor for `vector` taking two `Iter`s deduces the template argument to be `typename std::iterator_traits<Iter>::value_type`. For `int*`, that's just `int`. When the compiler sees `vector b{a.begin(), a.end()};`, it instantiates the deduction guide with `int*` as the template argument, and deduces `vector<int*>` as the type of `b`.
+
+----------------
+
+That covers the basics of template argument deduction for class template constructors. If you want to read more, you can have a look at the [proposal for this feature](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html). I think this is a welcome addition to C++ which removes another of the myriad pitfalls and inconsistencies in the language. Let me know in the comments if you agree or disagree!
 
 ----------------
