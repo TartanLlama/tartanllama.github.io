@@ -102,7 +102,7 @@ template<typename Iter>
 vector(Iter b, Iter e) -> vector<typename std::iterator_traits<Iter>::value_type>;
 {% endhighlight %}
 
-The above deduction guide says that the constructor for `vector` taking two `Iter`s deduces the template argument to be `typename std::iterator_traits<Iter>::value_type`. For `int*`, that's just `int`. When the compiler sees `vector b{a.begin(), a.end()};`, it instantiates the deduction guide with `int*` as the template argument, and deduces `vector<int*>` as the type of `b`.
+The above deduction guide says that the constructor for `vector` taking two `Iter`s deduces the template argument to be `typename std::iterator_traits<Iter>::value_type`. For `int*`, that's just `int`. When the compiler sees `vector b{a.begin(), a.end()};`, it instantiates the deduction guide with `int*` as the template argument, and deduces `vector<int>` as the type of `b`.
 
 ----------------
 
