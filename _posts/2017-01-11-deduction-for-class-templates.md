@@ -86,13 +86,13 @@ struct vector {
     template <typename Iter>
     vector (Iter start, Iter end);
     
-    int* begin();
-    int* end();
+    T* begin();
+    T* end();
 };
 
 vector a({1,2,3,4,5,6,7}); // Uses implicit deduction guide
 auto it = a.begin();
-vector b{it, it+3};        // Implicit guide will not work
+vector b(it, it+3);        // Implicit guide will not work
 {% endhighlight %}
 
 Looking back at my rule of thumb from before, the second constructor cannot deduce `T`, so we need to provide an explicit deduction guide. This looks like the following:
