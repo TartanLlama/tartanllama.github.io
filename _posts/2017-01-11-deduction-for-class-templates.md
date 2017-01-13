@@ -68,7 +68,7 @@ pair b = a;
 pair c = std::move(b);
 {% endhighlight %}
 
-If your class doesn't fulfil the critera for implicit deduction guides and you still want to deduce the class template arguments automatically, you can give your compiler a bit of help.
+If your class doesn't fulfil the criteria for implicit deduction guides and you still want to deduce the class template arguments automatically, you can give your compiler a bit of help.
 
 -----------------
 
@@ -105,6 +105,14 @@ vector(Iter b, Iter e) -> vector<typename std::iterator_traits<Iter>::value_type
 The above deduction guide says that the constructor for `vector` taking two `Iter`s deduces the template argument to be `typename std::iterator_traits<Iter>::value_type`. For `int*`, that's just `int`. When the compiler sees `vector b{a.begin(), a.end()};`, it instantiates the deduction guide with `int*` as the template argument, and deduces `vector<int>` as the type of `b`.
 
 ----------------
+
+Does this mean we should never use `make_` functions? No.
+
+Although this feature removes most of the need for these helpers, there are still some cases where you should prefer the `make_` function. Two of those are `std::make_unique` and `std::make_shared`. These helpers allow you to hide the use of bare `new`, improve your exception safety, and -- in the case of `std::make_shared` -- coalesce the allocations for the control block and pointee data.
+
+Use template deduction for template classes in most cases, but be aware of edge cases and the few places in which `make_` helpers are the better choice.
+
+---------------
 
 That covers the basics of template argument deduction for class template constructors. If you want to read more, you can have a look at the [proposal for this feature](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html). I think this is a welcome addition to C++ which removes another of the myriad pitfalls and inconsistencies in the language. Let me know in the comments if you agree or disagree!
 
