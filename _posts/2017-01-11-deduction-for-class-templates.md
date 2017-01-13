@@ -106,7 +106,7 @@ The above deduction guide says that the constructor for `vector` taking two `Ite
 
 ----------------
 
-Does this mean we should never use `make_` functions? No.
+Does this mean that `make_` functions are useless? No.
 
 Although this feature removes most of the need for these helpers, there are still some cases where you should prefer the `make_` function. Two of those are `std::make_unique` and `std::make_shared`. These helpers allow you to hide the use of bare `new`, improve your exception safety, and -- in the case of `std::make_shared` -- coalesce the allocations for the control block and pointee data.
 
