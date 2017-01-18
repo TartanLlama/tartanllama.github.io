@@ -1,7 +1,6 @@
 ---
 layout: post
 title:  "Announcing the C++ Edinburgh Mentoring Programme"
-date:   2017-01-18 
 categories: social-tech
 ---
 
