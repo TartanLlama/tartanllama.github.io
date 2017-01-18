@@ -20,7 +20,9 @@ We are looking to compile a list of local C\+\+ developers in Edinburgh that wou
 
 ## Looking for a Mentor?
 
-If you are looking for guidance, whether you are a high-school or university student, a recent graduate, a junior developer still trying to decide your career path, an experienced developer looking to move to something new, or anything else, then get in touch with someone on [this list][mentor-list]. If you’d rather we got in touch with mentors for you, then fill in [this short form][mentee-form], or contact us by [email][edi-email] or [Twitter][edi-twitter]. All we need is a short bio and the areas in which you are interested in being mentored.
+If you are looking for guidance, whether you are a high-school[^1] or university student, a recent graduate, a junior developer still trying to decide your career path, an experienced developer looking to move to something new, or anything else, then get in touch with someone on [this list][mentor-list]. If you’d rather we got in touch with mentors for you, then fill in [this short form][mentee-form], or contact us by [email][edi-email] or [Twitter][edi-twitter]. All we need is a short bio and the areas in which you are interested in being mentored.
+
+[^1]: Depending on your age, child protection laws may apply. If you're interested, get in touch and we'll see what we can do.
 
 [cpp-edinburgh-website]: http://cppedinburgh.uk/
 [stephanie-blog]: http://stephaniehurlburt.com/blog/2016/11/14/list-of-engineers-willing-to-mentor-you
@@ -29,3 +31,5 @@ If you are looking for guidance, whether you are a high-school or university stu
 [mentor-list]: http://cppedinburgh.uk/mentorships.html
 [mentor-form]: https://cppedinburgh.typeform.com/to/YCAPwf
 [mentee-form]: https://cppedinburgh.typeform.com/to/riF7zb
+
+-----------------
