@@ -132,8 +132,8 @@ Done? How many did you come up with? In perusal of the standard, I counted *eigh
 - constant: `static int i = some_constexpr_function();`
 - static: zero- or constant-initialization
 - dynamic: not static initialization
-- ordered: dynamic initialization of non-local vars which are explicitly specialized class template static data members (yes really)
-- unordered: same as ordered, but for other class template static data members
+- unordered: dynamic initialization of class template static data members which are not explicitly specialized
+- ordered: dynamic initialization of other non-local variables with static storage duration
 - non-trivial: when a class or aggregate is initialized by a non-trivial constructor
 - direct: `int i{42}; int j(42);`
 - copy: `int i = 42;`
