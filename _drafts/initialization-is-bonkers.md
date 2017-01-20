@@ -2,11 +2,12 @@
 layout:     post
 title:      "Initialization in C++ is bonkers"
 category:   c++
+minutes:    10
 tags:
  - c++ 
 ---
 
-C++ pop quiz time: what are the values of `a.a` and `b.b` at the end of this program?
+C++ pop quiz time: what are the values of `a.a` and `b.b` on the last line in `main` of this program?
 
 {% highlight cpp %}
 #include <iostream>
@@ -53,9 +54,9 @@ void foo() {
     new T{};     //value initialization (C++11)
 }
 
-struct A { T t; A() : t{} /*value initialization*/ {} };
-struct B { T t; B() : t{} /*value initialization*/ {} };
-struct C { T t; C()       /*default initialization*/ {} };
+struct A { T t; A() : t() {} }; //t is value initialized
+struct B { T t; B() : t{} {} }; //t is value initialized (C++11)
+struct C { T t; C()       {} }; //t is default initialized
 {% endhighlight %}
 
 The rules for these different initialization forms are fairly complex, so I'll give a simplified outline of the C++11 rules. If you want to understand all the details of these forms, check out the relevant cppreference.com articles[^1][^2][^3], or see the standards quotes at the bottom of the article.
@@ -74,25 +75,25 @@ Taking the simple example of `int` as `T`, `global` and all of the value-initial
 
 #### Back to our original example
 
-The real reason for the result of our original example is that the behaviours of `foo` and `bar` are changed by the different location of `=default` on their constructors. Again, the relevant standards passages are down at the bottom of the page if you want them, but the jist is this:
+Now we have the necessary knowledge to understand what's going on in my original example. Essentially, the behaviours of `foo` and `bar` are changed by the different location of `=default` on their constructors. Again, the relevant standards passages are down at the bottom of the page if you want them, but the jist is this:
 
-Since the constructor for `foo` is defaulted on its first declaration, it is not technically *user-provided* (don't worry about what this term means for now). The constructor for `bar`, conversely, is only defaulted at its definition, which makes it user-provided. Put another way, if you don't want your constructor to be user-provided, be sure to write `=default` when you declare it rather than define it like that elsewhere. This rule makes sense when you think about it: without having access to the definition of a constructor, a translation unit can't know if your constructor is going to be a simple compiler-generated one, or if it's going to send a telegram to the Moon to retrieve some data.
+Since the constructor for `foo` is defaulted on its first declaration, it is not technically *user-provided* -- I'll explain what this term means shortly, just accept this standardese for now. The constructor for `bar`, conversely, is only defaulted at its definition, so it *is* user-provided. Put another way, if you don't want your constructor to be user-provided, be sure to write `=default` when you declare it rather than define it like that elsewhere. This rule makes sense when you think about it: without having access to the definition of a constructor, a translation unit can't know if it is going to be a simple compiler-generated one, or if it's going to send a telegram to the Moon to retrieve some data and block until it gets a response.
 
-The default constructor being user-provided has a few consequences for the class type. For example, you can't default-initialize a const-qualified object if it lacks a user-provided constructor:
+The default constructor being user-provided has a few consequences for the class type. For example, you can't default-initialize a const-qualified object if it lacks a user-provided constructor, the notion being that if the object should only be set once, it better be initialised with something reasonable:
 
 {% highlight cpp %}
 const int my_int;            //ill-formed, no user-provided constructor
-const std::string my_string; //well-formed, has a user-providedded constructor
+const std::string my_string; //well-formed, has a user-provided constructor
 
 const foo my_foo; //ill-formed, no user-provided constructor
-const bar my_bar; //well-formed, has a user-providedded constructor
+const bar my_bar; //well-formed, has a user-provide-dded constructor
 {% endhighlight %}
 
 Additionally, in order to be [trivial](http://en.cppreference.com/w/cpp/concept/TrivialType) (and therefore [POD](http://en.cppreference.com/w/cpp/concept/PODType)) or an [aggregate](http://en.cppreference.com/w/cpp/language/aggregate_initialization), a class must have no user-provided constructors. Don't worry if you don't know those terms, it suffices to know that whether your constructors are user-provided or not modifies some of the restrictions of what you can do with that class and how it acts.
 
-For our first example, however, we're interested in how user-provided constructors interact with initialization rules. The relevant standards passages mandate that in this case that the type with the user-provided constructor is default-initialized and the type without is zero-initialized. Default-initialization for `bar` leaves `b` uninitialized, whereas zero-initialization sets `a` in `foo` to `0`. This is a very subtle distiction which has inadvertantly changed our program from executing safely to summoning nasal demons/eating your cat/ordering pizza/your favourite undefined behaviour metaphor.
+For our first example, however, we're interested in how user-provided constructors interact with initialization rules. The language mandates that the type without the user-provided constructor is value-initialized and the type with is default-initialized. Zero-initialization for `foo` gives `a` the value `0`, whereas zero-initialization does not initialize `b` in `bar` at all, giving us undefined behaviour if we attempt to read it. This is a very subtle distinction which has inadvertently changed our program from executing safely to summoning nasal demons/eating your cat/ordering pizza/your favourite undefined behaviour metaphor.
 
-Fortunately, there's a simple solution: **initialize your variables.**
+Fortunately, there's a simple solution. At the risk of repeating advice which has been given many times before, **initialize your variables.**
 
 <b style="font-size:34px;">Seriously.</b>
 
@@ -100,7 +101,7 @@ Fortunately, there's a simple solution: **initialize your variables.**
 
 <b style="font-size:64px;">INITIALIZE YOUR GORRAM VARIABLES.</b>
 
-If the designer of `foo` and `bar` decides that they should be default constructible, they should initialize their contents with some sensible values. If they decide that they should *not* be default constructible, they should delete the constructors to avoid issues.
+If the designer of `foo` and `bar` decides that they should be default constructible, they should initialize their contents with some sensible values. If they decide that they should *not* be default constructible, they should delete the constructors to avoid issues. 
 
 {% highlight cpp %}
 struct foo {
@@ -114,6 +115,8 @@ struct bar {
     int b;
 };
 {% endhighlight %}
+
+Internalising this way of thinking about initialization is key to writing unsurprising code. If you've profiled your code and found a bottleneck caused by unnecessary initialization, then sure, optimise it, but you best be certain that the extra performance is worth the possible headaches and money spent to keep the code safe.
 
 If you still aren't convinced that C++ initialization rules are crazy-complex, take a minute to think of all the forms of initialization you can think of. My answers after the line.
 
@@ -147,3 +150,47 @@ Don't try to memorise all of these rules; therein lies madness. Just be careful,
 **In C++, you can give your program undefined behaviour by changing the point at which you tell the compiler to generate something it was probably going to generate for you anyway.**
 
 -------------------------
+
+#### Appendix: Standards quotes
+
+All quotes from N4140 (essentially C++14).
+
+> Explicitly-defaulted functions and implicitly-declared functions are collectively called defaulted functions,
+and the implementation shall provide implicit definitions for them (12.1 12.4, 12.8), which might mean
+defining them as deleted. **A function is user-provided if it is user-declared and not explicitly defaulted or
+deleted on its first declaration.** A user-provided explicitly-defaulted function (i.e., explicitly defaulted after its first declaration) is defined at the point where it is explicitly defaulted; if such a function is implicitly defined
+as deleted, the program is ill-formed.
+{:.standards para="[dcl.fct.def.default]/5"}
+
+
+> To *zero-initialize* an object or reference of type `T` means:
+>
+> - if `T` is a scalar type (3.9), the object is initialized to the value obtained by converting the integer literal
+0 (zero) to T
+> - if `T` is a (possibly cv-qualified) non-union class type, each non-static data member and each base-class subobject is zero-initialized and padding is initialized to zero bits;
+> - if `T` is a (possibly cv-qualified) union type, the object's first non-static named data member is zero-initialized and padding is initialized to zero bits;
+> - if `T` is an array type, each element is zero-initialized;
+> - if `T` is a reference type, no initialization is performed.
+>
+> To *default-initialize* an object of type `T` means:
+>
+> - if `T` is a (possibly cv-qualified) class type (Clause 9), the default constructor (12.1) for `T` is called (and
+the initialization is ill-formed if `T` has no default constructor or overload resolution (13.3) results in an
+ambiguity or in a function that is deleted or inaccessible from the context of the initialization);
+> - if `T` is an array type, each element is default-initialized;
+> - otherwise, no initialization is performed.
+>If a program calls for the default initialization of an object of a const-qualified type `T`, `T` shall be a class type with a user-provided default constructor.
+>
+> To *value-initialize* an object of type `T` means:
+>
+> - if `T` is a (possibly cv-qualified) class type (Clause 9) with either no default constructor (12.1) or a default constructor that is user-provided or deleted, then the object is default-initialized;
+> - if `T` is a (possibly cv-qualified) class type without a user-provided or deleted default constructor, then the object is zero-initialized and the semantic constraints for default-initialization are checked, and if `T` has a non-trivial default constructor, the object is default-initialized;
+> - if `T` is an array type, then each element is value-initialized;
+> - otherwise, the object is zero-initialized.
+{:.standards para="[dcl.init]/6-8"}
+
+
+> Variables with static storage duration (3.7.1) or thread storage duration (3.7.2) shall be zero-initialized (8.5)
+before any other initialization takes place. [...]
+{:.standards para="[basic.start.init]/2"}
+
