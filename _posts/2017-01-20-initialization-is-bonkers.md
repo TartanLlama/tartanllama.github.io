@@ -40,26 +40,26 @@ The answer is that `a.a` is `0` and `b.b` is indeterminate, so reading it is und
 Before we get into the details which cause this, I'll introduce the concepts of default-, value- and zero-initialization. Feel free to skip this section if you're already familiar with these.
 
 {% highlight cpp %}
-T global;       //default initialization
+T global;       //default-initialization
 
 void foo() {
-    T i;         //default initialization
-    T j{};       //value initialization (C++11)
-    T k = T();   //value initialization
-    T l = T{};   //value initialization (C++11)
-    T m();       //function declaration
+    T i;         //default-initialization
+    T j{};       //value-initialization (C++11)
+    T k = T();   //value-initialization
+    T l = T{};   //value-initialization (C++11)
+    T m();       //function-declaration
 
-    new T;       //default initialization
-    new T();     //value initialization
-    new T{};     //value initialization (C++11)
+    new T;       //default-initialization
+    new T();     //value-initialization
+    new T{};     //value-initialization (C++11)
 }
 
-struct A { T t; A() : t() {} }; //t is value initialized
-struct B { T t; B() : t{} {} }; //t is value initialized (C++11)
-struct C { T t; C()       {} }; //t is default initialized
+struct A { T t; A() : t() {} }; //t is value-initialized
+struct B { T t; B() : t{} {} }; //t is value-initialized (C++11)
+struct C { T t; C()       {} }; //t is default-initialized
 {% endhighlight %}
 
-The rules for these different initialization forms are fairly complex, so I'll give a simplified outline of the C++11 rules. If you want to understand all the details of these forms, check out the relevant cppreference.com articles[^1][^2][^3], or see the standards quotes at the bottom of the article.
+The rules for these different initialization forms are fairly complex, so I'll give a simplified outline of the C++11 rules (C++14 even changed some of them, so those value-initialization forms can be aggregate initialization). If you want to understand all the details of these forms, check out the relevant cppreference.com articles[^1][^2][^3], or see the standards quotes at the bottom of the article.
 
 - **default-initialization** -- If `T` is a class, the default constructor is called; if it's an array, each element is default-initialized; otherwise, no initialization is done, resulting in indeterminate values.
 - **value-initialization** -- If `T` is a class, the object is default-initialized (after being zero-initialized if `T`'s default constructor is compiler-generated); if it's an array, each element is value-initialized; otherwise, the object is zero-initialized.
@@ -153,7 +153,7 @@ Don't try to memorise all of these rules; therein lies madness. Just be careful,
 
 #### Appendix: Standards quotes
 
-All quotes from N4140 (essentially C++14).
+All quotes from N3337 (essentially C++14).
 
 > Explicitly-defaulted functions and implicitly-declared functions are collectively called defaulted functions,
 and the implementation shall provide implicit definitions for them (12.1 12.4, 12.8), which might mean
@@ -174,8 +174,7 @@ as deleted, the program is ill-formed.
 >
 > To *default-initialize* an object of type `T` means:
 >
-> - if `T` is a (possibly cv-qualified) class type (Clause 9), the default constructor (12.1) for `T` is called (and
-the initialization is ill-formed if `T` has no default constructor or overload resolution (13.3) results in an
+> - if `T` is a (possibly cv-qualified) class type (Clause 9), the default constructor (12.1) for `T` is called (and the initialization is ill-formed if `T` has no default constructor or overload resolution (13.3) results in an
 ambiguity or in a function that is deleted or inaccessible from the context of the initialization);
 > - if `T` is an array type, each element is default-initialized;
 > - otherwise, no initialization is performed.
