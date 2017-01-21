@@ -153,7 +153,7 @@ Don't try to memorise all of these rules; therein lies madness. Just be careful,
 
 #### Appendix: Standards quotes
 
-All quotes from N3337 (essentially C++14).
+All quotes from N4140 (essentially C++14).
 
 > Explicitly-defaulted functions and implicitly-declared functions are collectively called defaulted functions,
 and the implementation shall provide implicit definitions for them (12.1 12.4, 12.8), which might mean
