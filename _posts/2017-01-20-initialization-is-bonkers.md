@@ -40,7 +40,7 @@ The answer is that `a.a` is `0` and `b.b` is indeterminate, so reading it is und
 Before we get into the details which cause this, I'll introduce the concepts of default-, value- and zero-initialization. Feel free to skip this section if you're already familiar with these.
 
 {% highlight cpp %}
-T global;       //default-initialization
+T global;       //zero-initialization, then default-initialization
 
 void foo() {
     T i;         //default-initialization
@@ -62,7 +62,7 @@ struct C { T t; C()       {} }; //t is default-initialized
 The rules for these different initialization forms are fairly complex, so I'll give a simplified outline of the C++11 rules (C++14 even changed some of them, so those value-initialization forms can be aggregate initialization). If you want to understand all the details of these forms, check out the relevant cppreference.com articles[^1][^2][^3], or see the standards quotes at the bottom of the article.
 
 - **default-initialization** -- If `T` is a class, the default constructor is called; if it's an array, each element is default-initialized; otherwise, no initialization is done, resulting in indeterminate values.
-- **value-initialization** -- If `T` is a class, the object is default-initialized (after being zero-initialized if `T`'s default constructor is compiler-generated); if it's an array, each element is value-initialized; otherwise, the object is zero-initialized.
+- **value-initialization** -- If `T` is a class, the object is default-initialized (after being zero-initialized if `T`'s default constructor is user-provided/deleted); if it's an array, each element is value-initialized; otherwise, the object is zero-initialized.
 - **zero-initialization** -- Applied to static and thread-local variables before any other initialization. If `T` is scalar (arithmetic, pointer, enum), it is initialized from `0`; if it's a class type, all base classes and data members are zero-initialized; if it's an array, each element is zero-initialized.
 
 Taking the simple example of `int` as `T`, `global` and all of the value-initialized variables will have the value `0`, and all other variables will have an indeterminate value. Reading these indeterminate values results in undefined behaviour.
@@ -91,7 +91,7 @@ const bar my_bar; //well-formed, has a user-provided constructor
 
 Additionally, in order to be [trivial](http://en.cppreference.com/w/cpp/concept/TrivialType) (and therefore [POD](http://en.cppreference.com/w/cpp/concept/PODType)) or an [aggregate](http://en.cppreference.com/w/cpp/language/aggregate_initialization), a class must have no user-provided constructors. Don't worry if you don't know those terms, it suffices to know that whether your constructors are user-provided or not modifies some of the restrictions of what you can do with that class and how it acts.
 
-For our first example, however, we're interested in how user-provided constructors interact with initialization rules. The language mandates that the type without the user-provided constructor is value-initialized and the type with is default-initialized. Zero-initialization for `foo` gives `a` the value `0`, whereas default-initialization does not initialize `b` in `bar` at all, giving us undefined behaviour if we attempt to read it. This is a very subtle distinction which has inadvertently changed our program from executing safely to summoning nasal demons/eating your cat/ordering pizza/your favourite undefined behaviour metaphor.
+For our first example, however, we're interested in how user-provided constructors interact with initialization rules. The language mandates that both `a` and `b` are value-initialized, but only `a` is additionally zero-initialized. Zero-initialization for `a` gives `a.a` the value `0`, whereas `b.b` is not initialized at all, giving us undefined behaviour if we attempt to read it. This is a very subtle distinction which has inadvertently changed our program from executing safely to summoning nasal demons/eating your cat/ordering pizza/your favourite undefined behaviour metaphor.
 
 Fortunately, there's a simple solution. At the risk of repeating advice which has been given many times before, **initialize your variables.**
 
