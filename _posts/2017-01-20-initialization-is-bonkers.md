@@ -4,7 +4,7 @@ title:      "Initialization in C++ is bonkers"
 category:   c++
 minutes:    10
 tags:
- - c++ 
+ - c++
 ---
 
 C++ pop quiz time: what are the values of `a.a` and `b.b` on the last line in `main` of this program?
@@ -40,32 +40,32 @@ The answer is that `a.a` is `0` and `b.b` is indeterminate, so reading it is und
 Before we get into the details which cause this, I'll introduce the concepts of default-, value- and zero-initialization. Feel free to skip this section if you're already familiar with these.
 
 {% highlight cpp %}
-T global;       //default initialization
+T global;       //zero-initialization, then default-initialization
 
 void foo() {
-    T i;         //default initialization
-    T j{};       //value initialization (C++11)
-    T k = T();   //value initialization
-    T l = T{};   //value initialization (C++11)
-    T m();       //function declaration
+    T i;         //default-initialization
+    T j{};       //value-initialization (C++11)
+    T k = T();   //value-initialization
+    T l = T{};   //value-initialization (C++11)
+    T m();       //function-declaration
 
-    new T;       //default initialization
-    new T();     //value initialization
-    new T{};     //value initialization (C++11)
+    new T;       //default-initialization
+    new T();     //value-initialization
+    new T{};     //value-initialization (C++11)
 }
 
-struct A { T t; A() : t() {} }; //t is value initialized
-struct B { T t; B() : t{} {} }; //t is value initialized (C++11)
-struct C { T t; C()       {} }; //t is default initialized
+struct A { T t; A() : t() {} }; //t is value-initialized
+struct B { T t; B() : t{} {} }; //t is value-initialized (C++11)
+struct C { T t; C()       {} }; //t is default-initialized
 {% endhighlight %}
 
-The rules for these different initialization forms are fairly complex, so I'll give a simplified outline of the C++11 rules. If you want to understand all the details of these forms, check out the relevant cppreference.com articles[^1][^2][^3], or see the standards quotes at the bottom of the article.
+The rules for these different initialization forms are fairly complex, so I'll give a simplified outline of the C++11 rules (C++14 even changed some of them, so those value-initialization forms can be aggregate initialization). If you want to understand all the details of these forms, check out the relevant cppreference.com articles[^1][^2][^3], or see the standards quotes at the bottom of the article.
 
 - **default-initialization** -- If `T` is a class, the default constructor is called; if it's an array, each element is default-initialized; otherwise, no initialization is done, resulting in indeterminate values.
-- **value-initialization** -- If `T` is a class, the object is default-initialized (after being zero-initialized if `T`'s default constructor is compiler-generated); if it's an array, each element is value-initialized; otherwise, the object is zero-initialized.
+- **value-initialization** -- If `T` is a class, the object is default-initialized (after being zero-initialized if `T`'s default constructor is user-provided/deleted); if it's an array, each element is value-initialized; otherwise, the object is zero-initialized.
 - **zero-initialization** -- Applied to static and thread-local variables before any other initialization. If `T` is scalar (arithmetic, pointer, enum), it is initialized from `0`; if it's a class type, all base classes and data members are zero-initialized; if it's an array, each element is zero-initialized.
 
-Taking the simple example of `int` as `T`, `global` and all of the value-initialized variables will have the value `0`, and all other variables will have an indeterminate value. Reading these indeterminate values results in undefined behaviour. 
+Taking the simple example of `int` as `T`, `global` and all of the value-initialized variables will have the value `0`, and all other variables will have an indeterminate value. Reading these indeterminate values results in undefined behaviour.
 
 [^1]: [cppreference value-initialization](http://en.cppreference.com/w/cpp/language/value_initialization)
 [^2]: [cppreference default-initialization](http://en.cppreference.com/w/cpp/language/default_initialization)
@@ -91,7 +91,7 @@ const bar my_bar; //well-formed, has a user-provided constructor
 
 Additionally, in order to be [trivial](http://en.cppreference.com/w/cpp/concept/TrivialType) (and therefore [POD](http://en.cppreference.com/w/cpp/concept/PODType)) or an [aggregate](http://en.cppreference.com/w/cpp/language/aggregate_initialization), a class must have no user-provided constructors. Don't worry if you don't know those terms, it suffices to know that whether your constructors are user-provided or not modifies some of the restrictions of what you can do with that class and how it acts.
 
-For our first example, however, we're interested in how user-provided constructors interact with initialization rules. The language mandates that the type without the user-provided constructor is value-initialized and the type with is default-initialized. Zero-initialization for `foo` gives `a` the value `0`, whereas zero-initialization does not initialize `b` in `bar` at all, giving us undefined behaviour if we attempt to read it. This is a very subtle distinction which has inadvertently changed our program from executing safely to summoning nasal demons/eating your cat/ordering pizza/your favourite undefined behaviour metaphor.
+For our first example, however, we're interested in how user-provided constructors interact with initialization rules. The language mandates that both `a` and `b` are value-initialized, but only `a` is additionally zero-initialized. Zero-initialization for `a` gives `a.a` the value `0`, whereas `b.b` is not initialized at all, giving us undefined behaviour if we attempt to read it. This is a very subtle distinction which has inadvertently changed our program from executing safely to summoning nasal demons/eating your cat/ordering pizza/your favourite undefined behaviour metaphor.
 
 Fortunately, there's a simple solution. At the risk of repeating advice which has been given many times before, **initialize your variables.**
 
@@ -101,7 +101,7 @@ Fortunately, there's a simple solution. At the risk of repeating advice which ha
 
 <b style="font-size:64px;">INITIALIZE YOUR GORRAM VARIABLES.</b>
 
-If the designer of `foo` and `bar` decides that they should be default constructible, they should initialize their contents with some sensible values. If they decide that they should *not* be default constructible, they should delete the constructors to avoid issues. 
+If the designer of `foo` and `bar` decides that they should be default constructible, they should initialize their contents with some sensible values. If they decide that they should *not* be default constructible, they should delete the constructors to avoid issues.
 
 {% highlight cpp %}
 struct foo {
@@ -132,8 +132,8 @@ Done? How many did you come up with? In perusal of the standard, I counted *eigh
 - constant: `static int i = some_constexpr_function();`
 - static: zero- or constant-initialization
 - dynamic: not static initialization
-- ordered: dynamic initialization of non-local vars which are explicitly specialized class template static data members (yes really)
-- unordered: same as ordered, but for other class template static data members
+- unordered: dynamic initialization of class template static data members which are not explicitly specialized
+- ordered: dynamic initialization of other non-local variables with static storage duration
 - non-trivial: when a class or aggregate is initialized by a non-trivial constructor
 - direct: `int i{42}; int j(42);`
 - copy: `int i = 42;`
@@ -174,8 +174,7 @@ as deleted, the program is ill-formed.
 >
 > To *default-initialize* an object of type `T` means:
 >
-> - if `T` is a (possibly cv-qualified) class type (Clause 9), the default constructor (12.1) for `T` is called (and
-the initialization is ill-formed if `T` has no default constructor or overload resolution (13.3) results in an
+> - if `T` is a (possibly cv-qualified) class type (Clause 9), the default constructor (12.1) for `T` is called (and the initialization is ill-formed if `T` has no default constructor or overload resolution (13.3) results in an
 ambiguity or in a function that is deleted or inaccessible from the context of the initialization);
 > - if `T` is an array type, each element is default-initialized;
 > - otherwise, no initialization is performed.
@@ -193,4 +192,3 @@ ambiguity or in a function that is deleted or inaccessible from the context of t
 > Variables with static storage duration (3.7.1) or thread storage duration (3.7.2) shall be zero-initialized (8.5)
 before any other initialization takes place. [...]
 {:.standards para="[basic.start.init]/2"}
-
