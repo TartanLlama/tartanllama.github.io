@@ -6,6 +6,10 @@ tags:
 - social-tech
 ---
 
+I review a lot of job applications at Codeplay and most of them make me sad.
+
+For every application I look at, I make a list of plus points and minus points as I read through the candidate's documents and code. Invariably the first thing I look at is the cover letter, and I would estimate that 90% of them get an instant minus point in my review feedback.
+
 (all advice is from the viewpoint of a small-medium sized tech company and all, well, you know, just like, my opinion, man)
 
 A good job application answers two questions: why the candidate is right for the company and why the company is right for the candidate.
@@ -22,4 +26,3 @@ If the advert asks for links to your work, provide good ones. Many link to a SO 
 Spellcheck your letter. English might not be your first language, but maeking shoor ur letter doesnt look lyk this can be done by your WP.
 That should be obvious, but you'd be surprised. Bad spelling looks lazy. You should put effort into your cover letter, and it should show.
 Finally, don't assume you're not good enough. An honest desire to learn the field and evidence that you're trying goes a really long way.
-
