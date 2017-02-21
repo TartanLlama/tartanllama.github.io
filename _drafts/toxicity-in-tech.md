@@ -1,12 +1,16 @@
 ---
 layout:     post
-title:      "Toxicity in tech -- my personal journey"
+title:      "Toxicity in tech -- a short personal journey"
 category:   social-tech
 tags:
  - social-tech
 ---
 
-The easiest thing would have been for me to go and take some of the myriad sarcastic comments from a beginner-level Stack Overflow question, but I've chosen the hard path: I went through some of my old Stack Overflow, Reddit and Hipchat comments and picked out real-life examples of times in the past when I've been a dick on the internet. 
+The longer I've been working in the tech industry, the more I'm interested in the sociological issues as well as the technological. As such, I'm going to start writing a few posts on community, applying for jobs and such. Hopefully some of you will find them interesting, but if not, I'm happy to shout into a vacuum for your entertainment.
+
+For my first post, I'd like to 
+
+The easiest thing would have been for me to go and take some of the myriad sarcastic comments from a beginner-level Stack Overflow question. Instead, I went through some of my old Stack Overflow, Reddit and Hipchat comments and picked out real-life examples of times in the past when I've been a dick on the internet. 
 
 > *Beginner posts basic Stack Overflow question*
 >
@@ -36,18 +40,5 @@ Maybe you're reading those and thinking that they aren't all that bad. Maybe tha
 
 I don't make any excuses for these contributions, or worse ones which have been lost down the back of the Internet sofa. But I *do* try and learn from them.
 
-However, while I wish that we didn't have to deal with ad-homenim attacks, unconstructive criticism, and the like, I do really appreciate direct feedback. Here's a comment from Reddit on one of my recent blog posts.
 
-> `T{}` may be either value-initialization or aggregate initialization or "plain" initialization calling an initializer-list constructor, depending on `T`.
->
-> "you can’t default-initialize a const-qualified object if it lacks a user-provided constructor,"
->
->That's not the rule anymore, thankfully. See Core DR 253, resolved by P0490R0 (scroll to the bottom).
->
-> "The language mandates that the type without the user-provided constructor is value-initialized and the type with is default-initialized."
->
->That's not quite how it works. In your initial example, `a` is aggregate-initialized; `b` is value-initialized but its value-initialization doesn't do zero-initialization.
->
->"ordered"'s description is incorrect. That category also include all "plain" non-local static/thread-local variables. If "non-trivial" is referring to [basic.life], it's now called "non-vacuous" and covers all initialization except by a trivial default constructor.
 
-I would say that this is excellent feedback. It explicitly addresses inaccuracies in the post and provides corrections for each point in turn, all without a sense of condescension or malice. Maybe you wouldn't call it "polite", but if you want to correct someone's post, this is a good way to do it.

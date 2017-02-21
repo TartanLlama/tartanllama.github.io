@@ -7,7 +7,7 @@ tags:
  - gpgpu
 ---
 
-Leveraging the power of graphics cards for compute applications is all the rage right now in fields such as neural networks, scientific programming, high-performance computing, and more. Technologies like OpenCL expose this power through a hardware-independent programming model, allowing you to write code which abstracts over different architecture capabilities. The dream of this is "write once, run anywhere", be it an Intel CPU, AMD discrete GPU, DSP, etc. Unfortunately for everyday programmers, OpenCL has something of a steep learning curve; a simple Hello World program can be a hundred or so lines of pretty ugly-looking code. Fortunately, the Khronos group have developed a new standard called [SYCL](https://www.khronos.org/sycl), which is a C++ abstraction layer on top of OpenCL. Using SYCL, you can develop these general-purpose GPU (GPGPU) applications in clean, modern C++ without most of the faff associated with OpenCL. Here's a simple vector multiplication example written in SYCL:
+Leveraging the power of graphics cards for compute applications is all the rage right now in fields such as machine learning, computer vision and high-performance computing. Technologies like OpenCL expose this power through a hardware-independent programming model, allowing you to write code which abstracts over different architecture capabilities. The dream of this is "write once, run anywhere", be it an Intel CPU, AMD discrete GPU, DSP, etc. Unfortunately, for everyday programmers, OpenCL has something of a steep learning curve; a simple Hello World program can be a hundred or so lines of pretty ugly-looking code. However, to ease this pain, the Khronos group have developed a new standard called [SYCL](https://www.khronos.org/sycl), which is a C++ abstraction layer on top of OpenCL. Using SYCL, you can develop these general-purpose GPU (GPGPU) applications in clean, modern C++ without most of the faff associated with OpenCL. Here's a simple vector multiplication example written in SYCL using the parallel STL implementation:
 
 {% highlight cpp %}
 #include <vector>
@@ -21,19 +21,16 @@ using namespace std::experimental::parallel;
 using namespace sycl::helpers;
 
 int main() {
-  std::vector<int> v = {3, 1, 5, 6};
+  constexpr size_t array_size = 1024*512;
+  std::array<cl::sycl::cl_int, array_size> a;
+  std::iota(begin(a),end(a),0);
 
   {
-    cl::sycl::buffer<int> b(v.data(), cl::sycl::range<1>(v.size()));
-    cl::sycl::default_selector h;
-    cl::sycl::queue q(h);
+    cl::sycl::buffer<int> b(a.data(), cl::sycl::range<1>(a.size()));
+    cl::sycl::queue q;
     sycl::sycl_execution_policy<class Mul> sycl_policy(q);
     transform(sycl_policy, begin(b), end(b), begin(b),
               [](int x) { return x*2; });
-  }
-
-  for (size_t i = 0; i < v.size(); i++) {
-    std::cout << v[i] << " ";
   }
 }
 {% endhighlight %}
@@ -42,6 +39,8 @@ For comparison, here's a mostly equivalent version written in OpenCL using the C
 
 {% highlight cpp %}
 #include <iostream>
+#include <array>
+#include <numeric>
 #include <CL/cl.hpp>
 
 int main(){
@@ -65,9 +64,9 @@ int main(){
 
     cl::Program::Sources sources;
     std::string kernel_code=
-                    "   void kernel mul2(global int* A){"
-                    "       A[get_global_id(0)]=A[get_global_id(0)]*2;"
-                    "   }";
+        "   void kernel mul2(global int* A){"
+        "       A[get_global_id(0)]=A[get_global_id(0)]*2;"
+        "   }";
     sources.push_back({kernel_code.c_str(),kernel_code.length()});
 
     cl::Program program(context,sources);
@@ -76,12 +75,14 @@ int main(){
         exit(1);
     }
 
-    std::vector<int> v = {3, 1, 5, 6};
+    constexpr size_t array_size = 1024*512;    
+    std::array<cl_int, array_size> a;
+    std::iota(begin(a),end(a),0);
 
-    cl::Buffer buffer_A(context,CL_MEM_READ_WRITE,sizeof(int)*v.size());
+    cl::Buffer buffer_A(context,CL_MEM_READ_WRITE,sizeof(int)*a.size());
     cl::CommandQueue queue(context,default_device);
 
-    if (queue.enqueueWriteBuffer(buffer_A,CL_TRUE,0,sizeof(int)*v.size(),v.data()) != CL_SUCCESS) {
+    if (queue.enqueueWriteBuffer(buffer_A,CL_TRUE,0,sizeof(int)*a.size(),a.data()) != CL_SUCCESS) {
         std::cout << "Failed to write memory;n";
         exit(1);
     }
@@ -89,7 +90,7 @@ int main(){
     cl::Kernel kernel_add = cl::Kernel(program,"mul2");
     kernel_add.setArg(0,buffer_A);
 
-    if (queue.enqueueNDRangeKernel(kernel_add,cl::NullRange,cl::NDRange(v.size()),cl::NullRange) != CL_SUCCESS) {
+    if (queue.enqueueNDRangeKernel(kernel_add,cl::NullRange,cl::NDRange(a.size()),cl::NullRange) != CL_SUCCESS) {
         std::cout << "Failed to enqueue kernel\n";
         exit(1);
     }
@@ -99,17 +100,14 @@ int main(){
         exit(1);
     }
 
-    if (queue.enqueueReadBuffer(buffer_A,CL_TRUE,0,sizeof(int)*v.size(),v.data()) != CL_SUCCESS) {
+    if (queue.enqueueReadBuffer(buffer_A,CL_TRUE,0,sizeof(int)*a.size(),a.data()) != CL_SUCCESS) {
         std::cout << "Failed to read result\n";
         exit(1);
     }
-
-    std::cout<<"result: \n";
-    for (auto e : v) {
-        std::cout<<e<<" ";
-    }
 }
 {% endhighlight %}
+
+
 
 ----------------------------
 
@@ -137,9 +135,198 @@ Before we get back to SYCL, some short pieces of terminology. The *host* is the 
 
 ### Back to SYCL
 
-There are currently two implementations of SYCL available; "triSYCL", an experimental open source version by Xilinx (mostly used as a testbed for the standard), and "ComputeCpp", an industry-strength implementation by Codeplay[^1] (currently in open Beta). We'll be using ComputeCpp in this post.
+There are currently two implementations of SYCL available; "triSYCL", an experimental open source version by Xilinx (mostly used as a testbed for the standard), and "ComputeCpp", an industry-strength implementation by Codeplay[^1] (currently in open Beta). Only ComputeCpp supports execution of kernels on the GPU, so we'll be using that in this post.
 
 Step 1 is to get ComputeCpp up and running on your machine. The main components are a runtime library which implements the SYCL API, and a Clang-based compiler which compiles both your host code and your device code. At the time of writing, Intel CPUs and some AMD GPUs are officially supported on Ubuntu and CentOS. It should be pretty easy to get it working on other Linux distributions (I got it running on my Arch system, for instance. Support for more hardware and operating systems are being worked on, so check the [supported platforms document](https://www.codeplay.com/products/computesuite/computecpp/reference/platform-support-notes) for an up-to-date list. The dependencies and components are listed [here](https://www.codeplay.com/products/computesuite/computecpp/reference/release-notes/). You might also want to download the [SDK](https://github.com/codeplaysoftware/computecpp-sdk), which contains samples, documentation, build system integration files, and more. I'll be using the [SYCL Parallel STL](https://github.com/KhronosGroup/SyclParallelSTL) in this post, so get that if you want to play along at home.
+
+Once you're all set up, we can get GPGPUing! As noted in the introduction, my first sample used the SYCL parallel STL implementation. We'll now take a look at how to write that code with bare SYCL.
+
+{% highlight cpp %}
+#include <CL/sycl.hpp>
+
+#include <array>
+#include <numeric>
+#include <iostream>
+
+int main() {
+  const size_t array_size = 1024*512;
+  std::array<cl::sycl::cl_int, array_size> in,out;
+  std::iota(begin(in),end(in),0);
+
+      cl::sycl::queue device_queue;
+      cl::sycl::range<1> n_items{array_size};
+      cl::sycl::buffer<cl::sycl::cl_int, 1> in_buffer(in.data(), n_items);
+      cl::sycl::buffer<cl::sycl::cl_int, 1> out_buffer(out.data(), n_items);
+
+
+      device_queue.submit([&](cl::sycl::handler &cgh) {
+              constexpr auto sycl_read = cl::sycl::access::mode::read_write;
+              constexpr auto sycl_write = cl::sycl::access::mode::write;
+          
+              auto in_accessor = in_buffer.get_access<sycl_read>(cgh);
+              auto out_accessor = out_buffer.get_access<sycl_write>(cgh);
+
+              cgh.parallel_for<class VecScalMul>(n_items,
+                                                 [=](cl::sycl::id<1> wiID) {
+                                                     out_accessor[wiID] = in_accessor[wiID]*2;
+                                                 });
+          });
+
+     device_queue.wait();
+}
+{% endhighlight %}
+
+I'll break this down piece-by-piece.
+
+{% highlight cpp %}
+#include <CL/sycl.hpp>
+{% endhighlight %} 
+
+The first thing we do is include the SYCL header file, which will put the SYCL runtime library at our command.
+
+{% highlight cpp %}
+const size_t array_size = 1024*512;
+std::array<cl::sycl::cl_int, array_size> in,out;
+std::iota(begin(in),end(in),0);
+{% endhighlight %}
+
+Here we construct a large array of integers and initialize it with the numbers from `0` to `array_size-1` (this is what `std::iota` does). Note that we use `cl::sycl::cl_int` to ensure compatibility.
+
+{% highlight cpp %}
+cl::sycl::queue device_queue;
+{% endhighlight %}
+
+Now we create our command queue. The command queue is where all work (kernels) will be enqueued before being dispatched to the device. There are many ways to customise the queue, such as providing a device to enqueue on or setting up asynchronous error handlers, but the default constructor will do for this example; it just looks for a compatible GPU and falls back on the host CPU if it fails.
+
+{% highlight cpp %}
+cl::sycl::range<1> n_items{array_size};
+{% endhighlight %}
+
+Next we create a range, which describes the shape of the data which the kernel will be executing on. In our simple example, it's just a one-dimensional array, so we use `cl::sycl::range<1>`. If the data was two-dimensional we would use `cl::sycl::range<2>` and so on. Alongside `cl::sycl::range`, there is `cl::sycl::ndrange`, which allows you to specify work group sizes as well as an overall range, but we don't need that for our example.
+
+{% highlight cpp %}
+cl::sycl::buffer<cl::sycl::cl_int, 1> in_buffer(in.data(), n_items);
+cl::sycl::buffer<cl::sycl::cl_int, 1> out_buffer(out.data(), n_items);
+{% endhighlight %}
+
+In order to control data sharing and transfer between the host and devices, SYCL provides a `buffer` class. We create two SYCL buffers to manage our input and output arrays.
+
+{% highlight cpp %}
+      device_queue.submit([&](cl::sycl::handler &cgh) {/*...*/});
+{% endhighlight %}
+
+After setting up all of our data, we can enqueue our actual work. There are a few ways to do this, but a simple method for setting up a parallel execution is to call the `.submit` function on our queue. To this function we pass a *command group functor*[^2] which will be executed when the runtime schedules that task. A command group handler sets up any last resources needed by the kernel and dispatches it.
+
+[^2]: Hey, "functor" is in the spec, don't @ me.
+
+{% highlight cpp %}
+constexpr auto sycl_read = cl::sycl::access::mode::read_write;
+constexpr auto sycl_write = cl::sycl::access::mode::write;
+          
+auto in_accessor = in_buffer.get_access<sycl_read>(cgh);
+auto out_accessor = out_buffer.get_access<sycl_write>(cgh);
+{% endhighlight %}
+
+In order to control access to our buffers and to tell the runtime how we will be using the data, we need to create *accessors*. Hopefully it is clear that we are creating one accessor for reading from `in_buffer`, and one accessor for writing to `out_buffer`.
+
+{% highlight cpp %}
+cgh.parallel_for<class VecScalMul>(n_items,
+                                   [=](cl::sycl::id<1> wiID) {
+                                       out_accessor[wiID] = in_accessor[wiID]*2;
+                                   });
+{% endhighlight %}
+
+Now that we've done all the setup, we can actually do some computation on our device. Here we dispatch a kernel on the command group handler `cgh` over our range `n_items`. The actual kernel itself is just a lambda which takes a work-item identifier and carries out our computation. In this case, we are just reading from `in_accessor` at the index of our work-item identifier, multiplying it by `2`, then storing the result in the relevant place in `out_accessor`. That `<class VecScalMul>` is just an unfortunate byproduct of how SYCL needs to work within the confines of standard C++, so we need to give a unique class name to the kernel for the compiler to be able to do its job.
+
+{% highlight cpp %}
+device_queue.wait();
+{% endhighlight %}
+
+Our last line is kind of like calling `.join()` on a `std::thread`; it waits until the queue has executed all work which has been submitted. After this point, we could now access `out` and expect to see the correct results. Queues will also wait implicitly on destruction, so you could alternatively place it in some other scope and let the synchronisation happen when the scope ends.
+
+There are quite a few new concepts at play here, but hopefully you can see the power and expressibility we get using these techniques. However, if you just want to toss some code at your GPU and not worry about the customisation, then you can use the SYCL Parallel STL implementation.
+
+--------------------------------
+
+### SYCL Parallel STL
+
+The SYCL Parallel STL is an implementation of the Parallelism TS which dispatches your algorithm function objects as SYCL kernels. We already saw an example of this at the top of the page, so lets run through it quickly.
+
+{% highlight cpp %}
+#include <vector>
+#include <iostream>
+
+#include <sycl/execution_policy>
+#include <experimental/algorithm>
+#include <sycl/helpers/sycl_buffers.hpp>
+
+using namespace std::experimental::parallel;
+using namespace sycl::helpers;
+
+int main() {
+  constexpr size_t array_size = 1024*512;
+  std::array<cl::sycl::cl_int, array_size> in,out;
+  std::iota(begin(in),end(in),0);
+
+  {
+    cl::sycl::buffer<int> in_buffer(in.data(), cl::sycl::range<1>(in.size()));
+    cl::sycl::buffer<int> out_buffer(out.data(), cl::sycl::range<1>(out.size()));    
+    cl::sycl::queue q;
+    sycl::sycl_execution_policy<class Mul> sycl_policy(q);
+    transform(sycl_policy, begin(in_buffer), end(in_buffer), begin(out_buffer),
+              [](int x) { return x*2; });
+  }
+}
+{% endhighlight %}
+
+{% highlight cpp %}
+  constexpr size_t array_size = 1024*512;
+  std::array<cl::sycl::cl_int, array_size> in, out;
+  std::iota(begin(in),end(out),0);
+{% endhighlight %}
+
+So far, so similar. Again we're just creating a couple of arrays to hold our input and output data.
+
+{% highlight cpp %}
+cl::sycl::buffer<int> in_buffer(in.data(), cl::sycl::range<1>(in.size()));
+cl::sycl::buffer<int> out_buffer(out.data(), cl::sycl::range<1>(out.size()));    
+cl::sycl::queue q;
+{% endhighlight %}
+
+Here we are creating our buffers and our queue, just like in the last example.
+
+{% highlight cpp %}
+sycl::sycl_execution_policy<class Mul> sycl_policy(q);
+{% endhighlight %}    
+
+Here's where things get interesting. We create a `sycl_execution_policy` from our queue and give it a name to use for the kernel. This execution policy can then be used just like `std::execution::par` or `std::execution::seq`.
+
+{% highlight cpp %}
+transform(sycl_policy, begin(in_buffer), end(in_buffer), begin(out_buffer),
+          [](int x) { return x*2; });
+{% endhighlight %}                  
+
+Now our kernel dispatch looks just like a call to `std::transform` with an execution policy provided. That closure we pass in will be compiled for and executed on the device without us having to do any more complex set up.
+
+Of course, you can do more than just `transform`. At the time of writing, the SYCL Parallel STL supports these algorithms:
+
+- `sort`
+- `transform`
+- `for_each`
+- `for_each_n`
+- `count_if`
+- `reduce`
+- `inner_product`
+- `transform_reduce`
+
+-------------------------------------
+
+### Is it worth it?
+
+Maybe by this point you think this is all interesting, but don't see the benefit of all the extra code. I'm not going to do any scientific benchmarking, but I can give you the numbers for running the above examples on my machine.
+
+Parallel STL - 260ms
+SYCL - 310ms
 
 
 
