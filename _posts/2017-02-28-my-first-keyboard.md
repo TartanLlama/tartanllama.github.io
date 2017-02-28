@@ -48,7 +48,7 @@ You can see at the bottom here where I had to get creative with getting the diod
 
 ![teensy](/assets/keyboard/teensy.jpg)
 
-Here's my first ever attempt at soldering a microcontroller. I had to redo some of these joints after taking this picture, but everything worked in the end. The chip I used is called the Teensy 2, and it appears to be the de facto standard in small custom keyboards. Essentially you just wire every row and every column to a pin on the Teensy. The multiple colours help a lot in tracking down what you soldered to what when it comes to writing the firmware.
+Here's my first ever attempt at soldering a microcontroller. I know, I have some improving to do. I had to redo some of these joints after taking this picture, but everything worked in the end. The chip I used is called the Teensy 2, and it appears to be the de facto standard in small custom keyboards. Essentially you just wire every row and every column to a pin on the Teensy. The multiple colours help a lot in tracking down what you soldered to what when it comes to writing the firmware.
 
 ![spider](/assets/keyboard/spider.jpg)
 
