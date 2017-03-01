@@ -3,8 +3,8 @@ title: "Simon Brand"
 email: tartanllama@gmail.com
 description: "Personal blog and CV for Simon Brand"
 baseurl: ""
-url: https://tartanllama.xyz
-enforse_ssl: tartanllama.xyz
+url: https://blog.tartanllama.xyz
+enforse_ssl: blog.tartanllama.xyz
 title_description: "Programming blog and CV for Simon Brand, AKA TartanLlama. Expect C++ template metaprogramming."
 title_image: "https://s.gravatar.com/avatar/c425873f547d93f4079ca252b42a886d?s=500"
 post_limit: 5
