@@ -13,7 +13,12 @@ Anyone who has written more than a hello world program should have used a debugg
   - Memory addresses -- part 2
   - Source code lines -- part 5
   - Function entry -- part 5
-- Instruction-level single step -- part 3
+- Read and write registers and memory -- part 3
+- Single stepping -- part 4
+  - Instruction
+  - Step in
+  - Step out
+  - Step over
 - Print current source location -- part 5
 - Print backtrace -- part 6
 - Print values of simple variables -- part 7
@@ -22,7 +27,6 @@ In part 8 I'll also outline how you could add the following to your debugger:
 
 - Remote debugging
 - Shared library and dynamic loading support
-- Source-level single stepping
 - Expression evaluation
 - Multi-threaded debugging support
 
