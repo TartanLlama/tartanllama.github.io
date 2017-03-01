@@ -43,21 +43,21 @@ const std::array<reg_descriptor, n_registers> g_register_descriptors {{ "{{" }}
     { reg::rbx, 3, "rbx" },
     { reg::r11, 11, "r11" },
     { reg::r10, 10, "r10" },
-    { reg::r9, 9, "r9" },        
+    { reg::r9, 9, "r9" },
     { reg::r8, 8, "r8" },
     { reg::rax, 0, "rax" },
     { reg::rcx, 2, "rcx" },
     { reg::rdx, 1, "rdx" },
     { reg::rsi, 4, "rsi" },
     { reg::rdi, 5, "rdi" },
-    { reg::orig_rax, -1, "orig_rax" },        
+    { reg::orig_rax, -1, "orig_rax" },
     { reg::rip, -1, "rip" },
     { reg::cs, 51, "cs" },
     { reg::rflags, 49, "eflags" },
     { reg::rsp, 7, "rsp" },
     { reg::ss, 52, "ss" },
     { reg::fs_base, 58, "fs_base" },
-    { reg::gs_base, 59, "gs_base" },        
+    { reg::gs_base, 59, "gs_base" },
     { reg::ds, 53, "ds" },
     { reg::es, 50, "es" },
     { reg::fs, 54, "fs" },
@@ -84,7 +84,7 @@ Now we want to read `regs` depending on which register was requested. We could w
 {% highlight cpp %}
     auto it = std::find_if(begin(g_register_descriptors), end(g_register_descriptors),
                            [r](auto&& rd) { return rd.r == r; });
-    
+
     *(reinterpret_cast<uint64_t*>(&regs) + (it - begin(g_register_descriptors))) = value;
 {% endhighlight %}
 
@@ -98,7 +98,7 @@ void set_register_value(pid_t pid, reg r, uint64_t value) {
     ptrace(PTRACE_GETREGS, pid, nullptr, &regs);
     auto it = std::find_if(begin(g_register_descriptors), end(g_register_descriptors),
                            [r](auto&& rd) { return rd.r == r; });
-    
+
     *(reinterpret_cast<uint64_t*>(&regs) + (it - begin(g_register_descriptors))) = value;
     ptrace(PTRACE_SETREGS, pid, nullptr, &regs);
 }
@@ -163,7 +163,7 @@ All we need to do here is add a new command to the `handle_command` function. Wi
         }
         else if (is_prefix(args[1], "write")) {
             set_register_value(m_pid, get_register_from_name(args[2]), std::stol(args[3]));
-        }        
+        }
     }
 {% endhighlight %}
 
@@ -190,7 +190,7 @@ Now we'll add commands for our UI:
 {% highlight cpp %}
     else if(is_prefix(command, "memory")) {
         std::string addr {args[2], 2};
-        
+
         if (is_prefix(args[1], "read")) {
             std::cout << read_memory(std::stol(addr, 0, 16)) << std::endl;
         }
@@ -204,6 +204,6 @@ Now we'll add commands for our UI:
 
 ### Testing it out
 
-Since we can't continue our program after a breakpoint yet (don't worry, that's coming in the next post), you're kind of limited in what you can test at this point. For now, be content with writing some values to registers or memory and seeing them there when you read them back.
+Now that we can read and modify registers, we can have a bit of fun with our hello world program. If you set a breakpoint just after the output call, try writing the address of the previous instruction to the program counter (`rip`) so that the call happens again.
 
 In the next post, we'll take our first look at DWARF information and add various kinds of single stepping to our debugger. After that, we'll have a mostly functioning tool which can step through code, set breakpoints wherever we like, modify data and so forth. As always, drop a comment below if you have any questions!

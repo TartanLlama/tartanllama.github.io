@@ -132,11 +132,37 @@ void debugger::handle_command(const std::string& line) {
 
 ------------------------------
 
+### Continuing from the breakpoint
+
+You might notice that if you continue from the breakpoint, nothing happens. That's because the breakpoint is still set in memory, so it's just hit repeatedly. The simple solution is to just disable the breakpoint, single step, re-enable it, then continue. We don't currently have a way to work out if we're at a breakpoint or not, so for now we'll just disable all breakpoints before stepping a single instruction. Let's change the `continue_execution` function which we wrote last time:
+
+{% highlight cpp %}
+void debugger::continue_execution() {
+    for (auto&& p : m_breakpoints) {
+        p.second.disable();
+    }
+
+    ptrace(PTRACE_SINGLESTEP, m_pid, nullptr, nullptr);
+
+    for (auto&& p : m_breakpoints) {
+        p.second.enable();
+    }
+
+    ptrace(PTRACE_CONT, m_pid, nullptr, nullptr);
+
+    int wait_status;
+    auto options = 0;
+    waitpid(m_pid, &wait_status, options);
+}
+{% endhighlight %}
+
+You might want to check if the breakpoints are already disabled and try to finish with the state the same as when you started, but we're going to be fixing this function in a couple of posts anyway.
+
 ### Testing it out
 
 Of course, setting a breakpoint on some address isn't very useful if you don't know what address to set it at. In the future we'll be adding the ability to set breakpoints on function names or source code lines, but for now, we can work it out manually.
 
-A simple way to test out your debugger is to write a hello world program which outputs to `std::cerr` (since this isn't buffered, it'll print out straight away), figure out where the call to the output function is, then set a breakpoint on it. If you continue and "Hello world" doesn't print out, then it works! You can then restart your debugger and set a breakpoint on the instruction after the call and you should see the text printing out as normal.
+A simple way to test out your debugger is to write a hello world program and set a breakpoint on the call to the output operator. If you continue the program then hopefully the execution will stop without printing anything, then when you continue again the printing will occur.
 
 One way to find the address is to use `objdump`. If you open up a shell and execute `objdump -d <your program>`, then you should see the disassembly for your code. You should then be able to find the `main` function and locate the `call` instruction. For example, I built a hello world example, disassembled it, and got this as the disassembly for `main`:
 
@@ -153,8 +179,6 @@ One way to find the address is to use `objdump`. If you open up a shell and exec
 ```
 
 As you can hopefully see, we would want to set a breakpoint on `0x400944` to see no output, and `0x400949` to see the output.
-
-If you try to continue the program after hitting the breakpoint, it will not work, as the breakpoint is still in place. We'll deal with this in the next post, where we'll also implement single stepping.
 
 ------------------------------
 
