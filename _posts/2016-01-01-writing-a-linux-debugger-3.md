@@ -203,6 +203,57 @@ Now we'll add commands for our UI:
 
 ----------------------
 
+### Patching `continue_execution`
+
+Before we test out our changes, we're now in a position to implement a more sane version of `continue_execution`. Since we can get the program counter, we can check if we're at a breakpoint and only disable that one before stepping rather than disabling the entire world.
+
+First we'll add for couple of helper functions for clarity and brevity:
+
+{% highlight cpp %}
+uint64_t debugger::get_pc() {
+    return get_register_value(m_pid, reg::rip);
+}
+
+void debugger::set_pc(uint64_t pc) {
+    set_register_value(m_pid, reg::rip, pc);
+}
+
+void debugger::wait_for_signal() {
+    int wait_status;
+    auto options = 0;
+    waitpid(m_pid, &wait_status, options);
+{% endhighlight %}
+
+Then we can write a function to step over a breakpoint:
+
+{% highlight cpp %}
+void debugger::step_over_breakpoint() {
+    if (m_breakpoints.count(get_pc())) {
+        auto& bp = m_breakpoints[get_pc()];
+        if (bp.is_enabled()) {
+            bp.disable();
+            ptrace(PTRACE_SINGLESTEP, m_pid, nullptr, nullptr);
+            wait_for_signal();            
+            bp.enable();
+        }
+    }
+}
+{% endhighlight %}
+
+We simply check to see if there's a breakpoint set for the value of the current PC, and if there is, we enable it, step over it, and re-enable.
+
+Now `continue_execution` becomes this:
+
+{% highlight cpp %}
+void debugger::continue_execution() {
+    step_over_breakpoint();
+    ptrace(PTRACE_CONT, m_pid, nullptr, nullptr);
+    wait_for_signal();
+}
+{% endhighlight %}
+
+-------------------------------
+
 ### Testing it out
 
 Now that we can read and modify registers, we can have a bit of fun with our hello world program. If you set a breakpoint just after the output call, try writing the address of the previous instruction to the program counter (`rip`) so that the call happens again.
