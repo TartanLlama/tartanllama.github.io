@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Writing a Linux Debugger Part 1 -- Setup"
+title:      "Writing a Linux Debugger Part 1: Setup"
 category:   c++
 tags:
  - c++
@@ -14,16 +14,16 @@ Anyone who has written more than a hello world program should have used a debugg
   - Source code lines -- part 5
   - Function entry -- part 5
 - Read and write registers and memory -- part 3
-- Single stepping -- part 4
+- Single stepping -- part 5
   - Instruction
   - Step in
   - Step out
   - Step over
-- Print current source location -- part 5
-- Print backtrace -- part 6
-- Print values of simple variables -- part 7
+- Print current source location -- part 6
+- Print backtrace -- part 7
+- Print values of simple variables -- part 8
 
-In part 8 I'll also outline how you could add the following to your debugger:
+In part 9 I'll also outline how you could add the following to your debugger:
 
 - Remote debugging
 - Shared library and dynamic loading support

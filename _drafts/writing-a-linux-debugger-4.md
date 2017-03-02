@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Writing a Linux Debugger Part 4 -- Elves and dwarves"
+title:      "Writing a Linux Debugger Part 4: Elves and dwarves"
 category:   c++
 tags:
  - c++
@@ -139,13 +139,18 @@ LOCAL_SYMBOLS:
 The first DIE represents a compilation unit (CU), which is essentially a source file with all of the `#includes` and such resolved. Here are the attributes annotated with their meaning:
 
 ```
-DW_AT_producer              clang version 3.9.1 (tags/RELEASE_391/final)    <-- The compiler which produced this binary
-DW_AT_language              DW_LANG_C_plus_plus                             <-- The source language
-DW_AT_name                  /home/simon/play/MiniDbg/examples/variable.cpp  <-- The name of the file which this CU represents
-DW_AT_stmt_list             0x00000000                                      <-- An offset into the line table which tracks this CU
-DW_AT_comp_dir              /home/simon/play/MiniDbg/build                  <-- The compilation directory
-DW_AT_low_pc                0x00400670                                      <-- The start of the code for this CU
-DW_AT_high_pc               0x0040069c                                      <-- The end of the code for this CU
+DW_AT_producer   clang version 3.9.1 (tags/RELEASE_391/final)    <-- The compiler which produced
+                                                                     this binary
+DW_AT_language   DW_LANG_C_plus_plus                             <-- The source language
+DW_AT_name       /home/simon/play/MiniDbg/examples/variable.cpp  <-- The name of the file which
+                                                                     this CU represents
+DW_AT_stmt_list  0x00000000                                      <-- An offset into the line table
+                                                                     which tracks this CU
+DW_AT_comp_dir   /home/simon/play/MiniDbg/build                  <-- The compilation directory
+DW_AT_low_pc     0x00400670                                      <-- The start of the code for
+                                                                     this CU
+DW_AT_high_pc    0x0040069c                                      <-- The end of the code for
+                                                                     this CU
 ```
 
 The other DIEs follow a similar scheme, and you can probably intuit what the different attributes mean.

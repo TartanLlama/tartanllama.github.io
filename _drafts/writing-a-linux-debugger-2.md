@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Writing a Linux Debugger Part 2 -- Breakpoints"
+title:      "Writing a Linux Debugger Part 2: Breakpoints"
 category:   c++
 tags:
  - c++

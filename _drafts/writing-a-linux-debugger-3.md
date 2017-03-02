@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Writing a Linux Debugger Part 3 -- Registers and memory"
+title:      "Writing a Linux Debugger Part 3: Registers and memory"
 category:   c++
 tags:
  - c++
