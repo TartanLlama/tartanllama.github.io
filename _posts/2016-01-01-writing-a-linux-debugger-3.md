@@ -1,6 +1,7 @@
 ---
 layout:     post
 title:      "Writing a Linux Debugger Part 3: Registers and memory"
+pubdraft:   true
 category:   c++
 tags:
  - c++
@@ -104,7 +105,7 @@ void set_register_value(pid_t pid, reg r, uint64_t value) {
 }
 {% endhighlight %}
 
-Next is lookup by DWARF register number. This time I'll actually check for an error condition just incase we get some weird DWARF information:
+Next is lookup by DWARF register number. This time I'll actually check for an error condition just in case we get some weird DWARF information:
 
 {% highlight cpp %}
 uint64_t get_register_value_from_dwarf_register (pid_t pid, unsigned regnum) {

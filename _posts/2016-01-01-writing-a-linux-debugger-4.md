@@ -1,6 +1,7 @@
 ---
 layout:     post
 title:      "Writing a Linux Debugger Part 4: Elves and dwarves"
+pubdraft:   true
 category:   c++
 tags:
  - c++
@@ -236,11 +237,11 @@ If we look up this type in the debug information, we get this DIE:
                       DW_AT_byte_size             0x00000008
 ```
 
-This tells us that the type is a 8 byte (64 bit) signed integer type, so we can go ahead and intepret those bytes as an `int64_t` and display it to the user.
+This tells us that the type is a 8 byte (64 bit) signed integer type, so we can go ahead and interpret those bytes as an `int64_t` and display it to the user.
 
 Of course, types can get waaaaaaay more complex than that, as they have to be able to express things like C++ types, but this gives you a basic idea of how they work.
 
-Coming bace to that frame base for a second, Clang was nice enough to track the frame base with register `6`, which on x86_64 is the `rbp` or frame pointer register. GCC tends to prefer to use `DW_OP_call_frame_cfa`, which involves parsing the `.eh_frame` ELF section, and that's an entirely different article which I won't be writing. If you tell GCC to use DWARF 2 instead of more recent versions, it'll tend to output location lists, which are somewhat easier to read:
+Coming back to that frame base for a second, Clang was nice enough to track the frame base with register `6`, which on x86_64 is the `rbp` or frame pointer register. GCC tends to prefer to use `DW_OP_call_frame_cfa`, which involves parsing the `.eh_frame` ELF section, and that's an entirely different article which I won't be writing. If you tell GCC to use DWARF 2 instead of more recent versions, it'll tend to output location lists, which are somewhat easier to read:
 
 ```
 DW_AT_frame_base            <loclist at offset 0x00000000 with 4 entries follows>

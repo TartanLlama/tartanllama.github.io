@@ -2,6 +2,7 @@
 layout:     post
 title:      "Writing a Linux Debugger Part 1: Setup"
 category:   c++
+pubdraft:   true
 tags:
  - c++
 ---
@@ -44,7 +45,7 @@ Once you've either installed these on your system, or got them building as depen
 
 ### Launching the executable
 
-Before we actually debug anything, we'll need to lanch the debugee program. We'll do this with the classic fork/exec pattern.
+Before we actually debug anything, we'll need to launch the debugee program. We'll do this with the classic fork/exec pattern.
 
 {% highlight cpp %}
 int main(int argc, char* argv[]) {
@@ -194,7 +195,7 @@ void debugger::continue_execution() {
 }
 {% endhighlight %}
 
-For now our `continue_execution` function will just use `ptrace` to tell the process to continue, then `waitpid` until it't signalled.
+For now our `continue_execution` function will just use `ptrace` to tell the process to continue, then `waitpid` until it's signalled.
 
 ------------------------------
 
