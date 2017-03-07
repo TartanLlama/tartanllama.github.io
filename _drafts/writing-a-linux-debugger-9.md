@@ -28,6 +28,8 @@ $Z0,400570,1#43
 
 ### Shared library and dynamic loading support
 
+Supporting shared libraries and dynamic loading is a pretty in-depth issue which requires a lot of knowledge about the Linux dynamic loader. This is one area of debugging which I don't know much about, so you might be better off reading the LLDB sources if you want to understand how to implement this. The relevant folder is [`source/Plugins/DynamicLoader/POSIX_DYLD`](https://github.com/llvm-mirror/lldb/tree/master/source/Plugins/DynamicLoader/POSIX-DYLD).
+
 --------------------
 
 ### Expression evaluation
@@ -36,4 +38,26 @@ $Z0,400570,1#43
 
 ### Multi-threaded debugging support
 
-[useful link](http://timetobleed.com/notes-about-an-odd-esoteric-yet-incredibly-useful-library-libthread_db/)
+The debugger we have written only supports single threaded applications, but if we want to debug most real-world applications, we'll want to support multiple threads. The simplest way to support this is to trace thread creation and parse the procfs to get the information you want.
+
+The Linux threading library is called `pthreads`. When `pthread_create` is called, the library creates a new thread using the `clone` syscall, and we can trace this syscall with `ptrace` (assuming your kernel is older than 2.5.46). To do this, you'll need to set some `ptrace` options after attaching to the debuggee:
+
+{% highlight cpp %}
+ptrace(PTRACE_SETOPTIONS, m_pid, nullptr, PTRACE_O_TRACECLONE);
+{% endhighlight %}
+
+Now when `clone` is called, the process will be signaled with our old friend `SIGTRAP`. You can add a case to `handle_sigtrap` which can handle the creation of the new thread:
+
+{% highlight cpp %}
+case (SIGTRAP | (PTRACE_EVENT_CLONE << 8)):
+    //get the new thread ID
+    unsigned long event_message = 0;
+    ptrace(PTRACE_GETEVENTMSG, pid, nullptr, message);
+    
+    //handle creation
+    //...
+{% endhighlight %}
+
+Once you've got that, you can have a look in `/proc/<pid>/task/` and have a look at the memory maps and suchlike to get all the information you need.
+
+GDB uses `libthread_db`, which provides a bunch of helper functions so that you don't need to do all the parsing and processing yourself. Setting up this library is pretty weird and I won't show how it works here, but you can go and read [this tutorial](http://timetobleed.com/notes-about-an-odd-esoteric-yet-incredibly-useful-library-libthread_db/) if you'd like to use it.
