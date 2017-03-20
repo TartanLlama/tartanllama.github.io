@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Writing a Linux Debugger Part 5: Stepping on dwarves"
+title:      "Writing a Linux Debugger Part 6: Stepping on dwarves"
 category:   c++
 tags:
  - c++
@@ -8,7 +8,7 @@ tags:
 
 In the last post we learned about DWARF information and how it lets us relate the machine code with the high-level source. This time we'll be putting this knowledge into practice by adding source-level stepping to our debugger.
 
-------------------------
+---------------------
 
 ### Exposing instruction-level stepping
 
@@ -41,81 +41,112 @@ else if(is_prefix(command, "stepi")) {
  }
 {% endhighlight %}
 
+But now there's a bit of a problem; both hitting a breakpoint and finishing a single step will send a `SIGTRAP` signal, but we need a way to tell between them. While we're at it, we'll want to tell the user if the debugee segfaults or something as well.
+
 --------------------------
 
-### Setting up our DWARF parser
+### Handling signals
 
-As I noted way back at the start of this series, we'll be using `libelfin` to handle our DWARF information. Hopefully you got this set up in the first post, but if not, do so now, and make sure that you use the `fbreg` branch of my fork.
-
-Once you have `libelfin` building, it's time to add it to our debugger. The first step is to parse the ELF executable we're given and extract the DWARF from it. This is very easy with `libelfin`, just make these changes to `debugger`:
+Fortunately, `ptrace` comes to our rescue again. One of the possible commands to `ptrace` is `PTRACE_GETSIGINFO`, which will give you information about the last signal which the process was sent. We use it like so:
 
 {% highlight cpp %}
-class debugger {
-public:
-    debugger (std::string prog_name, pid_t pid)
-         : m_prog_name{std::move(prog_name)}, m_pid{pid} {
-        auto fd = open(m_prog_name.c_str(), O_RDONLY);
-
-        m_elf = elf::elf{elf::create_mmap_loader(fd)};
-        m_dwarf = dwarf::dwarf{dwarf::elf::create_loader(m_elf)};
-    }
-    //...
-    
-private:
-    //...
-    dwarf::dwarf m_dwarf;
-    elf::elf m_elf;
-};
-{% endhighlight %}
-
----------------------------
-
-### Debug information primatives
-
-Next on the list is to implement functions to retrieve line entries and function DIEs from PC values. We'll start with `get_function_from_pc`:
-
-{% highlight cpp %}
-dwarf::die debugger::get_function_from_pc(uint64_t pc) {
-    for (auto &cu : m_dwarf.compilation_units()) {
-        if (die_pc_range(cu.root()).contains(get_pc())) {
-            for (const auto& die : cu.root()) {
-                if (die.tag == dwarf::DW_TAG::subprogram) {
-                    if (die_pc_range(die).contains(pc)) {
-                        return die;
-                    }
-                }
-            }
-        }
-    }
-
-    throw std::out_of_range{"Cannot find function"};
+siginfo_t debugger::get_signal_info() {
+    siginfo_t info;
+    ptrace(PTRACE_GETSIGINFO, m_pid, nullptr, &info);
+    return info;
 }
 {% endhighlight %}
 
-Here we take a naive approach of just iterating through compilation units until we find one which contains the program counter, then iterating through the children until we find the relevant function (`DW_TAG_subprogram`). As mentioned in the last part, you could handle things like member functions and inlining here if you wanted.
-
-Next is `get_line_entry_from_pc`:
+This gives us a `siginfo_t` object, which provides the following information:
 
 {% highlight cpp %}
-dwarf::line_table::iterator debugger::get_line_entry_from_pc(uint64_t pc) {
-    for (auto &cu : m_dwarf.compilation_units()) {
-        if (die_pc_range(cu.root()).contains(pc)) {
-            auto &lt = cu.get_line_table();
-            auto it = lt.find_address(pc);
-            if (it == lt.end()) {
-                throw std::out_of_range{"Cannot find line entry"};
-            }
-            else {
-                return it;
-            }
-        }
-    }
-
-    throw std::out_of_range{"Cannot find line entry"};
+siginfo_t {
+    int      si_signo;     /* Signal number */
+    int      si_errno;     /* An errno value */
+    int      si_code;      /* Signal code */
+    int      si_trapno;    /* Trap number that caused
+                              hardware-generated signal
+                              (unused on most architectures) */
+    pid_t    si_pid;       /* Sending process ID */
+    uid_t    si_uid;       /* Real user ID of sending process */
+    int      si_status;    /* Exit value or signal */
+    clock_t  si_utime;     /* User time consumed */
+    clock_t  si_stime;     /* System time consumed */
+    sigval_t si_value;     /* Signal value */
+    int      si_int;       /* POSIX.1b signal */
+    void    *si_ptr;       /* POSIX.1b signal */
+    int      si_overrun;   /* Timer overrun count;
+                              POSIX.1b timers */
+    int      si_timerid;   /* Timer ID; POSIX.1b timers */
+    void    *si_addr;      /* Memory location which caused fault */
+    long     si_band;      /* Band event (was int in
+                              glibc 2.3.2 and earlier) */
+    int      si_fd;        /* File descriptor */
+    short    si_addr_lsb;  /* Least significant bit of address
+                              (since Linux 2.6.32) */
+    void    *si_lower;     /* Lower bound when address violation
+                              occurred (since Linux 3.19) */
+    void    *si_upper;     /* Upper bound when address violation
+                              occurred (since Linux 3.19) */
+    int      si_pkey;      /* Protection key on PTE that caused
+                              fault (since Linux 4.6) */
+    void    *si_call_addr; /* Address of system call instruction
+                              (since Linux 3.5) */
+    int      si_syscall;   /* Number of attempted system call
+                              (since Linux 3.5) */
+    unsigned int si_arch;  /* Architecture of attempted system call
+                              (since Linux 3.5) */
 }
 {% endhighlight %}
 
-Again, we simply find the correct compilation unit, then ask the line table to get us the relevant entry.
+I'll just be using `si_signo` to work out which signal was sent, and `si_code` to get more information about the signal. The best place to put this code is in our `wait_for_signal` function:
+
+{% highlight cpp %}
+void debugger::wait_for_signal() {
+    int wait_status;
+    auto options = 0;
+    waitpid(m_pid, &wait_status, options);
+
+    auto siginfo = get_signal_info();
+
+    switch (siginfo.si_signo) {
+    case SIGTRAP:
+        handle_sigtrap(siginfo);
+        break;
+    case SIGSEGV:
+        std::cout << "Yay, segfault. Reason: " << siginfo.si_code << std::endl;
+        break;
+    default:
+        std::cout << "Got signal " << strsignal(siginfo.si_signo) << std::endl;
+    }
+}
+{% endhighlight %}
+
+Now to handle `sigtraps`. It suffices to know that `SI_KERNEL` or `TRAP_BRKPT` will be sent when a breakpoint is hit, and `TRAP_TRACE` will be sent on single step completion:
+
+{% highlight cpp %}
+void debugger::handle_sigtrap(siginfo_t info) {
+    switch (info.si_code) {
+    //one of these will be set if a breakpoint was hit
+    case SI_KERNEL:
+    case TRAP_BRKPT:
+    {
+        set_pc(get_pc()-1);
+        std::cout << "Hit breakpoint at address 0x" << std::hex << get_pc() << std::endl;
+        auto line_entry = get_line_entry_from_pc(get_pc());
+        print_source(line_entry->file->path, line_entry->line);
+        return;
+    }
+    //this will be set if the signal was sent by single stepping
+    case TRAP_TRACE:
+        return;
+    default:
+        std::cout << "Unknown SIGTRAP code " << info.si_code << std::endl;
+        return;
+    }
+}
+{% endhighlight %}
+
 
 -------------------------------------
 

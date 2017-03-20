@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Writing a Linux Debugger Part 9: Advanced concepts"
+title:      "Writing a Linux Debugger Part 10: Next steps"
 category:   c++
 tags:
  - c++

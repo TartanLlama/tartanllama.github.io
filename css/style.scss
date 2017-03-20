@@ -938,3 +938,8 @@ h3  {
 	vertical-align: middle;
     }
 }
+
+@font-face {
+	font-family: Inconsolata-g;
+	src: url("fonts/inconsolatag.woff") format("woff"), url("fonts/inconsolatag.ttf") format("ttf");
+}

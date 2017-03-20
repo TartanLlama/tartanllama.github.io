@@ -7,13 +7,13 @@ tags:
  - c++
 ---
 
-Anyone who has written more than a hello world program should have used a debugger at some point (if you haven't, drop what you're doing and learn how to use one). However, although these tools are in such widespread use, there aren't a lot of resources which tell you how they work and how to write one, especially when compared to other toolchain technologies like compilers. In this post we'll write a small debugger for Linux programs with the following features:
+Anyone who has written more than a hello world program should have used a debugger at some point (if you haven't, drop what you're doing and learn how to use one). However, although these tools are in such widespread use, there aren't a lot of resources which tell you how they work and how to write one, especially when compared to other toolchain technologies like compilers. In this post series we'll learn what makes debuggers tick and write one for debugging Linux programs. We'll support the following features:
 
 - Launch, halt, and continue execution -- we'll do that in this post
 - Set breakpoints on
   - Memory addresses -- part 2
-  - Source code lines -- part 5
-  - Function entry -- part 5
+  - Source code lines -- part 6
+  - Function entry -- part 6
 - Read and write registers and memory -- part 3
 - Single stepping -- part 5
   - Instruction
@@ -31,7 +31,7 @@ In part 9 I'll also outline how you could add the following to your debugger:
 - Expression evaluation
 - Multi-threaded debugging support
 
-I'll be focusing on C and C++ for this debugger, but it should work just as well with any language which compiles down to machine code and outputs standard DWARF debug information (if you don't know what that is yet, don't worry, this will be covered in later posts).
+I'll be focusing on C and C++ for this debugger, but it should work just as well with any language which compiles down to machine code and outputs standard DWARF debug information (if you don't know what that is yet, don't worry, this will be covered in post 4).
 
 -------------------------------
 
