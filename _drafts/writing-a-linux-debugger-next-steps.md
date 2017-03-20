@@ -34,6 +34,8 @@ Supporting shared libraries and dynamic loading is a pretty in-depth issue which
 
 ### Expression evaluation
 
+Expression evaluation is a feature which lets users evaluate expressions in the original source language while debugging their application. For example, in LLDB or GDB you could execute `print foo()` to call the `foo` function and print the result. Depending on how complex the expression is, there are a few different ways of actually evaluating the expression. If the expression is ust a simple identifier, then the debuger can just look at the debug information, locate the variable and print out the value, just like we have done in part TODO N. If the expression is a bit more complex, then it may be possible to compile the code to an intermediate representation (IR) and just interpret that to get the result. For example, for some expressions LLDB will use Clang to compile the expression to LLVM IR and interpret that. If the expression is even more complex, or requires calling some function, then the code might need to be JITted to the target and executed in the address space of the debuggee.
+
 --------------------
 
 ### Multi-threaded debugging support
@@ -53,7 +55,7 @@ case (SIGTRAP | (PTRACE_EVENT_CLONE << 8)):
     //get the new thread ID
     unsigned long event_message = 0;
     ptrace(PTRACE_GETEVENTMSG, pid, nullptr, message);
-    
+
     //handle creation
     //...
 {% endhighlight %}
