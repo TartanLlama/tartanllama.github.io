@@ -9,7 +9,7 @@ tags:
 
 ### How is breakpoint formed?
 
-There are essentially two main kinds of breakpoints: hardware and software. Hardware breakpoints typically involve setting some architecture-specific registers to produce your breaks for you, whereas software breakpoints tend to be implemented by modifying the code which is being executed on the fly. We'll be focusing solely on software breakpoints for this article, as they are simpler and you can have as many as you want. On x86 you can only have four hardware breakpoints set at a given time, but they enable you to set them to fire on reading or writing a given address rather than simply executing them.
+There are essentially two main kinds of breakpoints: hardware and software. Hardware breakpoints typically involve setting some architecture-specific registers to produce your breaks for you, whereas software breakpoints involve modifying the code which is being executed on the fly. We'll be focusing solely on software breakpoints for this article, as they are simpler and you can have as many as you want. On x86 you can only have four hardware breakpoints set at a given time, but they give you the power to make them fire on just reading from or writing to a given address rather than only executing them.
 
 I said above that software breakpoints are set by modifying the executing code on the fly, so the questions are:
 
@@ -17,11 +17,13 @@ I said above that software breakpoints are set by modifying the executing code o
 - What modifications do we make?
 - How do these modifications result in a breakpoint?
 
-The answer to the first question is, of course, `ptrace`. We've previously used it to set up our program for tracing and continuing its execution, we can also use it to read and write memory.
+The answer to the first question is, of course, `ptrace`. We've previously used it to set up our program for tracing and continuing its execution, but we can also use it to read and write memory.
 
 For the modification, we need to write code to the address of the desired breakpoint which will cause the processor to halt and signal the program somehow. On x86 this is accomplished with the `int 3` instruction. As you may or may not know, x86 has an *interrupt vector table* which the operating system can use to register handlers for various events, such as page faults, protection faults, and invalid opcodes. It's kind of like registering error handling callbacks, but right down at the hardware level. When the processor executes the `int 3` instruction, control is passed to the debug interrupt handler, which -- in the case of Linux -- signals the process with a `SIGTRAP`.
 
-The above process will result in a breakpoint, because our debugger will be waiting for the child process to be signalled, so when it sees that `SIGTRAP`, it can see that a breakpoint has occurred. This breakpoint can then be communicated to the user, perhaps by printing the source location which has been reached, or changing the focused line in a GUI debugger.
+![breakpoint](/assets/breakpoint.png)
+
+The above process will result in a breakpoint, because our debugger will be waiting for the child process to be signalled with `waitpid`, so when it sees that `SIGTRAP`, it can see that a breakpoint has occurred. This breakpoint can then be communicated to the user, perhaps by printing the source location which has been reached, or changing the focused line in a GUI debugger.
 
 ------------------------------
 
