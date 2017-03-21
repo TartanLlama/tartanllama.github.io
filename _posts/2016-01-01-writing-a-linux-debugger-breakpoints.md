@@ -55,7 +55,7 @@ Hopefully that code all looks pretty straightforward. The real magic happens in 
 As we've learned above, we need to replace the instruction which is currently at the given address with an `int 3` instruction. We'll also want to save out what used to be at that address so that we can restore the code later. `0xcc` is the binary encoding of `int 3`, so we just need to set the bottom two bytes of the current instruction to that.
 
 {% highlight cpp %}
-void debugger::enable() {
+void breakpoint::enable() {
     m_saved_data = ptrace(PTRACE_PEEKDATA, m_pid, m_addr, nullptr);
     uint64_t int3 = 0xcc;
     uint64_t data_with_int3 = ((m_saved_data & ~0xff) | int3); //set bottom two bytes to 0xcc
@@ -70,7 +70,7 @@ The `PTRACE_PEEKDATA` request to `ptrace` is how to read the memory of the trace
 The implementation of `disable` is easier, as we simply need to overwrite the memory we wrote to with the original data:
 
 {% highlight cpp %}
-void debugger::disable() {
+void breakpoint::disable() {
     ptrace(PTRACE_POKEDATA, m_pid, m_addr, m_saved_data);
     m_enabled = false;
 }
@@ -92,7 +92,7 @@ I'll store my breakpoints in a `std::unordered_map<std::intptr_t, breakpoint>` s
 {% highlight cpp %}
 class debugger {
     //...
-    set_breakpoint_at_address(std::intptr_t addr);
+    void set_breakpoint_at_address(std::intptr_t addr);
     //...
 private:
     //...
@@ -135,35 +135,15 @@ void debugger::handle_command(const std::string& line) {
 
 ### Continuing from the breakpoint
 
-You might notice that if you continue from the breakpoint, nothing happens. That's because the breakpoint is still set in memory, so it's just hit repeatedly. The simple solution is to just disable the breakpoint, single step, re-enable it, then continue. We don't currently have a way to work out if we're at a breakpoint or not, so for now we'll just disable all breakpoints before stepping a single instruction. Let's change the `continue_execution` function which we wrote last time:
+You might notice that if you continue from the breakpoint, nothing happens. That's because the breakpoint is still set in memory, so it's just hit repeatedly. The simple solution is to just disable the breakpoint, single step, re-enable it, then continue. Unfortunately we'd also need to modify the program counter to point back before the breakpoint, so we'll leave this until the next post.
 
-{% highlight cpp %}
-void debugger::continue_execution() {
-    for (auto&& p : m_breakpoints) {
-        p.second.disable();
-    }
-
-    ptrace(PTRACE_SINGLESTEP, m_pid, nullptr, nullptr);
-
-    for (auto&& p : m_breakpoints) {
-        p.second.enable();
-    }
-
-    ptrace(PTRACE_CONT, m_pid, nullptr, nullptr);
-
-    int wait_status;
-    auto options = 0;
-    waitpid(m_pid, &wait_status, options);
-}
-{% endhighlight %}
-
-You might want to check if the breakpoints are already disabled and try to finish with the state the same as when you started, but we're going to be fixing this function in a couple of posts anyway.
+-----------------------------
 
 ### Testing it out
 
 Of course, setting a breakpoint on some address isn't very useful if you don't know what address to set it at. In the future we'll be adding the ability to set breakpoints on function names or source code lines, but for now, we can work it out manually.
 
-A simple way to test out your debugger is to write a hello world program and set a breakpoint on the call to the output operator. If you continue the program then hopefully the execution will stop without printing anything, then when you continue again the printing will occur.
+A simple way to test out your debugger is to write a hello world program which writes to `std::cerr` (to avoid buffering) and set a breakpoint on the call to the output operator. If you continue the program then hopefully the execution will stop without printing anything. You can then restart the debugger and set a breakpoint just after the call, and you should see the message being printed successfully.
 
 One way to find the address is to use `objdump`. If you open up a shell and execute `objdump -d <your program>`, then you should see the disassembly for your code. You should then be able to find the `main` function and locate the `call` instruction. For example, I built a hello world example, disassembled it, and got this as the disassembly for `main`:
 
@@ -186,3 +166,5 @@ As you can hopefully see, we would want to set a breakpoint on `0x400944` to see
 ### Finishing up
 
 That's all for now. Again, let me know in the comments if you have any issues.
+
+You can find the code for 

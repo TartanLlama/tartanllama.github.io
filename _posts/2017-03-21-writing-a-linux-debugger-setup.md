@@ -2,36 +2,55 @@
 layout:     post
 title:      "Writing a Linux Debugger Part 1: Setup"
 category:   c++
-pubdraft:   true
 tags:
  - c++
 ---
 
-Anyone who has written more than a hello world program should have used a debugger at some point (if you haven't, drop what you're doing and learn how to use one). However, although these tools are in such widespread use, there aren't a lot of resources which tell you how they work and how to write one, especially when compared to other toolchain technologies like compilers. In this post series we'll learn what makes debuggers tick and write one for debugging Linux programs. We'll support the following features:
+Anyone who has written more than a hello world program should have used a debugger at some point (if you haven't, drop what you're doing and learn how to use one). However, although these tools are in such widespread use, there aren't a lot of resources which tell you how they work and how to write one[^1], especially when compared to other toolchain technologies like compilers. In this post series we'll learn what makes debuggers tick and write one for debugging Linux programs. We'll support the following features:
+{:.listhead}
 
-- Launch, halt, and continue execution -- we'll do that in this post
+- Launch, halt, and continue execution
 - Set breakpoints on
-  - Memory addresses -- part 2
-  - Source code lines -- part 6
-  - Function entry -- part 6
-- Read and write registers and memory -- part 3
-- Single stepping -- part 5
+  - Memory addresses
+  - Source code lines
+  - Function entry
+- Read and write registers and memory
+- Single stepping
   - Instruction
   - Step in
   - Step out
   - Step over
-- Print current source location -- part 6
-- Print backtrace -- part 7
-- Print values of simple variables -- part 8
+- Print current source location
+- Print backtrace
+- Print values of simple variables
 
-In part 9 I'll also outline how you could add the following to your debugger:
+In the final part I'll also outline how you could add the following to your debugger:
+{:.listhead}
 
 - Remote debugging
 - Shared library and dynamic loading support
 - Expression evaluation
 - Multi-threaded debugging support
 
-I'll be focusing on C and C++ for this debugger, but it should work just as well with any language which compiles down to machine code and outputs standard DWARF debug information (if you don't know what that is yet, don't worry, this will be covered in post 4).
+I'll be focusing on C and C++ for this project, but it should work just as well with any language which compiles down to machine code and outputs standard DWARF debug information (if you don't know what that is yet, don't worry, this will be covered soon). Additionally, my focus will be on just getting something up and running which works most of the time, so things like robust error handling will be eschewed in favour of simplicity.
+
+-------------------------------
+
+### Series index
+
+These links will go live as the rest of the posts are released.
+{:.listhead}
+
+1. [Setup]({% post_url 2017-03-21-writing-a-linux-debugger-setup %})
+2. Breakpoints
+3. Registers and memory
+4. Elves and dwarves
+5. Stepping, source and signals
+6. Stepping on dwarves
+7. Source-level breakpoints
+8. Stack unwinding
+9. Reading variables
+10. Next steps
 
 -------------------------------
 
@@ -77,7 +96,7 @@ If we're in the child process, we want to replace whatever we're currently execu
    execl(prog.c_str(), prog.c_str(), nullptr);
 {% endhighlight %}
 
-Here we have our first encounter with `ptrace`, which is going to become our best friend when writing our debugger. `ptrace` allows us to observe and control the execution of another process, e.g. reading registers, reading memory, and single stepping. The API is very ugly; it's a single function which you provide with an enumerator value for what you want to do, and then some arguments which will either be used or ignored depending on which value you supply. The signature looks like this:
+Here we have our first encounter with `ptrace`, which is going to become our best friend when writing our debugger. `ptrace` allows us to observe and control the execution of another process by reading registers, reading memory, single stepping and more. The API is very ugly; it's a single function which you provide with an enumerator value for what you want to do, and then some arguments which will either be used or ignored depending on which value you supply. The signature looks like this:
 
 {% highlight cpp %}
 long ptrace(enum __ptrace_request request, pid_t pid,
@@ -86,7 +105,7 @@ long ptrace(enum __ptrace_request request, pid_t pid,
 
 `request` is what we would like to do to the traced process; `pid` is the process ID of the traced process; `addr` is a memory address, which is used in some calls to designate an address in the tracee; and `data` is some request-specific resource. The return value often gives error information, so you probably want to check that in your real code; I'm just omitting it for brevity. You can have a look at the man pages for more information.
 
-The request we send in the above code, `PTRACE_TRACEME`, indicates that this process should allow its parent to trace it. All of the other arguments are ignored, because API design isn't important \s.
+The request we send in the above code, `PTRACE_TRACEME`, indicates that this process should allow its parent to trace it. All of the other arguments are ignored, because API design isn't important /s.
 
 Next, we call `execl`, which is one of the many `exec` flavours. We execute the given program, passing the name of it as a command-line argument and a `nullptr` to terminate the list. You can pass any other arguments needed to execute your program here if you like.
 
@@ -153,7 +172,7 @@ void debugger::handle_command(const std::string& line) {
     auto args = split(line,' ');
     auto command = args[0];
 
-    if (is_prefix(command, "cont")) {
+    if (is_prefix(command, "continue")) {
         continue_execution();
     }
     else {
@@ -202,3 +221,9 @@ For now our `continue_execution` function will just use `ptrace` to tell the pro
 ### Finishing up
 
 Now you should be able to compile some C or C++ program, run it through your debugger, see it halting on entry, and be able to continue execution from your debugger. In the next part we'll learn how to get our debugger to set breakpoints. If you come across any issues, please let me know in the comments!
+
+You can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_setup).
+
+---------------------
+
+[^1]: Here are some pre-existing ones if you want other resources: [1](http://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1) [2](http://t-a-w.blogspot.co.uk/2007/03/how-to-code-debuggers.html) [3](https://www.codeproject.com/Articles/43682/Writing-a-basic-Windows-debugger) [4](http://system.joekain.com/debugger/)
