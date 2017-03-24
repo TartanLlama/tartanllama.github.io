@@ -2,7 +2,6 @@
 layout:     post
 title:      "Writing a Linux Debugger Part 2: Breakpoints"
 category:   c++
-pubdraft:   true
 tags:
  - c++
 ---
