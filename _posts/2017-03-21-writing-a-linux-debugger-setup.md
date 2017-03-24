@@ -44,7 +44,7 @@ These links will go live as the rest of the posts are released.
 {:.listhead}
 
 1. [Setup]({% post_url 2017-03-21-writing-a-linux-debugger-setup %})
-2. Breakpoints
+2. [Breakpoints]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
 3. Registers and memory
 4. Elves and dwarves
 5. Stepping, source and signals
