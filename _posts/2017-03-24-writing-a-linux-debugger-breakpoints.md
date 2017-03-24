@@ -6,7 +6,7 @@ tags:
  - c++
 ---
 
-In the first part of this series, we wrote a small process launcher as a base for our debugger. In this post we'll learn how breakpoints work in x86 Linux and augment our tool with the ability to set them.
+In the first part of this series we wrote a small process launcher as a base for our debugger. In this post we'll learn how breakpoints work in x86 Linux and augment our tool with the ability to set them.
 
 -------------------------------
 
