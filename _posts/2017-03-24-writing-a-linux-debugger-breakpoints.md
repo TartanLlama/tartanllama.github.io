@@ -41,7 +41,7 @@ I said above that software breakpoints are set by modifying the executing code o
 
 The answer to the first question is, of course, `ptrace`. We've previously used it to set up our program for tracing and continuing its execution, but we can also use it to read and write memory.
 
-The modification we make has to cause the processor to halt and signal the program when the breakpoint address is executed. On x86 this is accomplished by overwriting the instruction at that address with the `int 3` instruction. x86 has an *interrupt vector table* which the operating system can use to register handlers for various events, such as page faults, protection faults, and invalid opcodes. It's kind of like registering error handling callbacks, but right down at the hardware level. When the processor executes the `int 3` instruction, control is passed to the breakpoint interrupt handler, which -- in the case of Linux -- signals the process with a `SIGTRAP`. You can see this process in the diagram below, where we overwrite the first byte of the `mov` instruction with `0xcc`, which is the instruction encoding for `int 3`. 
+The modification we make has to cause the processor to halt and signal the program when the breakpoint address is executed. On x86 this is accomplished by overwriting the instruction at that address with the `int 3` instruction. x86 has an *interrupt vector table* which the operating system can use to register handlers for various events, such as page faults, protection faults, and invalid opcodes. It's kind of like registering error handling callbacks, but right down at the hardware level. When the processor executes the `int 3` instruction, control is passed to the breakpoint interrupt handler, which -- in the case of Linux -- signals the process with a `SIGTRAP`. You can see this process in the diagram below, where we overwrite the first byte of the `mov` instruction with `0xcc`, which is the instruction encoding for `int 3`.
 
 ![breakpoint](/assets/breakpoint.png)
 
@@ -70,7 +70,7 @@ private:
     pid_t m_pid;
     std::intptr_t m_addr;
     bool m_enabled;
-    uint64_t m_saved_data; //data which used to be at the breakpoint address
+    uint6_t m_saved_data; //data which used to be at the breakpoint address
 };
 {% endhighlight %}
 
@@ -80,9 +80,10 @@ As we've learned above, we need to replace the instruction which is currently at
 
 {% highlight cpp %}
 void breakpoint::enable() {
-    m_saved_data = ptrace(PTRACE_PEEKDATA, m_pid, m_addr, nullptr);
+    auto data = ptrace(PTRACE_PEEKDATA, m_pid, m_addr, nullptr);
+    m_saved_data = static_cast<uint8_t>(data & 0xff); //save bottom byte
     uint64_t int3 = 0xcc;
-    uint64_t data_with_int3 = ((m_saved_data & ~0xff) | int3); //set bottom byte to 0xcc
+    uint64_t data_with_int3 = ((data & ~0xff) | int3); //set bottom byte to 0xcc
     ptrace(PTRACE_POKEDATA, m_pid, m_addr, data_with_int3);
 
     m_enabled = true;
@@ -91,11 +92,14 @@ void breakpoint::enable() {
 
 The `PTRACE_PEEKDATA` request to `ptrace` is how to read the memory of the traced process. We give it a process ID and an address, and it gives us back the 64 bits which are currently at that address. `(m_saved_data & ~0xff)` zeroes out the bottom byte of this data, then we bitwise `OR` that with our `int 3` instruction to set the breakpoint. Finally, we set the breakpoint by overwriting that part of memory with our new data with `PTRACE_POKEDATA`.
 
-The implementation of `disable` is easier, as we simply need to restore the original data which we overwrote with `0xcc`.
+`disable` is easier, but still has a subtlety to it. Since the `ptrace` memory requests operate on whole words rather than bytes we need to first read the word which is at the location to restore, then overwrite the low byte with the original data and write it back to memory.
 
 {% highlight cpp %}
 void breakpoint::disable() {
-    ptrace(PTRACE_POKEDATA, m_pid, m_addr, m_saved_data);
+    auto data = ptrace(PTRACE_PEEKDATA, m_pid, m_addr, nullptr);
+    auto restored_data = ((data & ~0xff) | m_saved_data);
+    ptrace(PTRACE_POKEDATA, m_pid, m_addr, restored_data);
+
     m_enabled = false;
 }
 {% endhighlight %}
@@ -186,7 +190,7 @@ One way to find the address is to use `objdump`. If you open up a shell and exec
   40094f:	c3                   	retq
 ```
 
-As you can see, we would want to set a breakpoint on `0x400944` to see no output, and `0x400949` to see the output. 
+As you can see, we would want to set a breakpoint on `0x400944` to see no output, and `0x400949` to see the output.
 
 ------------------------------
 
