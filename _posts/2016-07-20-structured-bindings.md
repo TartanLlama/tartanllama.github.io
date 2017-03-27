@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Adding C++17 decomposition declaration support to your classes"
+title:      "Adding C++17 structured bindings support to your classes"
 date:       2016-07-20
 category:   c++
 tags:
@@ -10,7 +10,7 @@ tags:
 
 ### Introduction
 
-C++17 adds decomposition declarations (proposals [here](https://isocpp.org/files/papers/P0144R1.pdf) and [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0217r2.html)) to the language, which allow you to declare multiple variables initialised from a tuple-like object:
+C++17 adds structured bindings (proposals [here](https://isocpp.org/files/papers/P0144R1.pdf) and [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0217r2.html)) to the language, which allow you to declare multiple variables initialised from a tuple-like object:
 
 {% highlight cpp %}
 tuple<T1,T2,T3> f(/*...*/) { /*...*/ return {a,b,c}; }
@@ -25,7 +25,7 @@ This is a very powerful and expressive feature, but the most interesting element
 
 ### Built-in support
 
-The great news is that decomposition declarations are supported out-of-the-box for classes where all the non-static member variables are public (or all public-only non-statc members are in a single direct base class). So a class like this can be decomposed with no additional code:
+The great news is that structured bindings are supported out-of-the-box for classes where all the non-static member variables are public (or all public-only non-statc members are in a single direct base class). So a class like this can be decomposed with no additional code:
 
 {% highlight cpp %}
 struct yay {
@@ -57,14 +57,14 @@ If you have more complex classes, or want to wrap/process members before exposin
 
 ### Supporting other classes
 
-For demonstration purposes we'll write a small class named `Config`, which stores some immutable configuration data. We'll be returning `name` as a C++17 `std::string_view`, `id` by value, and `data` by reference to const. 
+For demonstration purposes we'll write a small class named `Config`, which stores some immutable configuration data. We'll be returning `name` as a C++17 `std::string_view`, `id` by value, and `data` by reference to const.
 
 {% highlight cpp %}
 class Config {
     std::string name;
     std::size_t id;
     std::vector<std::string> data;
-    
+
     //constructors and such
 };
 {% endhighlight %}
@@ -83,7 +83,7 @@ Next is `get`. We'll use C++17's `if constexpr` for brevity. I've just added thi
 {% highlight cpp %}
 class Config {
     //...
-    
+
    template <std::size_t N>
    decltype(auto) get() const {
        if      constexpr (N == 0) return std::string_view{name};
@@ -98,9 +98,9 @@ Finally we need to specialize `std::tuple_element`. For this we just need to ret
 
 {% highlight cpp %}
 namespace std {
-    template<std::size_t N> 
-    struct tuple_element<N, Config> { 
-        using type = decltype(std::declval<Config>().get<N>()); 
+    template<std::size_t N>
+    struct tuple_element<N, Config> {
+        using type = decltype(std::declval<Config>().get<N>());
     };
 }
 {% endhighlight %}
@@ -124,4 +124,3 @@ Config get_config();
 
 auto [name, id, data] = get_config();
 {% endhighlight %}
-
