@@ -79,7 +79,9 @@ uint64_t get_register_value(pid_t pid, reg r) {
 
 Again, `ptrace` gives us easy access to the data we want. We just construct an instance of `user_regs_struct` and give that to `ptrace` alongside the `PTRACE_GETREGS` request.
 
-Now we want to read `regs` depending on which register was requested. We could write a big switch statement, but since we've laid out our `g_register_descriptors` table in the same order as `user_regs_struct`, we can just search for the index of the register descriptor, and access `user_regs_struct` as an array of `uint64_t`s.
+Now we want to read `regs` depending on which register was requested. We could write a big switch statement, but since we've laid out our `g_register_descriptors` table in the same order as `user_regs_struct`, we can just search for the index of the register descriptor, and access `user_regs_struct` as an array of `uint64_t`s.[^2]
+
+[^2]: You could also reorder the `reg` enum and cast them to the underlying type to use as indexes, but I wrote it this way in the first place, it works, and I'm too lazy to change it.
 
 {% highlight cpp %}
         auto it = std::find_if(begin(g_register_descriptors), end(g_register_descriptors),
@@ -155,7 +157,7 @@ This gives us enough support to handle registers easily in the rest of the debug
 
 ### Exposing our registers
 
-All we need to do here is add a new command to the `handle_command` function. With the following code, users will be able to type `register read rax`, `register write rax 42` and so on.
+All we need to do here is add a new command to the `handle_command` function. With the following code, users will be able to type `register read rax`, `register write rax 0x42` and so on.
 
 {% highlight cpp %}
     else if (is_prefix(command, "register")) {
