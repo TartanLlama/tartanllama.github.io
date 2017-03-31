@@ -180,14 +180,14 @@ One way to find the address is to use `objdump`. If you open up a shell and exec
 
 ```
 0000000000400936 <main>:
-  400936:	55                   	push   %rbp
-  400937:	48 89 e5             	mov    %rsp,%rbp
-  40093a:	be 35 0a 40 00       	mov    $0x400a35,%esi
-  40093f:	bf 60 10 60 00       	mov    $0x601060,%edi
-  400944:	e8 d7 fe ff ff       	callq  400820 <_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc@plt>
-  400949:	b8 00 00 00 00       	mov    $0x0,%eax
-  40094e:	5d                   	pop    %rbp
-  40094f:	c3                   	retq
+  400936:	55                   	push   rbp
+  400937:	48 89 e5             	mov    rbp,rsp
+  40093a:	be 35 0a 40 00       	mov    esi,0x400a35
+  40093f:	bf 60 10 60 00       	mov    edi,0x601060
+  400944:	e8 d7 fe ff ff       	call   400820 <_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc@plt>
+  400949:	b8 00 00 00 00       	mov    eax,0x0
+  40094e:	5d                   	pop    rbp
+  40094f:	c3                   	ret
 ```
 
 As you can see, we would want to set a breakpoint on `0x400944` to see no output, and `0x400949` to see the output.

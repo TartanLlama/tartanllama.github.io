@@ -1,19 +1,18 @@
 ---
 layout:     post
 title:      "Writing a Linux Debugger Part 3: Registers and memory"
-pubdraft:   true
 category:   c++
 tags:
  - c++
 ---
 
-In the last post we got breakpoints working in our debugger. This time we'll be adding the ability to read and write registers and memory, which will allow us to screw around with our program counter and change the behaviour of our program after we've done a bit more work.
+In the last post we added simple address breakpoints to our debugger. This time we'll be adding the ability to read and write registers and memory, which will allow us to screw around with our program counter, observe state and change the behaviour of our program.
 
 ---------------
 
 ### Registering our registers
 
-Before we actually read any registers, we need to teach our debugger a bit about our target, which is x86_64. 40 registers are available on this platform: 16 general-purpose 64-bit, 16 SSE (vector), and 8 floating point. We'll just be using the 64-bit registers for simplicity, but you could extend this to other registers if you like. Since all our registers are the same size, all we really care about is the register's name, it's DWARF register number (this will be important later), and where it is stored in structure returned by `ptrace`. I chose to have a scoped enum for referring to the registers, then I laid out a global array in the same order as the `ptrace` register structure and stored the relevant information in it.
+Before we actually read any registers, we need to teach our debugger a bit about our target, which is x86_64. Alongside sets of general and special purpose registers, x86_64 has floating point and vector registers available. I'll be omitting the latter two for simplicity, but you can choose to support them if you like. x86_64 also allows you to access some 64 bit registers as 32, 16, or 8 bit registers, but I'll just be sticking to 64. Due to these simplifications, for each register we just need its name, its DWARF register number, and where it is stored in the structure returned by `ptrace`. I chose to have a scoped enum for referring to the registers, then I laid out a global register descriptor array with the elements in the same order as in the `ptrace` register structure.
 
 {% highlight cpp %}
 enum class reg {
@@ -83,13 +82,13 @@ Again, `ptrace` gives us easy access to the data we want. We just construct an i
 Now we want to read `regs` depending on which register was requested. We could write a big switch statement, but since we've laid out our `g_register_descriptors` table in the same order as `user_regs_struct`, we can just search for the index of the register descriptor, and access `user_regs_struct` as an array of `uint64_t`s.
 
 {% highlight cpp %}
-    auto it = std::find_if(begin(g_register_descriptors), end(g_register_descriptors),
-                           [r](auto&& rd) { return rd.r == r; });
+        auto it = std::find_if(begin(g_register_descriptors), end(g_register_descriptors),
+                               [r](auto&& rd) { return rd.r == r; });
 
-    *(reinterpret_cast<uint64_t*>(&regs) + (it - begin(g_register_descriptors))) = value;
+        return *(reinterpret_cast<uint64_t*>(&regs) + (it - begin(g_register_descriptors)));
 {% endhighlight %}
 
-The cast to `uint64_t` is safe because `user_regs_struct` is a standard layout type, but I think the pointer arithmetic is technically UB. No current compilers even warn about this and I'm lazy, but if you want to maintain upmost correctness, write a big switch statement.
+The cast to `uint64_t` is safe because `user_regs_struct` is a standard layout type, but I think the pointer arithmetic is technically UB. No current compilers even warn about this and I'm lazy, but if you want to maintain utmost correctness, write a big switch statement.
 
 `set_register_value` is much the same, we just write to the location and write the registers back at the end:
 
@@ -146,6 +145,10 @@ void debugger::dump_registers() {
 }
 {% endhighlight %}
 
+As you can see, iostreams has a very concise interface for outputting hex data nicely[^1]. Feel free to make an I/O manipulator to get rid of this mess if you like.
+
+[^1]: Ahahahahahahahahahahahahahahahaha
+
 This gives us enough support to handle registers easily in the rest of the debugger, so we can now add this to our UI.
 
 ----------------------
@@ -163,7 +166,8 @@ All we need to do here is add a new command to the `handle_command` function. Wi
             std::cout << get_register_value(m_pid, get_register_from_name(args[2])) << std::endl;
         }
         else if (is_prefix(args[1], "write")) {
-            set_register_value(m_pid, get_register_from_name(args[2]), std::stol(args[3]));
+            std::string val {args[3], 2}; //assume 0xVAL
+            set_register_value(m_pid, get_register_from_name(args[2]), std::stol(val, 0, 16));
         }
     }
 {% endhighlight %}
@@ -172,7 +176,7 @@ All we need to do here is add a new command to the `handle_command` function. Wi
 
 ### Where is my mind?
 
-We've already read from and written to memory when setting our breakpoints, so we just need to add a couple of functions to make it clean.
+We've already read from and written to memory when setting our breakpoints, so we just need to add a couple of functions to hide the `ptrace` call a bit.
 
 {% highlight cpp %}
 uint64_t debugger::read_memory(uint64_t address) {
@@ -184,19 +188,20 @@ void debugger::write_memory(uint64_t address, uint64_t value) {
 }
 {% endhighlight %}
 
-You might want to add support for reading and writing more than a word at a time, which you can do by just incrementing the address each time you want to read another word.
+You might want to add support for reading and writing more than a word at a time, which you can do by just incrementing the address each time you want to read another word. You could also use [`process_vm_readv` and `process_vm_writev`](http://man7.org/linux/man-pages/man2/process_vm_readv.2.html) or `/proc/<pid>/mem` instead of `ptrace` if you like.
 
 Now we'll add commands for our UI:
 
 {% highlight cpp %}
     else if(is_prefix(command, "memory")) {
-        std::string addr {args[2], 2};
+        std::string addr {args[2], 2}; //assume 0xADDRESS
 
         if (is_prefix(args[1], "read")) {
-            std::cout << read_memory(std::stol(addr, 0, 16)) << std::endl;
+            std::cout << std::hex << read_memory(std::stol(addr, 0, 16)) << std::endl;
         }
         if (is_prefix(args[1], "write")) {
-            write_memory(std::stol(addr, 0, 16), std::stol(args[3]));
+            std::string val {args[3], 2}; //assume 0xVAL
+            write_memory(std::stol(addr, 0, 16), std::stol(val, 0, 16));
         }
     }
 {% endhighlight %}
@@ -205,7 +210,7 @@ Now we'll add commands for our UI:
 
 ### Patching `continue_execution`
 
-Before we test out our changes, we're now in a position to implement a more sane version of `continue_execution`. Since we can get the program counter, we can check if we're at a breakpoint and only disable that one before stepping rather than disabling the entire world.
+Before we test out our changes, we're now in a position to implement a more sane version of `continue_execution`. Since we can get the program counter, we can check our breakpoint map to see if we're at a breakpoint. If so, we can disable the breakpoint and step over it before continuing.
 
 First we'll add for couple of helper functions for clarity and brevity:
 
@@ -217,32 +222,45 @@ uint64_t debugger::get_pc() {
 void debugger::set_pc(uint64_t pc) {
     set_register_value(m_pid, reg::rip, pc);
 }
-
-void debugger::wait_for_signal() {
-    int wait_status;
-    auto options = 0;
-    waitpid(m_pid, &wait_status, options);
 {% endhighlight %}
 
 Then we can write a function to step over a breakpoint:
 
 {% highlight cpp %}
 void debugger::step_over_breakpoint() {
-    if (m_breakpoints.count(get_pc())) {
-        auto& bp = m_breakpoints[get_pc()];
+    // - 1 because execution will go past the breakpoint
+    auto possible_breakpoint_location = get_pc() - 1;
+
+    if (m_breakpoints.count(possible_breakpoint_location)) {
+        auto& bp = m_breakpoints[possible_breakpoint_location];
+
         if (bp.is_enabled()) {
+            auto previous_instruction_address = possible_breakpoint_location;
+            set_pc(previous_instruction_address);
+
             bp.disable();
             ptrace(PTRACE_SINGLESTEP, m_pid, nullptr, nullptr);
-            wait_for_signal();            
+            wait_for_signal();
             bp.enable();
         }
     }
 }
 {% endhighlight %}
 
-We simply check to see if there's a breakpoint set for the value of the current PC, and if there is, we enable it, step over it, and re-enable.
+First we check to see if there's a breakpoint set for the value of the current PC. If there is, we first put execution back to before the breakpoint, disable it, step over the original instruction, and re-enable the breakpoint.
 
-Now `continue_execution` becomes this:
+`wait_for_signal` will encapsulate our usual `waitpid` pattern:
+
+{% highlight cpp %}
+void debugger::wait_for_signal() {
+    int wait_status;
+    auto options = 0;
+    waitpid(m_pid, &wait_status, options);
+}
+{% endhighlight %}
+
+
+Finally we rewrite `continue_execution` like this:
 
 {% highlight cpp %}
 void debugger::continue_execution() {
@@ -252,10 +270,28 @@ void debugger::continue_execution() {
 }
 {% endhighlight %}
 
+
 -------------------------------
 
 ### Testing it out
 
-Now that we can read and modify registers, we can have a bit of fun with our hello world program. If you set a breakpoint just after the output call, try writing the address of the previous instruction to the program counter (`rip`) so that the call happens again.
+Now that we can read and modify registers, we can have a bit of fun with our hello world program. As a first test, try setting a breakpoint on the call instruction again and continue from it. You should see `Hello world` being printed out. For the fun part, set a breakpoint just after the output call, continue, then write the address of the call argument setup code to the program counter (`rip`) and continue. You should see `Hello world` being printed a second time due to this program counter manipulation. Just in case you aren't sure where to set the breakpoint, here's my `objdump` output from the last post again:
+
+```
+0000000000400936 <main>:
+  400936:	55                   	push   rbp
+  400937:	48 89 e5             	mov    rbp,rsp
+  40093a:	be 35 0a 40 00       	mov    esi,0x400a35
+  40093f:	bf 60 10 60 00       	mov    edi,0x601060
+  400944:	e8 d7 fe ff ff       	call   400820 <_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc@plt>
+  400949:	b8 00 00 00 00       	mov    eax,0x0
+  40094e:	5d                   	pop    rbp
+  40094f:	c3                   	ret
+```
+
+You'll want to move the program counter back to `0x40093a` so that the `esi` and `edi` registers are set up properly.
 
 In the next post, we'll take our first look at DWARF information and add various kinds of single stepping to our debugger. After that, we'll have a mostly functioning tool which can step through code, set breakpoints wherever we like, modify data and so forth. As always, drop a comment below if you have any questions!
+
+
+-------------------------------
