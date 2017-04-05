@@ -3,10 +3,10 @@ layout:     post
 title:      "void C::C::C::A::A::A::foo() - valid syntax monstrosity"
 category:   c++
 tags:
- - c++ 
+ - c++
 ---
 
-Here's an odd bit of C++ syntax for you. Say we have the following class structure:
+Here's an odd bit of C++ syntax for you. Say we have the following class hierarchy:
 
 {% highlight cpp %}
 class A {

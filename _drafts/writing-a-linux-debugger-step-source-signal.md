@@ -1,16 +1,34 @@
 ---
 layout:     post
-title:      "Writing a Linux Debugger Part 5: Stepping, source and signals"
+title:      "Writing a Linux Debugger Part 5: Source and signals"
 category:   c++
 tags:
  - c++
 ---
 
+-------------------------------
+
+### Series index
+
+These links will go live as the rest of the posts are released.
+{:.listhead}
+
+1. [Setup]({% post_url 2017-03-21-writing-a-linux-debugger-setup %})
+2. [Breakpoints]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
+3. [Registers and memory]({% post_url 2017-03-31-writing-a-linux-debugger-registers %})
+4. [Elves and dwarves]({% post_url 2017-04-05-writing-a-linux-debugger-elf-dwarf %})
+5. Stepping, source and signals
+6. Stepping on dwarves
+7. Source-level breakpoints
+8. Stack unwinding
+9. Reading variables
+10. Next steps
+
 ------------------------
 
 ### Setting up our DWARF parser
 
-As I noted way back at the start of this series, we'll be using `libelfin` to handle our DWARF information. Hopefully you got this set up in the first post, but if not, do so now, and make sure that you use the `fbreg` branch of my fork.
+As I noted way back at the start of this series, we'll be using [`libelfin`](https://github.com/TartanLlama/libelfin/tree/fbreg) to handle our DWARF information. Hopefully you got this set up in the first post, but if not, do so now, and make sure that you use the `fbreg` branch of my fork.
 
 Once you have `libelfin` building, it's time to add it to our debugger. The first step is to parse the ELF executable we're given and extract the DWARF from it. This is very easy with `libelfin`, just make these changes to `debugger`:
 
@@ -25,7 +43,7 @@ public:
         m_dwarf = dwarf::dwarf{dwarf::elf::create_loader(m_elf)};
     }
     //...
-    
+
 private:
     //...
     dwarf::dwarf m_dwarf;
@@ -33,16 +51,18 @@ private:
 };
 {% endhighlight %}
 
+`open` is used instead of `std::ifstream` because the elf loader needs a UNIX file descriptor to pass to `mmap` so that it can just map the file into memory rather than reading it a bit at a time.
+
 ---------------------------
 
 ### Debug information primitives
 
-Next on the list is to implement functions to retrieve line entries and function DIEs from PC values. We'll start with `get_function_from_pc`:
+Next we can implement functions to retrieve line entries and function DIEs from PC values. We'll start with `get_function_from_pc`:
 
 {% highlight cpp %}
 dwarf::die debugger::get_function_from_pc(uint64_t pc) {
     for (auto &cu : m_dwarf.compilation_units()) {
-        if (die_pc_range(cu.root()).contains(get_pc())) {
+        if (die_pc_range(cu.root()).contains(pc)) {
             for (const auto& die : cu.root()) {
                 if (die.tag == dwarf::DW_TAG::subprogram) {
                     if (die_pc_range(die).contains(pc)) {
@@ -57,7 +77,7 @@ dwarf::die debugger::get_function_from_pc(uint64_t pc) {
 }
 {% endhighlight %}
 
-Here we take a naive approach of just iterating through compilation units until we find one which contains the program counter, then iterating through the children until we find the relevant function (`DW_TAG_subprogram`). As mentioned in the last part, you could handle things like member functions and inlining here if you wanted.
+Here I take a naive approach of just iterating through compilation units until I find one which contains the program counter, then iterating through the children until we find the relevant function (`DW_TAG_subprogram`). As mentioned in the last post, you could handle things like member functions and inlining here if you wanted.
 
 Next is `get_line_entry_from_pc`:
 
@@ -87,7 +107,7 @@ Again, we simply find the correct compilation unit, then ask the line table to g
 
 ### Printing source
 
-Of course, stepping around our code isn't very useful if we don't know what our current position is. 
+Of course, stepping around our code isn't very useful if we don't know what our current position is.
 
 {% highlight cpp %}
 void debugger::print_source(const std::string& file_name, unsigned line, unsigned n_lines_context) {
@@ -113,8 +133,3 @@ void debugger::print_source(const std::string& file_name, unsigned line, unsigne
     std::cout << std::endl;
 }
 {% endhighlight %}
-
-
-
-
-

@@ -3,7 +3,7 @@ layout:     post
 title:      "Compile-time type registry"
 category:   c++
 tags:
- - c++ 
+ - c++
  - templates
 ---
 
@@ -34,7 +34,7 @@ struct decode_type
 };
 {% endhighlight %}
 
-Since this just uses template instantiation, if you write `encode_type<AType>` twice, then it will only be encoded once.
+Since this uses template instantiation, if you write `encode_type<AType>` twice, then it will only be encoded once.
 
 I had to make a couple of changes to the constexpr counter to make this easier. First was to make `meta_list::push` return the size of the meta-container *before* the push:
 
@@ -59,7 +59,7 @@ A quick test to make sure everything works:
 
 {% highlight cpp %}
 int main () {
-    std::array<int, 4> encoded { 
+    std::array<int, 4> encoded {
         encode_type<int>::value,
         encode_type<double>::value,
         encode_type<std::string>::value,
@@ -71,7 +71,7 @@ int main () {
   std::cout << std::endl;
 
   std::array<std::type_index, 4> decoded {
-      typeid(decode_type<0>::type),  
+      typeid(decode_type<0>::type),
       typeid(decode_type<1>::type),
       typeid(decode_type<2>::type),
       typeid(decode_type<3>::type),
@@ -85,5 +85,5 @@ int main () {
 
 Success! Clang 3.7 prints out this:
 
-    Encoding: 0, 1, 2, 3, 
+    Encoding: 0, 1, 2, 3,
     Decoding: i, d, NSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE, f,

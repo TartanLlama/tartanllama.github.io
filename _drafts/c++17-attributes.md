@@ -102,6 +102,7 @@ Functions declared with `[[nodiscard]]` should not have their return values igno
 
 {% highlight cpp %}
 [[nodiscard]] error do_something (thing&);
+error do_something_else (thing&);
 
 do_something(my_thing); // Warning: ignored return value
 do_something_else(my_thing);
