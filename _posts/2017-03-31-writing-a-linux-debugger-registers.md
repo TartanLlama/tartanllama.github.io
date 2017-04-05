@@ -8,6 +8,24 @@ tags:
 
 In the last post we added simple address breakpoints to our debugger. This time we'll be adding the ability to read and write registers and memory, which will allow us to screw around with our program counter, observe state and change the behaviour of our program.
 
+-------------------------------
+
+### Series index
+
+These links will go live as the rest of the posts are released.
+{:.listhead}
+
+1. [Setup]({% post_url 2017-03-21-writing-a-linux-debugger-setup %})
+2. [Breakpoints]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
+3. [Registers and memory]({% post_url 2017-03-31-writing-a-linux-debugger-registers %})
+4. Elves and dwarves
+5. Stepping, source and signals
+6. Stepping on dwarves
+7. Source-level breakpoints
+8. Stack unwinding
+9. Reading variables
+10. Next steps
+
 ---------------
 
 ### Registering our registers
@@ -295,5 +313,6 @@ You'll want to move the program counter back to `0x40093a` so that the `esi` and
 
 In the next post, we'll take our first look at DWARF information and add various kinds of single stepping to our debugger. After that, we'll have a mostly functioning tool which can step through code, set breakpoints wherever we like, modify data and so forth. As always, drop a comment below if you have any questions!
 
+You can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_registers).
 
 -------------------------------
