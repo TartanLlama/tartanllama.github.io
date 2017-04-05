@@ -9,13 +9,31 @@ tags:
 
 Up until now you've heard whispers of dwarves, of debug information, of a way to understand the source code without just parsing the thing. Today we'll be going into the details of source-level debug information in preparation for using it in following parts of this tutorial.
 
+-------------------------------
+
+### Series index
+
+These links will go live as the rest of the posts are released.
+{:.listhead}
+
+1. [Setup]({% post_url 2017-03-21-writing-a-linux-debugger-setup %})
+2. [Breakpoints]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
+3. [Registers and memory]({% post_url 2017-03-31-writing-a-linux-debugger-registers %})
+4. Elves and dwarves
+5. Stepping, source and signals
+6. Stepping on dwarves
+7. Source-level breakpoints
+8. Stack unwinding
+9. Reading variables
+10. Next steps
+
 -------------------------------------
 
 ### Introduction to ELF and DWARF
 
-ELF and DWARF are two components which you may not have heard of, but probably use most days. ELF (Executable and Linkable Format) is the most widely used object file format in the Linux world; it specifies a way to store all of the different parts of a binary, like the code, static data, debug information, and strings. It also tells the loader how to take the file and get it ready for execution, which involves noting where different parts of the binary should be placed in memory, which bits need to be fixed up depending on the position of other components (*relocations*) and more. I won't cover much more of ELF in these posts, but if you're interested, you can have a look at [this wonderful infographic](https://github.com/corkami/pics/raw/master/binary/elf101/elf101-64.pdf) or [the standard](http://www.skyfree.org/linux/references/ELF_Format.pdf).
+ELF and DWARF are two components which you may not have heard of, but probably use most days. ELF (Executable and Linkable Format) is the most widely used object file format in the Linux world; it specifies a way to store all of the different parts of a binary, like the code, static data, debug information, and strings. It also tells the loader how to take the binary and ready it for execution, which involves noting where different parts of the binary should be placed in memory, which bits need to be fixed up depending on the position of other components (*relocations*) and more. I won't cover much more of ELF in these posts, but if you're interested, you can have a look at [this wonderful infographic](https://github.com/corkami/pics/raw/master/binary/elf101/elf101-64.pdf) or [the standard](http://www.skyfree.org/linux/references/ELF_Format.pdf).
 
-DWARF is the debug information format most commonly used with ELF. It's not necessarily tied to ELF, but the two were developed in tandem and work very well together. This format allows a compiler to tell a debugger how the original source code relates to the binary which is going to be executed. This information is split into different ELF sections, each with its own piece of information to relay. Here are the different sections which are defined, taken from this highly informative if slightly out of date [Introduction to the
+DWARF is the debug information format most commonly used with ELF. It's not necessarily tied to ELF, but the two were developed in tandem and work very well together. This format allows a compiler to tell a debugger how the original source code relates to the binary which is to be executed. This information is split across different ELF sections, each with its own piece of information to relay. Here are the different sections which are defined, taken from this highly informative if slightly out of date [Introduction to the
 DWARF Debugging Format](http://www.dwarfstd.org/doc/Debugging%20using%20DWARF-2012.pdf):
 
 - `.debug_abbrev` Abbreviations used in the `.debug_info` section
@@ -67,7 +85,7 @@ Source lines (from CU-DIE at .debug_info offset 0x0000000b):
 0x0040069c  [   6, 1] NS ET
 ```
 
-The first bunch of lines is some information on how to understand the dump, and the main line number data starts at the line starting with `0x00400770`. Essentially this maps a code memory address with a line and column number in some file. `NS` means that the address marks the beginning of a new statement, which is often used for setting breakpoints or stepping. `PE` marks the end of the function prologue, which is helpful for setting function entry breakpoints. `ET` marks the end of the translation unit. The information isn't actually encoded like this; the real encoding is a very space-efficient program of sorts which can be executed to build up this line information.
+The first bunch of lines is some information on how to understand the dump -- the main line number data starts at the line starting with `0x00400770`. Essentially this maps a code memory address with a line and column number in some file. `NS` means that the address marks the beginning of a new statement, which is often used for setting breakpoints or stepping. `PE` marks the end of the function prologue, which is helpful for setting function entry breakpoints. `ET` marks the end of the translation unit. The information isn't actually encoded like this; the real encoding is a very space-efficient program of sorts which can be executed to build up this line information.
 
 So, say we want to set a breakpoint on line 4 of variable.cpp, what do we do? We look for entries corresponding to that file, then we look for a relevant line entry, look up the address which corresponds to it, and set a breakpoint there. In our example, that's this entry:
 
@@ -93,9 +111,9 @@ COMPILE_UNIT<header overall offset = 0x00000000>:
 < 0><0x0000000b>  DW_TAG_compile_unit
                     DW_AT_producer              clang version 3.9.1 (tags/RELEASE_391/final)
                     DW_AT_language              DW_LANG_C_plus_plus
-                    DW_AT_name                  /home/simon/play/MiniDbg/examples/variable.cpp
+                    DW_AT_name                  /super/secret/path/MiniDbg/examples/variable.cpp
                     DW_AT_stmt_list             0x00000000
-                    DW_AT_comp_dir              /home/simon/play/MiniDbg/build
+                    DW_AT_comp_dir              /super/secret/path/MiniDbg/build
                     DW_AT_low_pc                0x00400670
                     DW_AT_high_pc               0x0040069c
 
@@ -105,26 +123,26 @@ LOCAL_SYMBOLS:
                       DW_AT_high_pc               0x0040069c
                       DW_AT_frame_base            DW_OP_reg6
                       DW_AT_name                  main
-                      DW_AT_decl_file             0x00000001 /home/simon/play/MiniDbg/examples/variable.cpp
+                      DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
                       DW_AT_decl_line             0x00000001
                       DW_AT_type                  <0x00000077>
                       DW_AT_external              yes(1)
 < 2><0x0000004c>      DW_TAG_variable
                         DW_AT_location              DW_OP_fbreg -8
                         DW_AT_name                  a
-                        DW_AT_decl_file             0x00000001 /home/simon/play/MiniDbg/examples/variable.cpp
+                        DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
                         DW_AT_decl_line             0x00000002
                         DW_AT_type                  <0x0000007e>
 < 2><0x0000005a>      DW_TAG_variable
                         DW_AT_location              DW_OP_fbreg -16
                         DW_AT_name                  b
-                        DW_AT_decl_file             0x00000001 /home/simon/play/MiniDbg/examples/variable.cpp
+                        DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
                         DW_AT_decl_line             0x00000003
                         DW_AT_type                  <0x0000007e>
 < 2><0x00000068>      DW_TAG_variable
                         DW_AT_location              DW_OP_fbreg -24
                         DW_AT_name                  c
-                        DW_AT_decl_file             0x00000001 /home/simon/play/MiniDbg/examples/variable.cpp
+                        DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
                         DW_AT_decl_line             0x00000004
                         DW_AT_type                  <0x0000007e>
 < 1><0x00000077>    DW_TAG_base_type
@@ -143,11 +161,11 @@ The first DIE represents a compilation unit (CU), which is essentially a source 
 DW_AT_producer   clang version 3.9.1 (tags/RELEASE_391/final)    <-- The compiler which produced
                                                                      this binary
 DW_AT_language   DW_LANG_C_plus_plus                             <-- The source language
-DW_AT_name       /home/simon/play/MiniDbg/examples/variable.cpp  <-- The name of the file which
+DW_AT_name       /super/secret/path/MiniDbg/examples/variable.cpp  <-- The name of the file which
                                                                      this CU represents
 DW_AT_stmt_list  0x00000000                                      <-- An offset into the line table
                                                                      which tracks this CU
-DW_AT_comp_dir   /home/simon/play/MiniDbg/build                  <-- The compilation directory
+DW_AT_comp_dir   /super/secret/path/MiniDbg/build                  <-- The compilation directory
 DW_AT_low_pc     0x00400670                                      <-- The start of the code for
                                                                      this CU
 DW_AT_high_pc    0x0040069c                                      <-- The end of the code for
@@ -170,13 +188,13 @@ for each compile unit:
                 return function information
 ```
 
-This will work for many purposes, but things get a bit more difficult in the presence of member functions and inlining. With inlining, for example, once we've found the function whose range contains our PC, we'll need to recurse over the children of that DIE to see if there are any inlined functions which are a better match. I won't deal with inlining in my code for this debugger, but you can feel free to add support for this if you like.
+This will work for many purposes, but things get a bit more difficult in the presence of member functions and inlining. With inlining, for example, once we've found the function whose range contains our PC, we'll need to recurse over the children of that DIE to see if there are any inlined functions which are a better match. I won't deal with inlining in my code for this debugger, but you can add support for this if you like.
 
 ### How do I set a breakpoint on a function?
 
-Again, this depends on if you want to support member functions and suchlike. For globally accessible free functions, you can just iterate over the functions in different compile units until you find the right function. If your compiler is kind enough to fill in the `.debug_pubnames` section, you can do this a lot more efficiently.
+Again, this depends on if you want to support member functions, namespaces and suchlike. For free functions you can just iterate over the functions in different compile units until you find one with the right name. If your compiler is kind enough to fill in the `.debug_pubnames` section, you can do this a lot more efficiently.
 
-Once the function has been found, you can just set a breakpoint on the memory address given by `DW_AT_low_pc`. However, that'll break at the start of the function prologue, which isn't necessarily what we want. Since the line table information can specify the memory address which specifies the prologue end, you could just lookup the value of `DW_AT_low_pc` in the line table, then keep reading until you get to the entry marked as the prologue end. Some compilers won't output this information though, so another option is to just set a breakpoint on the address given by the second line entry for that function.
+Once the function has been found, you can set a breakpoint on the memory address given by `DW_AT_low_pc`. However, that'll break at the start of the function prologue, but it's preferable to break at the start of the user code. Since the line table information can specify the memory address which specifies the prologue end, you could just lookup the value of `DW_AT_low_pc` in the line table, then keep reading until you get to the entry marked as the prologue end. Some compilers won't output this information though, so another option is to just set a breakpoint on the address given by the second line entry for that function.
 
 Say we want to set a breakpoint on `main` in our example program. We search for the function called `main`, and get this DIE:
 
@@ -186,7 +204,7 @@ Say we want to set a breakpoint on `main` in our example program. We search for 
                       DW_AT_high_pc               0x0040069c
                       DW_AT_frame_base            DW_OP_reg6
                       DW_AT_name                  main
-                      DW_AT_decl_file             0x00000001 /home/simon/play/MiniDbg/examples/variable.cpp
+                      DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
                       DW_AT_decl_line             0x00000001
                       DW_AT_type                  <0x00000077>
                       DW_AT_external              yes(1)
@@ -195,7 +213,7 @@ Say we want to set a breakpoint on `main` in our example program. We search for 
 This tells us that the function begins at `0x00400670`. If we look this up in our line table, we get this entry:
 
 ```
-0x00400670  [   1, 0] NS uri: "/home/simon/play/MiniDbg/examples/variable.cpp"
+0x00400670  [   1, 0] NS uri: "/super/secret/path/MiniDbg/examples/variable.cpp"
 ```
 
 We want to skip the prologue, so we read ahead an entry:
@@ -220,7 +238,7 @@ This says that the contents are stored at an offset of `-8` from the base of the
 DW_AT_frame_base            DW_OP_reg6
 ```
 
-So we read the contents of the frame pointer, subtract 8 from it, and we've found our variable. If we actually want to make sense of the thing, we'll need to look at its type:
+`reg6` on x86 is the frame pointer register, as specified by the [System V x86_64 ABI](https://www.uclibc.org/docs/psABI-x86_64.pdf). Now we read the contents of the frame pointer, subtract 8 from it, and we've found our variable. If we actually want to make sense of the thing, we'll need to look at its type:
 
 ```
 < 2><0x0000004c>      DW_TAG_variable
@@ -241,7 +259,7 @@ This tells us that the type is a 8 byte (64 bit) signed integer type, so we can 
 
 Of course, types can get waaaaaaay more complex than that, as they have to be able to express things like C++ types, but this gives you a basic idea of how they work.
 
-Coming back to that frame base for a second, Clang was nice enough to track the frame base with register `6`, which on x86_64 is the `rbp` or frame pointer register. GCC tends to prefer to use `DW_OP_call_frame_cfa`, which involves parsing the `.eh_frame` ELF section, and that's an entirely different article which I won't be writing. If you tell GCC to use DWARF 2 instead of more recent versions, it'll tend to output location lists, which are somewhat easier to read:
+Coming back to that frame base for a second, Clang was nice enough to track the frame base with the frame pointer register. Recent versions of GCC tend to prefer `DW_OP_call_frame_cfa`, which involves parsing the `.eh_frame` ELF section, and that's an entirely different article which I won't be writing. If you tell GCC to use DWARF 2 instead of more recent versions, it'll tend to output location lists, which are somewhat easier to read:
 
 ```
 DW_AT_frame_base            <loclist at offset 0x00000000 with 4 entries follows>
