@@ -95,7 +95,7 @@ If we're in the child process, we want to replace whatever we're currently execu
 
 {% highlight cpp %}
    ptrace(PTRACE_TRACEME, 0, nullptr, nullptr);
-   execl(prog.c_str(), prog.c_str(), nullptr);
+   execl(prog, prog, nullptr);
 {% endhighlight %}
 
 Here we have our first encounter with `ptrace`, which is going to become our best friend when writing our debugger. `ptrace` allows us to observe and control the execution of another process by reading registers, reading memory, single stepping and more. The API is very ugly; it's a single function which you provide with an enumerator value for what you want to do, and then some arguments which will either be used or ignored depending on which value you supply. The signature looks like this:
