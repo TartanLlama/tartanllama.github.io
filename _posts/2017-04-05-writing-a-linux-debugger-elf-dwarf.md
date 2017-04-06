@@ -84,7 +84,7 @@ Source lines (from CU-DIE at .debug_info offset 0x0000000b):
 0x0040069c  [   6, 1] NS ET
 ```
 
-The first bunch of lines is some information on how to understand the dump -- the main line number data starts at the line starting with `0x00400770`. Essentially this maps a code memory address with a line and column number in some file. `NS` means that the address marks the beginning of a new statement, which is often used for setting breakpoints or stepping. `PE` marks the end of the function prologue, which is helpful for setting function entry breakpoints. `ET` marks the end of the translation unit. The information isn't actually encoded like this; the real encoding is a very space-efficient program of sorts which can be executed to build up this line information.
+The first bunch of lines is some information on how to understand the dump -- the main line number data starts at the line starting with `0x00400670`. Essentially this maps a code memory address with a line and column number in some file. `NS` means that the address marks the beginning of a new statement, which is often used for setting breakpoints or stepping. `PE` marks the end of the function prologue, which is helpful for setting function entry breakpoints. `ET` marks the end of the translation unit. The information isn't actually encoded like this; the real encoding is a very space-efficient program of sorts which can be executed to build up this line information.
 
 So, say we want to set a breakpoint on line 4 of variable.cpp, what do we do? We look for entries corresponding to that file, then we look for a relevant line entry, look up the address which corresponds to it, and set a breakpoint there. In our example, that's this entry:
 
