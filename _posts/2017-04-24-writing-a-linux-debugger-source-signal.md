@@ -256,6 +256,7 @@ There are a bunch of different signals and flavours of signals which you could h
 
 Since we now correct the program counter when we get the `SIGTRAP`, we can remove this coded from `step_over_breakpoint`, so it now looks like:
 
+{% highlight cpp %}
 void debugger::step_over_breakpoint() {
     if (m_breakpoints.count(get_pc())) {
         auto& bp = m_breakpoints[get_pc()];
@@ -267,6 +268,7 @@ void debugger::step_over_breakpoint() {
         }
     }
 }
+{% endhighlight %}
 
 -------------------------------------
 
