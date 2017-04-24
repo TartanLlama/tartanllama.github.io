@@ -6,7 +6,7 @@ tags:
  - c++
 ---
 
-In the last post we learned about DWARF information and how it lets us relate the machine code with the high-level source. This time we'll be putting this knowledge into practice by adding source-level stepping to our debugger.
+A couple of posts ago we learned about DWARF information and how it lets us relate the machine code with the high-level source. This time we'll be putting this knowledge into practice by adding source-level stepping to our debugger.
 
 ---------------------
 
@@ -45,114 +45,10 @@ But now there's a bit of a problem; both hitting a breakpoint and finishing a si
 
 --------------------------
 
-### Handling signals
-
-Fortunately, `ptrace` comes to our rescue again. One of the possible commands to `ptrace` is `PTRACE_GETSIGINFO`, which will give you information about the last signal which the process was sent. We use it like so:
-
-{% highlight cpp %}
-siginfo_t debugger::get_signal_info() {
-    siginfo_t info;
-    ptrace(PTRACE_GETSIGINFO, m_pid, nullptr, &info);
-    return info;
-}
-{% endhighlight %}
-
-This gives us a `siginfo_t` object, which provides the following information:
-
-{% highlight cpp %}
-siginfo_t {
-    int      si_signo;     /* Signal number */
-    int      si_errno;     /* An errno value */
-    int      si_code;      /* Signal code */
-    int      si_trapno;    /* Trap number that caused
-                              hardware-generated signal
-                              (unused on most architectures) */
-    pid_t    si_pid;       /* Sending process ID */
-    uid_t    si_uid;       /* Real user ID of sending process */
-    int      si_status;    /* Exit value or signal */
-    clock_t  si_utime;     /* User time consumed */
-    clock_t  si_stime;     /* System time consumed */
-    sigval_t si_value;     /* Signal value */
-    int      si_int;       /* POSIX.1b signal */
-    void    *si_ptr;       /* POSIX.1b signal */
-    int      si_overrun;   /* Timer overrun count;
-                              POSIX.1b timers */
-    int      si_timerid;   /* Timer ID; POSIX.1b timers */
-    void    *si_addr;      /* Memory location which caused fault */
-    long     si_band;      /* Band event (was int in
-                              glibc 2.3.2 and earlier) */
-    int      si_fd;        /* File descriptor */
-    short    si_addr_lsb;  /* Least significant bit of address
-                              (since Linux 2.6.32) */
-    void    *si_lower;     /* Lower bound when address violation
-                              occurred (since Linux 3.19) */
-    void    *si_upper;     /* Upper bound when address violation
-                              occurred (since Linux 3.19) */
-    int      si_pkey;      /* Protection key on PTE that caused
-                              fault (since Linux 4.6) */
-    void    *si_call_addr; /* Address of system call instruction
-                              (since Linux 3.5) */
-    int      si_syscall;   /* Number of attempted system call
-                              (since Linux 3.5) */
-    unsigned int si_arch;  /* Architecture of attempted system call
-                              (since Linux 3.5) */
-}
-{% endhighlight %}
-
-I'll just be using `si_signo` to work out which signal was sent, and `si_code` to get more information about the signal. The best place to put this code is in our `wait_for_signal` function:
-
-{% highlight cpp %}
-void debugger::wait_for_signal() {
-    int wait_status;
-    auto options = 0;
-    waitpid(m_pid, &wait_status, options);
-
-    auto siginfo = get_signal_info();
-
-    switch (siginfo.si_signo) {
-    case SIGTRAP:
-        handle_sigtrap(siginfo);
-        break;
-    case SIGSEGV:
-        std::cout << "Yay, segfault. Reason: " << siginfo.si_code << std::endl;
-        break;
-    default:
-        std::cout << "Got signal " << strsignal(siginfo.si_signo) << std::endl;
-    }
-}
-{% endhighlight %}
-
-Now to handle `sigtraps`. It suffices to know that `SI_KERNEL` or `TRAP_BRKPT` will be sent when a breakpoint is hit, and `TRAP_TRACE` will be sent on single step completion:
-
-{% highlight cpp %}
-void debugger::handle_sigtrap(siginfo_t info) {
-    switch (info.si_code) {
-    //one of these will be set if a breakpoint was hit
-    case SI_KERNEL:
-    case TRAP_BRKPT:
-    {
-        set_pc(get_pc()-1);
-        std::cout << "Hit breakpoint at address 0x" << std::hex << get_pc() << std::endl;
-        auto line_entry = get_line_entry_from_pc(get_pc());
-        print_source(line_entry->file->path, line_entry->line);
-        return;
-    }
-    //this will be set if the signal was sent by single stepping
-    case TRAP_TRACE:
-        return;
-    default:
-        std::cout << "Unknown SIGTRAP code " << info.si_code << std::endl;
-        return;
-    }
-}
-{% endhighlight %}
-
-
--------------------------------------
 
 ### Implementing the steps
 
-With these functions added we can begin to implement our source-level stepping functions. We're going to implement very simple versions of these functions, but real debuggers tend to have the concept of a *thread plan* which encapsulates all of the stepping information. For example, a debugger might have some complex logic to determine breakpoint sites, then have some callback which determines whether or not the step operation has completed. This is a lot of infrastructure to get in place, so we'll just take a naive approach. We might end up accidentally stepping over breakpoints, but you can spend some time getting all the details right if you like.
+With these functions added we can begin to implement our source-level stepping functions. We're going to write very simple versions of these functions, but real debuggers tend to have the concept of a *thread plan* which encapsulates all of the stepping information. For example, a debugger might have some complex logic to determine breakpoint sites, then have some callback which determines whether or not the step operation has completed. This is a lot of infrastructure to get in place, so we'll just take a naive approach. We might end up accidentally stepping over breakpoints, but you can spend some time getting all the details right if you like.
 
 For `step_out`, we'll just set a breakpoint at the return address of the function and continue. I don't want to get into the details of stack unwinding yet -- that'll come in a later part -- but it suffices to say for now that the return address is stored 8 bytes after the start of a stack frame. So we'll just read the frame pointer and read a word of memory at the relevant address:
 
@@ -166,7 +62,7 @@ void debugger::step_out() {
         set_breakpoint_at_address(return_address);
         should_remove_breakpoint = true;
     }
-    
+
     continue_execution();
 
     if (should_remove_breakpoint) {
@@ -180,7 +76,7 @@ Next is `step_in`. A simple algorithm is to just keep on stepping over instructi
 {% highlight cpp %}
 void debugger::step_in() {
    auto line = get_line_entry_from_pc(get_pc())->line;
-    
+
     while (get_line_entry_from_pc(get_pc())->line == line) {
         single_step_instruction_with_breakpoint_check();
     }
@@ -197,12 +93,12 @@ void debugger::step_over() {
     auto func = get_function_from_pc(get_pc());
     auto func_entry = at_low_pc(func);
     auto func_end = at_high_pc(func);
-    
+
     auto line = get_line_entry_from_pc(func_entry);
     auto start_line = get_line_entry_from_pc(get_pc());
 
-    std::vector<std::intptr_t> to_delete{}; 
-    
+    std::vector<std::intptr_t> to_delete{};
+
     while (line->address < func_end) {
         if (line->address != start_line->address && !m_breakpoints.count(line->address)) {
             set_breakpoint_at_address(line->address);
@@ -217,7 +113,7 @@ void debugger::step_over() {
         set_breakpoint_at_address(return_address);
         to_delete.push_back(return_address);
     }
-    
+
     continue_execution();
 
     for (auto addr : to_delete) {
@@ -240,8 +136,8 @@ This function is a bit more complex, so I'll break it down a bit.
     auto line = get_line_entry_from_pc(func_entry);
     auto start_line = get_line_entry_from_pc(get_pc());
 
-    std::vector<std::intptr_t> breakpoints_to_remove{}; 
-    
+    std::vector<std::intptr_t> breakpoints_to_remove{};
+
     while (line->address < func_end) {
         if (line->address != start_line->address && !m_breakpoints.count(line->address)) {
             set_breakpoint_at_address(line->address);
@@ -277,6 +173,8 @@ Finally, we continue until one of those breakpoints has been hit, then remove al
 It ain't pretty, but it'll do for now.
 
 ------------------------
+
+Of course, we also need to add this new functionality to our UI:
 
     else if(is_prefix(command, "step")) {
         step_in();

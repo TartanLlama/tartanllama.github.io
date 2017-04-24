@@ -47,7 +47,7 @@ These links will go live as the rest of the posts are released.
 2. [Breakpoints]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
 3. [Registers and memory]({% post_url 2017-03-31-writing-a-linux-debugger-registers %})
 4. [Elves and dwarves]({% post_url 2017-04-05-writing-a-linux-debugger-elf-dwarf %})
-5. Stepping, source and signals
+5. [Source and signals]({% post_url 2017-04-24-writing-a-linux-debugger-source-signal %})
 6. Stepping on dwarves
 7. Source-level breakpoints
 8. Stack unwinding
