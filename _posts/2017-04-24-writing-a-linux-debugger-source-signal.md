@@ -6,7 +6,7 @@ tags:
  - c++
 ---
 
-In the the last part we learned about DWARF information and how it can be used to read variables and associate our high-level source code with the machine code which is being executed. In this part we'll put this into practice by implementing some DWARF primatives which will be used by the rest of our debugger. We'll also take this opportunity to get our debugger to print out the current source context when a breakpoint is hit.
+In the the last part we learned about DWARF information and how it can be used to read variables and associate our high-level source code with the machine code which is being executed. In this part we'll put this into practice by implementing some DWARF primitives which will be used by the rest of our debugger. We'll also take this opportunity to get our debugger to print out the current source context when a breakpoint is hit.
 
 -------------------------------
 
@@ -227,7 +227,7 @@ void debugger::wait_for_signal() {
 }
 {% endhighlight %}
 
-Now to handle `sigtraps`. It suffices to know that `SI_KERNEL` or `TRAP_BRKPT` will be sent when a breakpoint is hit, and `TRAP_TRACE` will be sent on single step completion:
+Now to handle `SIGTRAP`s. It suffices to know that `SI_KERNEL` or `TRAP_BRKPT` will be sent when a breakpoint is hit, and `TRAP_TRACE` will be sent on single step completion:
 
 {% highlight cpp %}
 void debugger::handle_sigtrap(siginfo_t info) {
@@ -272,6 +272,6 @@ void debugger::step_over_breakpoint() {
 
 ### Testing it out
 
-Now you should be able to set a breakoint at some address, run the program and see the source code printed out with the currently executing line marked with a cursor.
+Now you should be able to set a breakpoint at some address, run the program and see the source code printed out with the currently executing line marked with a cursor.
 
 Next time we'll be adding the ability to set source-level breakpoints. In the meantime, you can get the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_source).
