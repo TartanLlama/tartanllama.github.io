@@ -63,7 +63,7 @@ This will automatically distribute the work over whatever compute cores we have 
 
 My personal favourite feature was *promotion*, in which functions which take single elements over some type can be promoted automatically to functions which take multiple elements. Kind of like automatic vectorisation, but using multiple physical cores rather than vector units.
 
-{% highlight chapel %}
+{% highlight %}
 proc negate(ref x: real) {
   x = -x;
 }
@@ -71,21 +71,21 @@ proc negate(ref x: real) {
 
 This function takes a reference to a single real number and negates it. We could call it like so:
 
-{% highlight chapel %}
+{% highlight %}
 var I = 42.42;
 negate(I);
 {% endhighlight %}
 
 But we can also get implicit data parallelism by passing an array:
 
-{% highlight chapel %}
+{% highlight %}
 var A = [1.2, 3.4, 5.6];
 negate(A);
 {% endhighlight %}
 
 This is functionally equivalent to writing:
 
-{% highlight chapel %}
+{% highlight %}
 forall a in A do
   negate(a);
 {% endhighlight %}
