@@ -8,6 +8,24 @@ tags:
 
 A couple of posts ago we learned about DWARF information and how it lets us relate the machine code to the high-level source. This time we'll be putting this knowledge into practice by adding source-level stepping to our debugger.
 
+-------------------------------
+
+### Series index
+
+These links will go live as the rest of the posts are released.
+{:.listhead}
+
+1. [Setup]({% post_url 2017-03-21-writing-a-linux-debugger-setup %})
+2. [Breakpoints]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
+3. [Registers and memory]({% post_url 2017-03-31-writing-a-linux-debugger-registers %})
+4. [Elves and dwarves]({% post_url 2017-04-05-writing-a-linux-debugger-elf-dwarf %})
+5. [Source and signals]({% post_url 2017-04-24-writing-a-linux-debugger-source-signal %})
+6. [Stepping on dwarves]({% post_url 2017-05-26-writing-a-linux-debugger-dwarf-step %})
+7. Source-level breakpoints
+8. Stack unwinding
+9. Reading variables
+10. Next steps
+
 ---------------------
 
 ### Exposing instruction-level stepping
