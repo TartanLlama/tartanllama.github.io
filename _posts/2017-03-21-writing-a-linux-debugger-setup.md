@@ -1,4 +1,4 @@
-y---
+---
 layout:     post
 title:      "Writing a Linux Debugger Part 1: Setup"
 category:   c++
