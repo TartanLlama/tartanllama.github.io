@@ -49,7 +49,7 @@ These links will go live as the rest of the posts are released.
 4. [Elves and dwarves]({% post_url 2017-04-05-writing-a-linux-debugger-elf-dwarf %})
 5. [Source and signals]({% post_url 2017-04-24-writing-a-linux-debugger-source-signal %})
 6. [Source-level stepping]({% post_url 2017-05-06-writing-a-linux-debugger-dwarf-step %})
-7. Source-level breakpoints
+7. [Source-level breakpoints]({% post_url 2017-06-19-writing-a-linux-debugger-source-break %})
 8. Stack unwinding
 9. Reading variables
 10. Next steps

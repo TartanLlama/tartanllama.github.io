@@ -6,9 +6,9 @@ tags:
  - c++
 ---
 
-Setting breakpoints on memory addresses is all well and good, but it isn't exactly the most user-friendly tool. We'd like to be able to set breakpoints on source lines and function entry addresses as well, so that we can debug at the same abstraction level as our code.
+Setting breakpoints on memory addresses is all well and good, but it doesn't provide the most user-friendly tool. We'd like to be able to set breakpoints on source lines and function entry addresses as well, so that we can debug at the same abstraction level as our code.
 
-This post will add source-level breakpoints to our debugger. With all of the support we already have available to us, this is a lot easier than it may first sound. We'll also add a command to get the type and address of a symbol, which can be useful for looking up addresses and understanding linking concepts.
+This post will add source-level breakpoints to our debugger. With all of the support we already have available to us, this is a lot easier than it may first sound. We'll also add a command to get the type and address of a symbol, which can be useful for locating code or data and understanding linking concepts.
 
 -------------------------------
 
@@ -23,7 +23,7 @@ These links will go live as the rest of the posts are released.
 4. [Elves and dwarves]({% post_url 2017-04-05-writing-a-linux-debugger-elf-dwarf %})
 5. [Source and signals]({% post_url 2017-04-24-writing-a-linux-debugger-source-signal %})
 6. [Source-level stepping]({% post_url 2017-05-06-writing-a-linux-debugger-dwarf-step %})
-7. Source-level breakpoints
+7. [Source-level breakpoints]({% post_url 2017-06-19-writing-a-linux-debugger-source-break %})
 8. Stack unwinding
 9. Reading variables
 10. Next steps
@@ -56,11 +56,11 @@ LOCAL_SYMBOLS:
                       DW_AT_high_pc               0x0040069c
                       DW_AT_name                  foo
                       ...
-...                      
+...
 <14><0x000000b0>    DW_TAG_subprogram
                       DW_AT_low_pc                0x00400700
                       DW_AT_high_pc               0x004007a0
-                      DW_AT_name                  bar                      
+                      DW_AT_name                  bar
                       ...
 ```
 
@@ -141,7 +141,7 @@ My `is_suffix` hack is there so you can type `c.cpp` for `a/b/c.cpp`. Of course 
 
 When we get down to the level of object files, symbols are king. Functions are named with symbols, global variables are named with symbols, you get a symbol, we get a symbol, everyone gets a symbol. In a given object file, some symbols might reference other object files or shared libraries, where the linker will patch things up to create an executable program from the symbol reference spaghetti.
 
-If we want to look up symbols, we need to examine the symbol table. Fortunately, `libelfin` has a fairly nice interface for doing this, so we don't need to deal with all of the ELF nonsense ourselves. To give you an idea of what we're dealing with, here is a dump of the `.symtab` section of a binary, produced with `readelf`:
+Symbols can be looked up in the aptly-named symbol table, which is stored in ELF sections in the binary. Fortunately, `libelfin` has a fairly nice interface for doing this, so we don't need to deal with all of the ELF nonsense ourselves. To give you an idea of what we're dealing with, here is a dump of the `.symtab` section of a binary, produced with `readelf`:
 
 ```
 Num:    Value          Size Type    Bind   Vis      Ndx Name
@@ -325,5 +325,7 @@ else if(is_prefix(command, "symbol")) {
 Fire up your debugger on a simple binary, play around with setting source-level breakpoints. Setting a breakpoint on some `foo` and seeing my debugger stop on it was one of the most rewarding moments of this project for me.
 
 Symbol lookup can be tested by adding some functions or global variables to your program and looking up the names of them. Note that if you're compiling C++ code you'll need to take [name mangling](https://en.wikipedia.org/wiki/Name_mangling#C.2B.2B) into account as well.
+
+That's all for this post. Next time I'll show how to add stack unwinding support to the debugger.
 
 You can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_source_break).
