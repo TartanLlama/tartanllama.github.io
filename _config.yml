@@ -19,7 +19,7 @@ google_analytics: "UA-86837989-1"
 
 # Footer
 footer_left: "<a href=\"https://github.com/jacobtomlinson/carte-noire\">Carte Noir</a> theme by <a href=\"https://twitter.com/_JacobTomlinson\">Jacob Tomlinson</a>"
-footer_center: "&copy; <a href=\"https://twitter.com/TartanLlama\">Simon Brand</a>"
+footer_center: "&copy; 2017 <a href=\"https://twitter.com/TartanLlama\">Simon Brand</a>"
 footer_right: "&lt;/&gt; on <a href=\"https://github.com/tartanllama/tartanllama.github.io\">Github</a> &nbsp;<i class=\"fa fa-github-alt\"></i>"
 
 # Build settings
