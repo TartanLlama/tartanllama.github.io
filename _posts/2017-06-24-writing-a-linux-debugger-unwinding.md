@@ -35,17 +35,17 @@ void a() {
     //stopped here
 }
 
-void e() {
-     b();
+void b() {
+     a();
 }
 
-void f() {
-     c();
+void c() {
+     a();
 }
 
 int main() {
-    e();
-    f();
+    b();
+    c();
 }
 {% endhighlight %}
 
