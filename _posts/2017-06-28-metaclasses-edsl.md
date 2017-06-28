@@ -128,7 +128,7 @@ $class keyboard {
             compiler.error("Check the definition of 'key_positions' here",
                            $(keyboard::key_positions).source_location());
             compiler.error("Check the definition of 'columns' here",
-                           $(keyboard::key_positions).source_location());
+                           $(keyboard::columns).source_location());
         }
     }
 }
