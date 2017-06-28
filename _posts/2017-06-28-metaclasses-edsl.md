@@ -162,6 +162,6 @@ The above also somewhat addresses problem of cohesion and code locality. In my C
 
 ---------------------
 
-That's it for my contribution to the metaclass hype train. Maybe I'll write some more posts as I come up with more ideas, but I'm particularly interested in exploring the design space for declarative EDSLs in C++. Templates are a powerful host for other languages, and metafunctions only make them more so.
+That's it for my contribution to the metaclass hype train. Maybe I'll write some more posts as I come up with more ideas, but I'm particularly interested in exploring the design space for declarative EDSLs in C++. Templates are a powerful host for other languages, and metaclasses only make them more so.
 
 ---------------------
