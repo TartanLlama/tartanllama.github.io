@@ -18,7 +18,7 @@ public:
 };
 {% endhighlight %}
 
-This class is obviously defining an interface of some kind: all of the member functions are public, pure virtual, and it has a virtual destructor. Other classes will need to be added which inherit from this interface for it to be useful. But those properties I listed are really just boilerplate; it's just noise that we need to type to get the compiler to do The Right Thing&#8482. It would be a lot clearer and less error-prone if we could push the boilerplate aside and just focus on the details which are important to us. This is the essence of metaclasses. If there were a metaclass called `interface`, you could write something like this:
+This class is obviously defining an interface of some kind: all of the member functions are public, pure virtual, and it has a virtual destructor. Other classes will need to be added which inherit from this interface for it to be useful. But those properties I listed are really just boilerplate; it's just noise that we need to type to get the compiler to do The Right Thing&#8482;. It would be a lot clearer and less error-prone if we could push the boilerplate aside and just focus on the details which are important to us. This is the essence of metaclasses. If there were a metaclass called `interface`, you could write something like this:
 
 {% highlight cpp %}
 interface IShape {
