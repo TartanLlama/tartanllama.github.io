@@ -138,6 +138,26 @@ $class keyboard {
 
 Now the validations are run as part of generating a class from the metaclass, and the diagnostics should be placed depending on the source location which is given to the `compiler.error` calls. With sufficiently fine-grained control over the placement of diagnostics, all error messages can be emitted **at the abstraction level of the EDSL** rather than having C++ template guff injecting itself into the party.
 
+Code to generate firmware from the high-level descriptions can now also be placed in the implementation of the `keyboard` metaclass, so that executing the firmware is carried out by calling `my_keyboard::run_firmware()`:
+
+{% highlight cpp %}
+$class keyboard {
+    //validations as above
+    
+    template <class Layouts>
+    static pressed_keys scan_matrix() {
+        //...
+    }
+    
+    static void run_firmware() {
+        while (true) {
+            auto pressed_keys = scan_matrix<keyboard::layouts>();
+            //...
+        }
+    }
+}
+{% endhighlight %}
+
 The above also somewhat addresses problem of cohesion and code locality. In my C++17 ETKF implementation, the validations which are run over the keyboard descriptions are quite separate from the code which generates the firmware from the template declarations. But really, these are both part of the abstraction which I'm trying to express in the interface. Metaclasses provide a means to tie together the constraints on the declaration as well as the code which lowers the EDSL into normal C++ land.
 
 ---------------------
