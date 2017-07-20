@@ -18,7 +18,7 @@ public:
 };
 {% endhighlight %}
 
-This class is obviously defining an interface of some kind: all of the member functions are public, pure virtual, and it has a virtual destructor. Other classes will need to be added which inherit from this interface for it to be useful. But those properties I listed are really just boilerplate; it's just noise that we need to type to get the compiler to do The Right Thing&#8482. It would be a lot clearer and less error-prone if we could push the boilerplate aside and just focus on the details which are important to us. This is the essence of metaclasses. If there were a metaclass called `interface`, you could write something like this:
+This class is obviously defining an interface of some kind: all of the member functions are public, pure virtual, and it has a virtual destructor. Other classes will need to be added which inherit from this interface for it to be useful. But those properties I listed are really just boilerplate; it's just noise that we need to type to get the compiler to do The Right Thing&#8482;. It would be a lot clearer and less error-prone if we could push the boilerplate aside and just focus on the details which are important to us. This is the essence of metaclasses. If there were a metaclass called `interface`, you could write something like this:
 
 {% highlight cpp %}
 interface IShape {
@@ -128,7 +128,7 @@ $class keyboard {
             compiler.error("Check the definition of 'key_positions' here",
                            $(keyboard::key_positions).source_location());
             compiler.error("Check the definition of 'columns' here",
-                           $(keyboard::key_positions).source_location());
+                           $(keyboard::columns).source_location());
         }
     }
 }
@@ -138,10 +138,30 @@ $class keyboard {
 
 Now the validations are run as part of generating a class from the metaclass, and the diagnostics should be placed depending on the source location which is given to the `compiler.error` calls. With sufficiently fine-grained control over the placement of diagnostics, all error messages can be emitted **at the abstraction level of the EDSL** rather than having C++ template guff injecting itself into the party.
 
+Code to generate firmware from the high-level descriptions can now also be placed in the implementation of the `keyboard` metaclass, so that executing the firmware is carried out by calling `my_keyboard::run_firmware()`:
+
+{% highlight cpp %}
+$class keyboard {
+    //validations as above
+    
+    template <class Layouts>
+    static pressed_keys scan_matrix() {
+        //...
+    }
+    
+    static void run_firmware() {
+        while (true) {
+            auto pressed_keys = scan_matrix<keyboard::layouts>();
+            //...
+        }
+    }
+}
+{% endhighlight %}
+
 The above also somewhat addresses problem of cohesion and code locality. In my C++17 ETKF implementation, the validations which are run over the keyboard descriptions are quite separate from the code which generates the firmware from the template declarations. But really, these are both part of the abstraction which I'm trying to express in the interface. Metaclasses provide a means to tie together the constraints on the declaration as well as the code which lowers the EDSL into normal C++ land.
 
 ---------------------
 
-That's it for my contribution to the metaclass hype train. Maybe I'll write some more posts as I come up with more ideas, but I'm particularly interested in exploring the design space for declarative EDSLs in C++. Templates are a powerful host for other languages, and metafunctions only make them more so.
+That's it for my contribution to the metaclass hype train. Maybe I'll write some more posts as I come up with more ideas, but I'm particularly interested in exploring the design space for declarative EDSLs in C++. Templates are a powerful host for other languages, and metaclasses only make them more so.
 
 ---------------------
