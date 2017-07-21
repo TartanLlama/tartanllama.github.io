@@ -19,8 +19,6 @@ auto [x,y,z] = f(); // x has type T1, y has type T2, z has type T3
 
 This is a very powerful and expressive feature, but the most interesting element for me is the ability to add support for this to your own classes. This post is a short tutorial on how to do this, mostly for my own future reference.
 
-(Note: currently there aren't any implementations available to play with, so this is theory for now. I plan to update this post as things change.)
-
 -----------------------
 
 ### Built-in support
