@@ -71,6 +71,7 @@ The simplest specialization is `std::tuple_size`. Since there are three elements
 
 {% highlight cpp %}
 namespace std {
+    template<>
     struct tuple_size<Config>
         : std::integral_constant<std::size_t, 3> {};
 }
@@ -81,7 +82,7 @@ Next is `get`. We'll use C++17's `if constexpr` for brevity. I've just added thi
 {% highlight cpp %}
 class Config {
     //...
-
+public:
    template <std::size_t N>
    decltype(auto) get() const {
        if      constexpr (N == 0) return std::string_view{name};
