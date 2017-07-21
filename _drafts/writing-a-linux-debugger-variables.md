@@ -30,6 +30,14 @@ These links will go live as the rest of the posts are released.
 
 Before you get started, make sure that the version of `libelfin` you are using is the [`fbreg` branch of my fork](https://github.com/TartanLlama/libelfin/tree/fbreg). This contains some hacks to support getting the base of the current stack frame and evaluating location lists, neither of which are supported by vanilla `libelfin`.
 
+The location of a variable in memory at a given moment is encoded in the DWARF information using the `DW_AT_location` attribute. Location descriptions can be either single location descriptions, composite location descriptions, or location lists.
+
+- Single location descriptions describe the location of one contiguous piece (usually all) of an object. A simple location description may describe a location in addressable memory, or in a register, or the lack of a location (with or without a known value).
+- Composite location descriptions describe an object in terms of pieces, each of which may be contained in part of a register or stored in a memory location unrelated to other pieces.
+- Location lists describe objects which have a limited lifetime or change location during their lifetime.
+
+
+
 
 void debugger::read_variables() {
     using namespace dwarf;
