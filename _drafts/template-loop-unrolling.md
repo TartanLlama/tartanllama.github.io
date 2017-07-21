@@ -3,18 +3,12 @@ layout:     post
 title:      "Unrolling loops with templates"
 category:   c++
 tags:
- - c++ 
+ - c++
  - templates
 ---
 
 {% highlight cpp %}
 namespace detail{
-    //This is used to store the visited nodes
-    template<int...> struct int_pack;
-
-    //Primary template
-    template<typename, int... I>
-    struct C;
 
     //This is the leaf node
     template<int... Is>
@@ -30,11 +24,11 @@ namespace detail{
     struct C<int_pack<PIs...>, I,Is...> {
         template <std::size_t... Idx>
         static void f_help (std::index_sequence<Idx...>) {
-            //Store the current node in the pack 
+            //Store the current node in the pack
             //and call `C::f` for each loop iteration
             (void)std::initializer_list<int> {
-                (C<int_pack<PIs...,Idx>,Is...>::f(), 0)... 
-            };   
+                (C<int_pack<PIs...,Idx>,Is...>::f(), 0)...
+            };
         }
 
         //Use tag dispatching to generate the loop iterations
@@ -71,6 +65,13 @@ static void detail::C<detail::int_pack<1, 2>>::f() [I = <>]
 This is fine if we just want to do this loop unrolling for a single loop, but the duplication would quickly become a nightmare if we wanted to repeat it. One solution would be to inject a lambda into the class to use as the loop body. This is a pretty easy modification to make to our existing code:
 
 {% highlight cpp %}
+//This is used to store the visited nodes
+template<int...> struct int_pack;
+
+//Primary template
+template<typename, int... I>
+struct C;
+
 template<int... Is>
 struct C<int_pack<Is...>> {
     //This is now a template which takes in a functor
@@ -85,7 +86,7 @@ struct C<int_pack<PIs...>, I,Is...> {
     //We need to pass the function through here
     template <std::size_t... Idx, typename Func>
     static void f_help (std::index_sequence<Idx...>, const Func& func) {
-        (void)std::initializer_list<int>{ (C<int_pack<PIs...,Idx>,Is...>::f(func), 0)... };   
+        (C<int_pack<PIs...,Idx>,Is...>::f(func), 0), ...);
     }
 
     //And this is our entry point
@@ -102,23 +103,4 @@ Now we can pass a lambda or anything which acts like a function to `f`:
 C<2,3>::f([](auto i, auto j){
     std::cout << "i " << i << " j " << j << '\n';
 });
-{% endhighlight %}
-
------------------------
-
-Alternatively, we could use a metaprogramming library like `boost::hana`:
-
-{% highlight cpp %}
-template <typename Func>
-void unroll (const Func& func) {
-    func();
-}
-
-template <std::size_t I1, std::size_t... Is, typename Func>
-void unroll (const Func& func) {
-    hana::for_each(hana::range_c<std::size_t, 0, I1>,
-                   [&](auto x) {
-                       unroll<Is...>([x, &func] (auto... xs) { func(x,xs...); });
-                   });
-}
 {% endhighlight %}
