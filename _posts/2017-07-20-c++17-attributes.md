@@ -127,3 +127,5 @@ Those warnings will help the user notice that `do_something_else` might be given
 ----------------------------
 
 Compilers have shipped non-standard extensions to express these concepts for years, but it's great that we now have standard methods to do the same. Leave a comment if you have ideas for other attributes you would like to be added to the language!
+
+For some more examples of using these attributes, see posts by [Kenneth Benzie](https://infektor.net/posts/2017-01-19-using-cpp17-attributes-today.html), [Bartłomiej Filipek](http://www.bfilipek.com/2017/07/cpp17-in-details-attributes.html), and [Arne Mertz](https://arne-mertz.de/2016/12/modern-c-features-attributes/).
