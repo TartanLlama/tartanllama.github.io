@@ -28,17 +28,30 @@ These links will go live as the rest of the posts are released.
 
 -------------------------------
 
-Before you get started, make sure that the version of `libelfin` you are using is the [`fbreg` branch of my fork](https://github.com/TartanLlama/libelfin/tree/fbreg). This contains some hacks to support getting the base of the current stack frame and evaluating location lists, neither of which are supported by vanilla `libelfin`.
+Before you get started, make sure that the version of `libelfin` you are using is the [`fbreg` branch of my fork](https://github.com/TartanLlama/libelfin/tree/fbreg). This contains some hacks to support getting the base of the current stack frame and evaluating location lists, neither of which are supported by vanilla `libelfin`. You might need to pass `-gdwarf-2` to GCC to get it to generate compatible DWARF information. But before we get into the implementation, I'll give a more detailed description of how locations are encoded in DWARF 5, which is the most recent specification.
 
 The location of a variable in memory at a given moment is encoded in the DWARF information using the `DW_AT_location` attribute. Location descriptions can be either single location descriptions, composite location descriptions, or location lists.
 
-- Single location descriptions describe the location of one contiguous piece (usually all) of an object. A simple location description may describe a location in addressable memory, or in a register, or the lack of a location (with or without a known value).
+- Simple location descriptions describe the location of one contiguous piece (usually all) of an object. A simple location description may describe a location in addressable memory, or in a register, or the lack of a location (with or without a known value).
+  - Example:
+    - `DW_OP_fbreg -32`
+    - A variable which is entirely stored -32 bytes from the stack frame base
 - Composite location descriptions describe an object in terms of pieces, each of which may be contained in part of a register or stored in a memory location unrelated to other pieces.
+  - Example:
+    - `DW_OP_reg3 DW_OP_piece 4 DW_OP_reg10 DW_OP_piece 2`
+    - A variable whose first four bytes reside in register 3 and whose next two bytes reside in register 10.
 - Location lists describe objects which have a limited lifetime or change location during their lifetime.
+  - Example:
+    - `<loclist with 3 entries follows>`
+      - `[ 0]<lowpc=0x2e00><highpc=0x2e19>DW_OP_reg0`
+      - `[ 1]<lowpc=0x2e19><highpc=0x2e3f>DW_OP_reg3`
+      - `[ 2]<lowpc=0x2ec4><highpc=0x2ec7>DW_OP_reg2`
+    - A variable whose location moves between registers depending on the current value of the program counter
+
+The `DW_AT_location` is encoded in one of three different ways, depending on the kind of location description. `exprloc`s encode simple and composite location descriptions. They consist of a byte length followed by a DWARF expression or location description. `loclist`s and `loclistptr`s encode location lists. They give indexes or offsets into the `.debug_loclists` section, which describes the actual location lists.
 
 
-
-
+{% highlight cpp %}
 void debugger::read_variables() {
     using namespace dwarf;
 
@@ -78,3 +91,4 @@ void debugger::read_variables() {
         }
     }
 }
+{% endhighlight %}
