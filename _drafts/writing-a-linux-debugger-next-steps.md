@@ -28,13 +28,25 @@ $Z0,400570,1#43
 
 ### Shared library and dynamic loading support
 
-Supporting shared libraries and dynamic loading is a pretty in-depth issue which requires a lot of knowledge about the Linux dynamic loader. This is one area of debugging which I don't know much about, so you might be better off reading the LLDB sources if you want to understand how to implement this. The relevant folder is [`source/Plugins/DynamicLoader/POSIX_DYLD`](https://github.com/llvm-mirror/lldb/tree/master/source/Plugins/DynamicLoader/POSIX-DYLD).
+The debugger needs to know what shared libraries have been loaded by the debuggee so that it can set breakpoints, get source-level information and symbols, etc. More than just finding libraries which have been dynamically linked against, the debugger must track libraries which are loaded at runtime through `dlopen`. To facilitate this, the dynamic linker maintains a *rendezvous structure*. This structure maintains a linked list of shared library descriptors, along with a pointer to a function which is called whenever the linked list is updated. This structure is stored where the `.dynamic` section of the ELF file is loaded, and is initialized before program execution.
+
+A simple tracing algorithm is this:
+
+- The tracer looks up the entry point of the program in the ELF header (or it could use the auxillary vector stored in `/proc/<pid>/aux`)
+- The tracer places a breakpoint on the entry point of the program and begins execution.
+- When the breakpoint is hit, the address of the rendezvous structure is found by looking up the load address of .dynamic in the ELF file.
+- The rendezvous structure is examined to get the list of currently loaded libraries.
+- A breakpoint is set on the linker update function.
+- Whenever the breakpoint is hit, the list is updated.
+- The tracer infinitely loops, continuing the program and waiting for a signal until the tracee signals that it has exited.
+
+I've written a small demonstration of these concepts, which you can find [here](https://github.com/TartanLlama/dltrace).
 
 --------------------
 
 ### Expression evaluation
 
-Expression evaluation is a feature which lets users evaluate expressions in the original source language while debugging their application. For example, in LLDB or GDB you could execute `print foo()` to call the `foo` function and print the result. Depending on how complex the expression is, there are a few different ways of actually evaluating the expression. If the expression is ust a simple identifier, then the debuger can just look at the debug information, locate the variable and print out the value, just like we have done in part TODO N. If the expression is a bit more complex, then it may be possible to compile the code to an intermediate representation (IR) and just interpret that to get the result. For example, for some expressions LLDB will use Clang to compile the expression to LLVM IR and interpret that. If the expression is even more complex, or requires calling some function, then the code might need to be JITted to the target and executed in the address space of the debuggee.
+Expression evaluation is a feature which lets users evaluate expressions in the original source language while debugging their application. For example, in LLDB or GDB you could execute `print foo()` to call the `foo` function and print the result. Depending on how complex the expression is, there are a few different ways of actually evaluating the expression. If the expression is a simple identifier, then the debugger can look at the debug information, locate the variable and print out the value. If the expression is a bit more complex, then it may be possible to compile the code to an intermediate representation (IR) and interpret that to get the result. For example, for some expressions LLDB will use Clang to compile the expression to LLVM IR and interpret that. If the expression is even more complex, or requires calling some function, then the code might need to be JITted to the target and executed in the address space of the debuggee.
 
 --------------------
 
