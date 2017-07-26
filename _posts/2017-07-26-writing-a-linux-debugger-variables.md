@@ -23,7 +23,7 @@ These links will go live as the rest of the posts are released.
 6. [Source-level stepping]({% post_url 2017-05-06-writing-a-linux-debugger-dwarf-step %})
 7. [Source-level breakpoints]({% post_url 2017-06-19-writing-a-linux-debugger-source-break %})
 8. [Stack unwinding]({% post_url 2017-06-24-writing-a-linux-debugger-unwinding %})
-9. Handling variables
+9. [Handling variables]({% post_url 2017-07-26-writing-a-linux-debugger-variables %})
 10. Next steps
 
 -------------------------------
