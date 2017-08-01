@@ -33,3 +33,6 @@ exclude: [vendor]
 
 #RSS
 name: "Simon Brand's Blog"
+
+redirects: yes
+permalink: /:title.html
