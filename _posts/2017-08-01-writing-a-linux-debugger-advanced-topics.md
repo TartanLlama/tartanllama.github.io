@@ -14,9 +14,6 @@ We're finally here at the last post of the series! This time I'll be giving a hi
 
 ### Series index
 
-These links will go live as the rest of the posts are released.
-{:.listhead}
-
 1. [Setup]({% post_url 2017-03-21-writing-a-linux-debugger-setup %})
 2. [Breakpoints]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
 3. [Registers and memory]({% post_url 2017-03-31-writing-a-linux-debugger-registers %})
