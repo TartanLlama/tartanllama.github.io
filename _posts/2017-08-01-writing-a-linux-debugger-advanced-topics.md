@@ -2,11 +2,33 @@
 layout:     post
 title:      "Writing a Linux Debugger Part 10: Advanced topics"
 category:   c++
+redirects:
+ - /c++/2017/08/01/writing-a-linux-debugger-advanced-topics/
 tags:
  - c++
 ---
 
-We're finally here at the last post of the series. This time I'll be giving a high-level overview of some more advanced concepts in debugging: remote debugging, shared library support, expression evaluation, and multi-threaded support. These ideas are more complex to implement, so I won't walk through how to do so in detail.
+We're finally here at the last post of the series! This time I'll be giving a high-level overview of some more advanced concepts in debugging: remote debugging, shared library support, expression evaluation, and multi-threaded support. These ideas are more complex to implement, so I won't walk through how to do so in detail, but I'm happy to answer questions about these concepts if you have any.
+
+-------------------------------
+
+### Series index
+
+These links will go live as the rest of the posts are released.
+{:.listhead}
+
+1. [Setup]({% post_url 2017-03-21-writing-a-linux-debugger-setup %})
+2. [Breakpoints]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
+3. [Registers and memory]({% post_url 2017-03-31-writing-a-linux-debugger-registers %})
+4. [Elves and dwarves]({% post_url 2017-04-05-writing-a-linux-debugger-elf-dwarf %})
+5. [Source and signals]({% post_url 2017-04-24-writing-a-linux-debugger-source-signal %})
+6. [Source-level stepping]({% post_url 2017-05-06-writing-a-linux-debugger-dwarf-step %})
+7. [Source-level breakpoints]({% post_url 2017-06-19-writing-a-linux-debugger-source-break %})
+8. [Stack unwinding]({% post_url 2017-06-24-writing-a-linux-debugger-unwinding %})
+9. [Handling variables]({% post_url 2017-07-26-writing-a-linux-debugger-variables %})
+10. [Advanced topics]({% post_url 2017-08-01-writing-a-linux-debugger-advanced-topics %})
+
+-------------------
 
 ### Remote debugging
 
@@ -28,6 +50,8 @@ $Z0,400570,1#43
 
 The GDB remote protocol is very easy to extend for custom packets, which is very useful for implementing platform- or language-specific functionality.
 
+-------------------
+
 ### Shared library and dynamic loading support
 
 The debugger needs to know what shared libraries have been loaded by the debuggee so that it can set breakpoints, get source-level information and symbols, etc. As well as finding libraries which have been dynamically linked against, the debugger must track libraries which are loaded at runtime through `dlopen`. To facilitate this, the dynamic linker maintains a *rendezvous structure*. This structure maintains a linked list of shared library descriptors, along with a pointer to a function which is called whenever the linked list is updated. This structure is stored where the `.dynamic` section of the ELF file is loaded, and is initialized before program execution.
@@ -44,11 +68,15 @@ A simple tracing algorithm is this:
 
 I've written a small demonstration of these concepts, which you can find [here](https://github.com/TartanLlama/dltrace). I can do a more detailed write up of this in the future if anyone is interested.
 
+-------------------
+
 ### Expression evaluation
 
 Expression evaluation is a feature which lets users evaluate expressions in the original source language while debugging their application. For example, in LLDB or GDB you could execute `print foo()` to call the `foo` function and print the result.
 
 Depending on how complex the expression is, there are a few different ways of evaluating it. If the expression is a simple identifier, then the debugger can look at the debug information, locate the variable and print out the value, just like we did in the last part of this series. If the expression is a bit more complex, then it may be possible to compile the code to an intermediate representation (IR) and interpret that to get the result. For example, for some expressions LLDB will use Clang to compile the expression to LLVM IR and interpret that. If the expression is even more complex, or requires calling some function, then the code might need to be JITted to the target and executed in the address space of the debuggee. This involves calling `mmap` to allocate some executable memory, then the compiled code is copied to this block and is executed. LLDB does this by using LLVM's JIT functionality.
+
+-------------------
 
 ### Multi-threaded debugging support
 
