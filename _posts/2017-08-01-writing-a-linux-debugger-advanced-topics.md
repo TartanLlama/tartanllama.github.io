@@ -57,6 +57,7 @@ The GDB remote protocol is very easy to extend for custom packets, which is very
 The debugger needs to know what shared libraries have been loaded by the debuggee so that it can set breakpoints, get source-level information and symbols, etc. As well as finding libraries which have been dynamically linked against, the debugger must track libraries which are loaded at runtime through `dlopen`. To facilitate this, the dynamic linker maintains a *rendezvous structure*. This structure maintains a linked list of shared library descriptors, along with a pointer to a function which is called whenever the linked list is updated. This structure is stored where the `.dynamic` section of the ELF file is loaded, and is initialized before program execution.
 
 A simple tracing algorithm is this:
+{:.listhead}
 
 - The tracer looks up the entry point of the program in the ELF header (or it could use the auxillary vector stored in `/proc/<pid>/aux`)
 - The tracer places a breakpoint on the entry point of the program and begins execution.
