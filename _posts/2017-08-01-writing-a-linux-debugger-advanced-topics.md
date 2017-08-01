@@ -2,8 +2,7 @@
 layout:     post
 title:      "Writing a Linux Debugger Part 10: Advanced topics"
 category:   c++
-redirects:
- - /c++/2017/08/01/writing-a-linux-debugger-advanced-topics/
+permalink:  /writing-a-linux-debugger-advanced-topics.html
 tags:
  - c++
 ---
