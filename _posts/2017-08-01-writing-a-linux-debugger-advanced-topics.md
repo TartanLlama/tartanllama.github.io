@@ -77,6 +77,8 @@ Expression evaluation is a feature which lets users evaluate expressions in the 
 
 Depending on how complex the expression is, there are a few different ways of evaluating it. If the expression is a simple identifier, then the debugger can look at the debug information, locate the variable and print out the value, just like we did in the last part of this series. If the expression is a bit more complex, then it may be possible to compile the code to an intermediate representation (IR) and interpret that to get the result. For example, for some expressions LLDB will use Clang to compile the expression to LLVM IR and interpret that. If the expression is even more complex, or requires calling some function, then the code might need to be JITted to the target and executed in the address space of the debuggee. This involves calling `mmap` to allocate some executable memory, then the compiled code is copied to this block and is executed. LLDB does this by using LLVM's JIT functionality.
 
+If you want to know more about JIT compilation, I'd highly recommend [Eli Bendersky's posts on the subject](http://eli.thegreenplace.net/tag/code-generation).
+
 -------------------
 
 ### Multi-threaded debugging support
