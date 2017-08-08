@@ -29,13 +29,13 @@ The following definitions are all well-formed:
 
 {% highlight cpp %}
 void C::foo(){
-  std::cout << "C" << std::endl;
+  std::cout << "C";
 }
 void C::A::foo(){
-  std::cout << "A" << std::endl;
+  std::cout << "A";
 }
 void C::B::foo(){
-  std::cout << "B" << std::endl;
+  std::cout << "B";
 }
 {% endhighlight %}
 
@@ -50,7 +50,7 @@ The *injected-class-name* exists to ensure that the class is found during name l
 
 {% highlight cpp %}
 void C::C::C::A::A::A::foo(){
-    std::cout << "A" << std::endl;
+    std::cout << "A";
 }
 {% endhighlight %}
 
