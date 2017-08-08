@@ -12,9 +12,6 @@ In the last post we added simple address breakpoints to our debugger. This time 
 
 ### Series index
 
-These links will go live as the rest of the posts are released.
-{:.listhead}
-
 1. [Setup]({% post_url 2017-03-21-writing-a-linux-debugger-setup %})
 2. [Breakpoints]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
 3. [Registers and memory]({% post_url 2017-03-31-writing-a-linux-debugger-registers %})
@@ -23,8 +20,8 @@ These links will go live as the rest of the posts are released.
 6. [Source-level stepping]({% post_url 2017-05-06-writing-a-linux-debugger-dwarf-step %})
 7. [Source-level breakpoints]({% post_url 2017-06-19-writing-a-linux-debugger-source-break %})
 8. [Stack unwinding]({% post_url 2017-06-24-writing-a-linux-debugger-unwinding %})
-9. Reading variables
-10. Next steps
+9. [Handling variables]({% post_url 2017-07-26-writing-a-linux-debugger-variables %})
+10. [Advanced topics]({% post_url 2017-08-01-writing-a-linux-debugger-advanced-topics %})
 
 ---------------
 
