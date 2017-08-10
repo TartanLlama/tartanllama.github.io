@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Writing a good tech cover letter"
+title:      "Writing a Good Tech Cover Letter"
 category:   social-tech
 tags:
 - social-tech
