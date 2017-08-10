@@ -8,7 +8,7 @@ tags:
 
 I review a lot of job applications at Codeplay and most of them make me sad.
 
-For every application I look at, I make a list of plus points and minus points as I read through the candidate's documents and code. Invariably the first thing I look at is the cover letter, and I would estimate that 90% of them get an instant minus point in my review feedback. As an alternative to ranting about this on the internet, I've written a bunch of advice on writing a cover letter for a tech job. All advice is from the viewpoint of a small-medium sized tech company and all, well, you know, just like, my opinion, man.
+For every application I look at, I make a list of plus points and minus points as I read through the candidate's documents and code. Invariably the first thing I look at is the cover letter, and I would estimate that 90% of them get an instant minus point in my review feedback. As an alternative to ranting about this on the internet, I've written some advice on writing a cover letter for a tech job. All advice is from the viewpoint of a small-medium sized tech company and all, well, you know, just like, my opinion, man.
 
 A good job application answers two questions: why the candidate is right for the company and why the company is right for the candidate. The best place to answer these questions is in your cover letter. In fact, with the best cover letters, I even forget to read the CV. If you can't answer both of these questions on a single side of A4, you probably don't know the answers.
 
@@ -22,8 +22,8 @@ Don't spout vague buzzwords. Every time I read about a "team player who is eager
 
 Let your character and enthusiasm show. These don't come across in a CV, so show me who you are and why I should want to work with you. Of course, this is much more apparent when it actually comes to interviews, but being enthusiastic about the position and giving some colour to your writing can make the difference between actually getting that interview or not.
 
-If the advert asks for links to your work, provide good ones. Many applicants link to a Stack Overflow profile with two closed questions on `std::vector` and send a code sample they wrote ten years ago with `using namespace std;` in all the headers. Don't.
+If the advert asks for links to your work, provide good ones. Of course, if most of your work is confidential and you don't work on hobby projects then you may not have any; that's fine, just justify it. But many applicants link to a Stack Overflow profile with two closed questions on `std::vector` and send a code sample they wrote ten years ago with `using namespace std;` in all the headers. Don't. 
 
-Spell-check your letter. English might not be your first language, and whoever is reviewing your application should be sensitive to that, but maeking shoor ur letter doesnt look lyk this can be done by your word processor. This advice should be obvious, but you'd be surprised how many application I review which are riddled with typos. Bad spelling looks lazy. You should put effort into your cover letter, and it should show.
+Spell-check your letter. English might not be your first language, and whoever is reviewing your application should be sensitive to that, but maeking shoor ur letter doesnt look lyk this can be done by your word processor. This advice should be obvious, but you'd be surprised how many applications I review are riddled with typos. Bad spelling looks lazy. You should put effort into your cover letter, and it should show.
 
-Finally, and most importantly, don't assume you're not good enough. An honest desire to learn the field and evidence that you're trying goes a really long way.
+Finally, and most importantly, don't assume you're not good enough. An understanding of the gaps in your knowledge, an honest desire to learn the field and evidence that you're trying goes a really long way.
