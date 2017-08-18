@@ -4,6 +4,7 @@ title:      "Writing a Linux Debugger Part 7: Source-level breakpoints"
 category:   c++
 tags:
  - c++
+redirect_from: /c++/2017/06/19/writing-a-linux-debugger-source-break/
 ---
 
 Setting breakpoints on memory addresses is all well and good, but it doesn't provide the most user-friendly tool. We'd like to be able to set breakpoints on source lines and function entry addresses as well, so that we can debug at the same abstraction level as our code.

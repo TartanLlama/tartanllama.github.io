@@ -2,6 +2,7 @@
 layout:     post
 title:      "New domain name and future plans"
 category:   meta
+redirect_from: /meta/2017/02/02/new-domain/
 ---
 
 A quick meta post about some things I'm working on for the blog for those who happen to be interested. Since I'm actually writing a reasonable amount of posts now and they're getting more views than I expected, I bought a custom domain at [tartanllama.xyz](https://tartanllama.xyz). Old links will continue to work, but [tartanllama.github.io](https://tartanllama.github.io) now redirects to the new domain. Apologies if your RSS reader picks up everything as new posts!

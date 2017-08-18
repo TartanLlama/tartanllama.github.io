@@ -36,3 +36,7 @@ name: "Simon Brand's Blog"
 
 redirects: yes
 permalink: /:title.html
+
+gems:
+  - jekyll-redirect-from
+  

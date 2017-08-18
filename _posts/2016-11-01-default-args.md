@@ -6,6 +6,7 @@ minutes:       10
 tags:
  - c++
  - templates
+redirect_from: /c++/2016/11/01/default-args/
 ---
 
 ### Introduction

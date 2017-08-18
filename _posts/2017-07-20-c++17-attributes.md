@@ -5,6 +5,7 @@ category:   c++
 tags:
  - c++
  - c++17
+redirect_from: /c++/2017/07/20/c++17-attributes/
 ---
 
 C++17 adds three new attributes for programmers to better express their intent to the compiler and readers of the code: `maybe_unused`, `fallthrough`, and `nodiscard`. This is a quick post to outline what they do and why they are useful.

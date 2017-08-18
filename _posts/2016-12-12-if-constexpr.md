@@ -7,6 +7,7 @@ tags:
  - c++
  - c++17
  - templates
+redirect_from: /c++/2016/12/12/if-constexpr/
 ---
 
 ### Introduction

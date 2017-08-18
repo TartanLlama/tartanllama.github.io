@@ -4,6 +4,7 @@ title:      "Writing a Linux Debugger Part 3: Registers and memory"
 category:   c++
 tags:
  - c++
+redirect_from: /c++/2017/03/31/writing-a-linux-debugger-registers/
 ---
 
 In the last post we added simple address breakpoints to our debugger. This time we'll be adding the ability to read and write registers and memory, which will allow us to screw around with our program counter, observe state and change the behaviour of our program.

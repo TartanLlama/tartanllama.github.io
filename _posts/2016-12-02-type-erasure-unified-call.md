@@ -7,6 +7,7 @@ date:       2016-12-02
 tags:
  - c++
  - templates
+redirect_from: /c++/2016/12/02/type-erasure-unified-call/
 ---
 
 ### Introduction

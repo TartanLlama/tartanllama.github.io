@@ -4,6 +4,7 @@ title:      "Metaclasses for embedded domain specific languages"
 category:   c++
 tags:
  - c++
+redirect_from: /c++/2017/06/28/metaclasses-edsl/
 ---
 
 Metaclasses are a [proposed feature](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0707r0.pdf) to C++ which will allow the creation of abstractions over classes and the extension of the language's type definition system. As an example, consider this definition of `IShape`:

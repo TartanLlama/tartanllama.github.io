@@ -7,6 +7,7 @@ minutes: 20
 tags:
  - c++ 
  - templates
+redirect_from: /c++/2016/07/28/integral_variable/
 ---
 
 <h3>Introduction</h3>

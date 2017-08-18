@@ -4,6 +4,7 @@ title:      "Writing a Linux Debugger Part 6: Source-level stepping"
 category:   c++
 tags:
  - c++
+redirect_from: /c++/2017/05/06/writing-a-linux-debugger-dwarf-step/
 ---
 
 A couple of posts ago we learned about DWARF information and how it lets us relate the machine code to the high-level source. This time we'll be putting this knowledge into practice by adding source-level stepping to our debugger.

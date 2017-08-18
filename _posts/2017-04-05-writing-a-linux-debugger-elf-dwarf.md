@@ -4,6 +4,7 @@ title:      "Writing a Linux Debugger Part 4: Elves and dwarves"
 category:   c++
 tags:
  - c++
+redirect_from: /c++/2017/04/05/writing-a-linux-debugger-elf-dwarf/
 ---
 
 Up until now you've heard whispers of dwarves, of debug information, of a way to understand the source code without just parsing the thing. Today we'll be going into the details of source-level debug information in preparation for using it in following parts of this tutorial.

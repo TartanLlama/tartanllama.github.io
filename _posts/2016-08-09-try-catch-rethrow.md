@@ -4,6 +4,7 @@ title:      "The effect of a try-catch-rethrow"
 category:   c++
 tags:
  - c++ 
+redirect_from: /c++/2016/08/09/try-catch-rethrow/
 ---
 
 A try-catch-rethrow with an empty handler does more than a standard block. Here's what I mean:

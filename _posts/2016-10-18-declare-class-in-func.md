@@ -5,6 +5,7 @@ category:   c++
 tags:
  - c++
 
+redirect_from: /c++/2016/10/18/declare-class-in-func/
 ---
 
 C++ allows you to declare classes in function declarations. The following code is fully standards-compliant:

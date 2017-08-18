@@ -4,6 +4,7 @@ title:      "void C::C::C::A::A::A::foo() - valid syntax monstrosity"
 category:   c++
 tags:
  - c++
+redirect_from: /c++/2017/08/08/silly-syntax/
 ---
 
 Here's an odd bit of C++ syntax for you. Say we have the following class hierarchy:

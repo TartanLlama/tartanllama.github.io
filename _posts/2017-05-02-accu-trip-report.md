@@ -4,6 +4,7 @@ title:      "ACCUConf Trip Report"
 category:   c++
 tags:
  - c++
+redirect_from: /c++/2017/05/02/accu-trip-report/
 ---
 
 I have now returned from my trip to ACCUConf, reeling from five days of talks and tutorials. This is the first conference I've been to on my own, having only met one or two people there prior to the conference. Fortunately, it was a very welcoming environment and I quickly found myself talking to new friends and a bunch of people from the [C++ Slack channel](http://cpplang.diegostamigni.com/).
