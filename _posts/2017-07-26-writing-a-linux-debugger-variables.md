@@ -4,7 +4,9 @@ title:      "Writing a Linux Debugger Part 9: Handling variables"
 category:   c++
 tags:
  - c++
-redirect_from: /c++/2017/07/26/writing-a-linux-debugger-variables/
+redirect_from:
+  - /c++/2017/07/26/writing-a-linux-debugger-variables/
+  - /writing-a-linux-debugger-variables.html
 ---
 
 Variables are sneaky. At one moment they'll be happily sitting in registers, but as soon as you turn your head they're spilled to the stack. Maybe the compiler completely throws them out of the window for the sake of optimization. Regardless of how often variables move around in memory, we need some way to track and manipulate them in our debugger. This post will teach you more about handling variables in your debugger and demonstrate a simple implementation using `libelfin`.

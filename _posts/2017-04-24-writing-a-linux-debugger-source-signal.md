@@ -4,7 +4,9 @@ title:      "Writing a Linux Debugger Part 5: Source and signals"
 category:   c++
 tags:
  - c++
-redirect_from: /c++/2017/04/24/writing-a-linux-debugger-source-signal/
+redirect_from:
+  - /c++/2017/04/24/writing-a-linux-debugger-source-signal/
+  - /writing-a-linux-debugger-source-signal.html
 ---
 
 In the the last part we learned about DWARF information and how it can be used to read variables and associate our high-level source code with the machine code which is being executed. In this part we'll put this into practice by implementing some DWARF primitives which will be used by the rest of our debugger. We'll also take this opportunity to get our debugger to print out the current source context when a breakpoint is hit.

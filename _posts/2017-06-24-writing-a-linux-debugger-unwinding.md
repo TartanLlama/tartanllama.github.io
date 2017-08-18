@@ -4,7 +4,9 @@ title:      "Writing a Linux Debugger Part 8: Stack unwinding"
 category:   c++
 tags:
  - c++
-redirect_from: /c++/2017/06/24/writing-a-linux-debugger-unwinding/
+redirect_from:
+  - /c++/2017/06/24/writing-a-linux-debugger-unwinding/
+  - /writing-a-linux-debugger-unwinding.html
 ---
 
 Sometimes the most important information you need to know about what your current program state is how it got there. This is typically provided with a `backtrace` command, which gives you the chain of function calls which have lead to the the program is right now. This post will show you how to implement stack unwinding on x86_64 to generate such a backtrace.

@@ -5,7 +5,9 @@ category:   c++
 tags:
  - c++
  - c++17
-redirect_from: /c++/2017/01/11/deduction-for-class-templates/
+redirect_from:
+  - /c++/2017/01/11/deduction-for-class-templates/
+  - /deduction-for-class-templates.html
 ---
 
 Have you ever found yourself writing `std::make_pair` or `std::make_move_iterator` and wondering why we need a helper function to create these objects for us? The answer is a lack of template argument deduction for class template constructors. Consider a simple `pair` class:

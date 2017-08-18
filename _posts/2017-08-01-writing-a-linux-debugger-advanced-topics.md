@@ -2,10 +2,11 @@
 layout:     post
 title:      "Writing a Linux Debugger Part 10: Advanced topics"
 category:   c++
-permalink:  /writing-a-linux-debugger-advanced-topics.html
 tags:
  - c++
-redirect_from: /c++/2017/08/01/writing-a-linux-debugger-advanced-topics/
+redirect_from:
+  - /c++/2017/08/01/writing-a-linux-debugger-advanced-topics/
+  - /writing-a-linux-debugger-advanced-topics.html
 ---
 
 We're finally here at the last post of the series! This time I'll be giving a high-level overview of some more advanced concepts in debugging: remote debugging, shared library support, expression evaluation, and multi-threaded support. These ideas are more complex to implement, so I won't walk through how to do so in detail, but I'm happy to answer questions about these concepts if you have any.

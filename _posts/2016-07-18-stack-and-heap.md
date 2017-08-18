@@ -7,7 +7,9 @@ minutes: 10
 tags:
  - c++
  - rants
-redirect_from: /c++/2016/07/18/stack-and-heap/
+redirect_from:
+  - /c++/2016/07/18/stack-and-heap/
+  - /stack-and-heap.html
 ---
 
 The terms "stack" and "heap" are often used in C++ writings inaccurately and unnecessarily. This article will show why the usage is incorrect and what terms should be used instead.

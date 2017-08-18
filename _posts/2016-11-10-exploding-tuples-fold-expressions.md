@@ -6,7 +6,9 @@ minutes:    10
 tags:
  - c++ 
  - templates
-redirect_from: /c++/2016/11/10/exploding-tuples-fold-expressions/
+redirect_from:
+  - /c++/2016/11/10/exploding-tuples-fold-expressions/
+  - /exploding-tuples-fold-expressions.html
 ---
 
 ### Introduction

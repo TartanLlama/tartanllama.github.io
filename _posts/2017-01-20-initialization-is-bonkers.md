@@ -5,7 +5,9 @@ category:   c++
 minutes:    10
 tags:
  - c++
-redirect_from: /c++/2017/01/20/initialization-is-bonkers/
+redirect_from:
+  - /c++/2017/01/20/initialization-is-bonkers/
+  - /initialization-is-bonkers.html
 ---
 
 C++ pop quiz time: what are the values of `a.a` and `b.b` on the last line in `main` of this program?

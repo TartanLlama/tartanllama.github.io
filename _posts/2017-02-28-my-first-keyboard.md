@@ -2,7 +2,9 @@
 layout:     post
 title:      "Building my first custom keyboard"
 category:   keyboards
-redirect_from: /keyboards/2017/02/28/my-first-keyboard/
+redirect_from:
+  - /keyboards/2017/02/28/my-first-keyboard/
+  - /my-first-keyboard.html
 ---
 
 I've recently been going down the rabbit hole of mechanical keyboards. There are a number of great communities dedicated to the hobby of collecting, creating, and modifying them, going from tiny 40% size custom builds to gorgeous artisan keycaps. I've been using a Filco Majestouch-2 with MX Brown switches and a Cherry G80 with MX Blues for a while, but I was keen to try something a little different. Being impatient, I decided to jump right in at the deep end with designing a keyboard from scratch, sourcing all the components, and building it all by hand. This is a log of the process for those who are interested, and so that I don't forget everything I did in case I want to build something else!

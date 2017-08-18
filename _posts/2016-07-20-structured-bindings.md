@@ -6,7 +6,9 @@ category:   c++
 tags:
  - c++
  - c++17
-redirect_from: /c++/2016/07/20/structured-bindings/
+redirect_from:
+  - /c++/2016/07/20/structured-bindings/
+  - /structured-bindings.html
 ---
 
 ### Introduction

@@ -4,7 +4,9 @@ title:      "Writing a Good Tech Cover Letter"
 category:   social-tech
 tags:
 - social-tech
-redirect_from: /social-tech/2017/08/10/cover-letter/
+redirect_from:
+  - /social-tech/2017/08/10/cover-letter/
+  - /cover-letter.html
 ---
 
 I review a lot of job applications at Codeplay and most of them make me sad.

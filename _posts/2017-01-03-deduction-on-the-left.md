@@ -7,7 +7,9 @@ minutes:    10
 tags:
  - c++
  - templates
-redirect_from: /c++/2017/01/03/deduction-on-the-left/
+redirect_from:
+  - /c++/2017/01/03/deduction-on-the-left/
+  - /deduction-on-the-left.html
 ---
 
 If you are constructing or assigning to a variable from some function template call, the template magic usually occurs on the right-hand side of the expression. For example:

@@ -35,7 +35,7 @@ exclude: [vendor]
 name: "Simon Brand's Blog"
 
 redirects: yes
-permalink: /:title.html
+permalink: /:title/
 
 gems:
   - jekyll-redirect-from
