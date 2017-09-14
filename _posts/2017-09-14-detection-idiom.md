@@ -80,7 +80,7 @@ int calculate_foo_factor (const T& t) {
 }
 {% endhighlight %}
 
-Well, it works, but it's not exactly clear. What's the `int` and `...` there for? Why do we need an extra overload? The answers are not the important part here; what is important is that unless you've got a reasonable amount of metaprogramming experience, this is pretty arcane.
+Well, it works, but it's not exactly clear. What's the `int` and `...` there for? What's `std::declval`? Why do we need an extra overload? The answers are not the important part here; what is important is that unless you've got a reasonable amount of metaprogramming experience, this is pretty arcane.
 
 The code could be improved by abstracting out the check for the presence of the member function into its own metafunction:
 
@@ -93,7 +93,7 @@ struct supports_foo<T, void_t<decltype(std::declval<T>().get_foo())>>
 : std::true_type{};
 {% endhighlight %}
 
-Using this trait, we can use [`std::enable_if`](http://en.cppreference.com/w/cpp/types/enable_if) to enable and disable the overloads as required:
+Again, some more trickery which'll be explained later. Using this trait, we can use [`std::enable_if`](http://en.cppreference.com/w/cpp/types/enable_if) to enable and disable the overloads as required:
 
 {% highlight cpp %}
 template <class T, std::enable_if_t<supports_foo<T>::value>* = nullptr>
@@ -118,7 +118,7 @@ template <class T>
 constexpr bool supports_foo = is_detected_v<foo_t,T>;
 {% endhighlight %}
 
-`is_detected_v` here is part of the detection idiom. Read it as "is it valid to instantiate `foo_t` with `T`?" This still requires some metaprogramming magic, but it's a whole lot simpler than the previous examples. With this technique we can also easily check for the validity of arbitrary expressions:
+`is_detected_v` here is part of the detection idiom. Read it as "is it valid to instantiate `foo_t` with `T`?" `std::declval<T>()` essentially means "pretend that I have a value of type `T`" (more on this later). This still requires some metaprogramming magic, but it's a whole lot simpler than the previous examples. With this technique we can also easily check for the validity of arbitrary expressions:
 
 {% highlight cpp %}
 template <class T, class U>
