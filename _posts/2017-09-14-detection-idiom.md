@@ -2,6 +2,7 @@
 layout:     post
 title:      "Detection Idiom - Poor Man's Concepts, Rich Man's SFINAE"
 category:   c++
+pubdraft: true
 tags:
  - c++
 ---
@@ -12,11 +13,11 @@ tags:
 
 ### A problem
 
-We are developing a generic library. At some point on our library we need to calculate the `foo` quotient for whatever types the user passes in.
+We are developing a generic library. At some point on our library we need to calculate the `foo` factor for whatever types the user passes in.
 
 {% highlight cpp %}
 template <class T>
-int calculate_foo_quotient (const T& t);
+int calculate_foo_factor (const T& t);
 {% endhighlight %}
 
 Some types will have specialized implementations of this function, but for types which don't we'll need to some generic calculation.
@@ -31,7 +32,7 @@ struct will_need_generic_calculation {
 };
 {% endhighlight %}
 
-Using concepts we could write `calculate_foo_quotient` like so:
+Using concepts we could write `calculate_foo_factor` like so:
 
 {% highlight cpp %}
 template <class T>
@@ -40,18 +41,18 @@ concept bool SupportsFoo = requires (T t) {
 };
 
 template <SupportsFoo T>
-int calculate_foo_quotient (const T& t) {
+int calculate_foo_factor (const T& t) {
     return t.get_foo();
 }
 
 template <class T>
-int calculate_foo_quotient (const T& t) {
+int calculate_foo_factor (const T& t) {
     // insert generic calculation here
     return 42;
 }
 {% endhighlight %}
 
-This is quite succinct and clear: `SupportsFoo` is a concept which checks that we can call `get_foo` on `t` with no arguments, and that the type of that expression is `int`. The first `calculate_foo_quotient` will be selected by overload resolution for types which satisfy the `SupportsFoo` concept, and the second will be chosen for those which don't.
+This is quite succinct and clear: `SupportsFoo` is a concept which checks that we can call `get_foo` on `t` with no arguments, and that the type of that expression is `int`. The first `calculate_foo_factor` will be selected by overload resolution for types which satisfy the `SupportsFoo` concept, and the second will be chosen for those which don't.
 
 Unfortunately, our library has to support C++14. We'll need to try something different. I'll demonstrate a bunch of possible solutions to this problem in the next section. Some of them may seem complex if you aren't familiar with the metaprogramming techniques used, but for now, just note the differences in complexity and abstraction between them. The metaprogramming tricks will all be explained in the following section.
 
@@ -62,20 +63,20 @@ Here's a possible solution using [expression SFINAE](https://stackoverflow.com/q
 {% highlight cpp %}
 namespace detail {
   template <class T>
-  auto calculate_foo_quotient (const T& t, int)
+  auto calculate_foo_factor (const T& t, int)
     -> decltype(std::declval<T>().to_foo()) {
     return t.get_foo();
   }
 
   template <class T>
-  int calculate_foo_quotient (const T& t, ...) {
+  int calculate_foo_factor (const T& t, ...) {
     // insert generic calculation here
     return 42;
   }
 }
 
-int calculate_foo_quotient (const T& t) {
-  return calculate_foo_quotient(t, 0);
+int calculate_foo_factor (const T& t) {
+  return calculate_foo_factor(t, 0);
 }
 {% endhighlight %}
 
@@ -92,16 +93,16 @@ struct supports_foo<T, void_t<decltype(std::declval<T>().get_foo())>>
 : std::true_type{};
 {% endhighlight %}
 
-Using this trait, we can use `std::enable_if` to enable and disable the overloads as required:
+Using this trait, we can use [`std::enable_if`](http://en.cppreference.com/w/cpp/types/enable_if) to enable and disable the overloads as required:
 
 {% highlight cpp %}
 template <class T, std::enable_if_t<supports_foo<T>::value>* = nullptr>
-auto calculate_foo_quotient (const T& t) {
+auto calculate_foo_factor (const T& t) {
   return t.get_foo();
 }
 
 template <class T, std::enable_if_t<!supports_foo<T>::value>* = nullptr>
-int calculate_foo_quotient (const T& t) {
+int calculate_foo_factor (const T& t) {
   // insert generic calculation here
   return 42;
 }
@@ -136,7 +137,7 @@ static_assert( supports_equality<foo,bar>, "wat");
 static_assert(!supports_equality<foo,baz>, "wat");
 {% endhighlight %}
 
-If you want to use `is_detected` today, then you can check if your standard library supports `std::experimental::is_detected`. If not, you can use the implementation from [cppreference](http://en.cppreference.com/w/cpp/experimental/is_detected) or the one which we will go on to write in the next section.
+If you want to use `is_detected` today, then you can check if your standard library supports `std::experimental::is_detected`. If not, you can use the implementation from [cppreference](http://en.cppreference.com/w/cpp/experimental/is_detected) or the one which we will go on to write in the next section. If you aren't interested in how this is written, then turn back, for here be metaprogramming dragons.
 
 -------------------------
 
@@ -159,11 +160,11 @@ Type traits either "return" types with a `::type` member alias, or values with a
 
 [^1]: See [here](https://stackoverflow.com/questions/610245/where-and-why-do-i-have-to-put-the-template-and-typename-keywords) for information on why the `typename` keyword is needed in some places.
 
-#### `decltype`
+#### `decltype` specifiers
 
 [`decltype`](http://en.cppreference.com/w/cpp/language/decltype) gives you access to the type of an entity or expression. For example, with `int i;`, `decltype(i)` is `int`.
 
-#### `std::declval`
+#### `std::declval` trickery
 
 [`std::declval`](http://en.cppreference.com/w/cpp/utility/declval) is a template function which helps create values inside `decltype` specifiers. `std::declval<foo>()` essentially means "pretend I have some value of type `foo`". This is needed because the types you want to inspect inside `decltype` specifiers may not be default-constructible. For example:
 
@@ -199,20 +200,20 @@ If `T` is integral, then the second overload will be SFINAEd out, so the first i
 {% highlight cpp %}
 namespace detail {
   template <class T>
-  auto calculate_foo_quotient (const T& t, int)
+  auto calculate_foo_factor (const T& t, int)
     -> decltype(std::declval<T>().to_foo()) {
     return t.get_foo();
   }
 
   template <class T>
-  int calculate_foo_quotient (const T& t, ...) {
+  int calculate_foo_factor (const T& t, ...) {
     // insert generic calculation here
     return 42;
   }
 }
 
-int calculate_foo_quotient (const T& t) {
-  return calculate_foo_quotient(t, 0);
+int calculate_foo_factor (const T& t) {
+  return calculate_foo_factor(t, 0);
 }
 {% endhighlight %}
 
@@ -220,9 +221,9 @@ The first overload will be SFINAEd out if calling `to_foo` on an instance of `T`
 
 [^2]: Have a look [here](https://github.com/rmartinho/flamingdangerzone/blob/master/_posts/cxx11/2013-03-11-overload-ranking.md) for a better way to do this.
 
-#### `void_t` 
+#### `void_t` magic
 
-`void_t` is a C++17 feature (although it's implementable in C++11) which makes writing traits and using expression SFINAE a bit easier. The implementation is deceptively simple[^3]:
+[`void_t`](http://en.cppreference.com/w/cpp/types/void_t) is a C++17 feature (although it's implementable in C++11) which makes writing traits and using expression SFINAE a bit easier. The implementation is deceptively simple[^3]:
 
 {% highlight cpp %}
 template <class... Ts>
