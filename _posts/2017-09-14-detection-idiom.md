@@ -118,7 +118,7 @@ template <class T>
 constexpr bool supports_foo = is_detected_v<foo_t,T>;
 {% endhighlight %}
 
-This still requires some metaprogramming magic, but it's a whole lot simpler than the previous examples. With this technique we can also easily check for the validity of arbitrary expressions:
+`is_detected_v` here is part of the detection idiom. Read it as "is it valid to instantiate `foo_t` with `T`?" This still requires some metaprogramming magic, but it's a whole lot simpler than the previous examples. With this technique we can also easily check for the validity of arbitrary expressions:
 
 {% highlight cpp %}
 template <class T, class U>
