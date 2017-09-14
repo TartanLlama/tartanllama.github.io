@@ -80,7 +80,7 @@ int calculate_foo_factor (const T& t) {
 }
 {% endhighlight %}
 
-Well, it works, but it's not exactly clear. What's the `int` and `...` there for? What's `std::declval`? Why do we need an extra overload? The answers are not the important part here; what is important is that unless you've got a reasonable amount of metaprogramming experience, this is pretty arcane.
+Well, it works, but it's not exactly clear. What's the `int` and `...` there for? What's `std::declval`? Why do we need an extra overload? The answers are not the important part here; what is important is that unless you've got a reasonable amount of metaprogramming experience, it's unlikely you'll be able to write this code offhand, or even to copy-paste it without error.
 
 The code could be improved by abstracting out the check for the presence of the member function into its own metafunction:
 
@@ -93,7 +93,7 @@ struct supports_foo<T, void_t<decltype(std::declval<T>().get_foo())>>
 : std::true_type{};
 {% endhighlight %}
 
-Again, some more trickery which'll be explained later. Using this trait, we can use [`std::enable_if`](http://en.cppreference.com/w/cpp/types/enable_if) to enable and disable the overloads as required:
+Again, some more expert-only template trickery which I'll explain later. Using this trait, we can use [`std::enable_if`](http://en.cppreference.com/w/cpp/types/enable_if) to enable and disable the overloads as required:
 
 {% highlight cpp %}
 template <class T, std::enable_if_t<supports_foo<T>::value>* = nullptr>
@@ -108,7 +108,7 @@ int calculate_foo_factor (const T& t) {
 }
 {% endhighlight %}
 
-This works, but we need to understand how to implement `supports_foo`, and we would need to repeat all the boilerplate again if we needed to write a `supports_bar` trait. It would be better if we could completely abstract away the mechanism for detecting the member function and just focus on _what_ we want to detect. This is what the detection idiom provides.
+This works, but you'd need to understand how to implement `supports_foo`, and you'd need to repeat all the boilerplate again if you needed to write a `supports_bar` trait. It would be better if we could completely abstract away the mechanism for detecting the member function and just focus on _what_ we want to detect. This is what the detection idiom provides.
 pp
 {% highlight cpp %}
 template <class T>
