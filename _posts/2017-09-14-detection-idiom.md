@@ -144,11 +144,11 @@ We can also compose traits using [`std::conjunction`](http://en.cppreference.com
 
 {% highlight cpp %}
 template <class T>
-using is_regular = std::conjunction<std::is_default_constructible,
-                                    std::is_copy_constructible,
+using is_regular = std::conjunction<std::is_default_constructible<T>,
+                                    std::is_copy_constructible<T>,
                                     supports_equality<T,T>,
-                                    supports_inequality<T,T>,
-                                    supports_less_than<T,T>>;
+                                    supports_inequality<T,T>, //assume impl
+                                    supports_less_than<T,T>>; //ditto
 {% endhighlight %}
 
 If you want to use `is_detected` today, then you can check if your standard library supports `std::experimental::is_detected`. If not, you can use the implementation from [cppreference](http://en.cppreference.com/w/cpp/experimental/is_detected) or the one which we will go on to write in the next section. If you aren't interested in how this is written, then turn back, for here be metaprogramming dragons.
