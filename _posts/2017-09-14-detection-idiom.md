@@ -1,13 +1,12 @@
 ---
 layout:     post
-title:      "Detection Idiom - Poor Man's Concepts, Rich Man's SFINAE"
+title:      "Detection Idiom - A Stopgap for Concepts"
 category:   c++
-pubdraft: true
 tags:
  - c++
 ---
 
-[Concepts](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4641.pdf) have been threatening to get in to C++ for a long time now. They were finally [merged in to C++20](https://herbsutter.com/2017/07/15/trip-report-summer-iso-c-standards-meeting-toronto/) a few months ago, much to the joy of some and the [ire of others](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0726r0.html). In the mean time, there have been various attempts to implement parts of concepts as a library so that we can constrain our templates expressively without waiting a few years. The [detection idiom](http://en.cppreference.com/w/cpp/experimental/is_detected), which is part of the [Library Fundamentals 2 TS](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/n4617.pdf), is one such solution. This post will outline the utility of it, and show the techniques which underlie its implementation.
+[Concepts](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4641.pdf) have been threatening to get in to C++ for a long time now. They were finally [merged in to C++20](https://herbsutter.com/2017/07/15/trip-report-summer-iso-c-standards-meeting-toronto/) a few months ago, which means we need to hold on for another few years before they're in the official C++ standard rather than a [Technical Specification](https://stackoverflow.com/questions/21342077/what-is-c-technical-specification). In the mean time, there have been various attempts to implement parts of concepts as a library so that we can constrain our templates expressively without waiting for the new standard. The [detection idiom](http://en.cppreference.com/w/cpp/experimental/is_detected), which is part of the [Library Fundamentals 2 TS](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/n4617.pdf), is one such solution. This post will outline the utility of it, and show the techniques which underlie its implementation.
 
 ------------------
 
@@ -20,11 +19,11 @@ template <class T>
 int calculate_foo_factor (const T& t);
 {% endhighlight %}
 
-Some types will have specialized implementations of this function, but for types which don't we'll need to some generic calculation.
+Some types will have specialized implementations of this function, but for types which don't we'll need some generic calculation.
 
 {% highlight cpp %}
 struct has_special_support {
-  int get_foo();
+  int get_foo() const;
 };
 
 struct will_need_generic_calculation {
@@ -64,7 +63,7 @@ Here's a possible solution using [expression SFINAE](https://stackoverflow.com/q
 namespace detail {
   template <class T>
   auto calculate_foo_factor (const T& t, int)
-    -> decltype(std::declval<T>().to_foo()) {
+    -> decltype(std::declval<T>().get_foo()) {
     return t.get_foo();
   }
 
@@ -75,16 +74,20 @@ namespace detail {
   }
 }
 
+template <class T>
 int calculate_foo_factor (const T& t) {
-  return calculate_foo_factor(t, 0);
+  return detail::calculate_foo_factor(t, 0);
 }
 {% endhighlight %}
 
-Well, it works, but it's not exactly clear. What's the `int` and `...` there for? What's `std::declval`? Why do we need an extra overload? The answers are not the important part here; what is important is that unless you've got a reasonable amount of metaprogramming experience, it's unlikely you'll be able to write this code offhand, or even to copy-paste it without error.
+Well, it works, but it's not exactly clear. What's the `int` and `...` there for? What's `std::declval`? Why do we need an extra overload? The answers are not the important part here; what is important is that unless you've got a reasonable amount of metaprogramming experience, it's unlikely you'll be able to write this code offhand, or even copy-paste it without error.
 
 The code could be improved by abstracting out the check for the presence of the member function into its own metafunction:
 
 {% highlight cpp %}
+template <class... Ts>
+using void_t = void;
+
 template <class T, class=void>
 struct supports_foo : std::false_type{};
 
@@ -109,23 +112,23 @@ int calculate_foo_factor (const T& t) {
 {% endhighlight %}
 
 This works, but you'd need to understand how to implement `supports_foo`, and you'd need to repeat all the boilerplate again if you needed to write a `supports_bar` trait. It would be better if we could completely abstract away the mechanism for detecting the member function and just focus on _what_ we want to detect. This is what the detection idiom provides.
-pp
+
 {% highlight cpp %}
 template <class T>
-using foo_t = decltype(std::declval<T>().foo());
+using foo_t = decltype(std::declval<T>().get_foo());
 
 template <class T>
-constexpr bool supports_foo = is_detected_v<foo_t,T>;
+using supports_foo = is_detected<foo_t,T>;
 {% endhighlight %}
 
-`is_detected_v` here is part of the detection idiom. Read it as "is it valid to instantiate `foo_t` with `T`?" `std::declval<T>()` essentially means "pretend that I have a value of type `T`" (more on this later). This still requires some metaprogramming magic, but it's a whole lot simpler than the previous examples. With this technique we can also easily check for the validity of arbitrary expressions:
+`is_detected` here is part of the detection idiom. Read it as "is it valid to instantiate `foo_t` with `T`?" `std::declval<T>()` essentially means "pretend that I have a value of type `T`" (more on this later). This still requires some metaprogramming magic, but it's a whole lot simpler than the previous examples. With this technique we can also easily check for the validity of arbitrary expressions:
 
 {% highlight cpp %}
 template <class T, class U>
 using equality_t = decltype(std::declval<T>() == std::declval<U>());
 
 template <class T, class U>
-constexpr bool supports_equality = is_detected_v<equality_t, T, U>;
+using supports_equality = is_detected<equality_t, T, U>;
 
 struct foo{};
 struct bar{};
@@ -133,8 +136,19 @@ struct baz{};
 
 bool operator== (foo, bar);
 
-static_assert( supports_equality<foo,bar>, "wat");
-static_assert(!supports_equality<foo,baz>, "wat");
+static_assert( supports_equality<foo,bar>::value, "wat");
+static_assert(!supports_equality<foo,baz>::value, "wat");
+{% endhighlight %}
+
+We can also compose traits using [`std::conjunction`](http://en.cppreference.com/w/cpp/types/conjunction):
+
+{% highlight cpp %}
+template <class T>
+using is_regular = std::conjunction<std::is_default_constructible,
+                                    std::is_copy_constructible,
+                                    supports_equality<T,T>,
+                                    supports_inequality<T,T>,
+                                    supports_less_than<T,T>>;
 {% endhighlight %}
 
 If you want to use `is_detected` today, then you can check if your standard library supports `std::experimental::is_detected`. If not, you can use the implementation from [cppreference](http://en.cppreference.com/w/cpp/experimental/is_detected) or the one which we will go on to write in the next section. If you aren't interested in how this is written, then turn back, for here be metaprogramming dragons.
@@ -264,9 +278,7 @@ template <template <class...> class Trait, class... Args>
 using is_detected = typename detail::is_detected<Trait, void, Args...>::type;
 {% endhighlight %}        
 
-Let's start with that last alias template. We take a variadic template template parameter (yes really) called `Trait` and any number of other type template arguments. We forward these to our `detail::is_detected` helper with an extra `void` argument which will act as the `class=void` construct from the previous section on `void_t`[^4].
-
-We then have a primary template which will "return" false as the result of the trait. The magic then happens in the following partial specialization. `Trait<Args...>>` is evaluated inside `void_t`. If instantiating `Traits` with `Args...` is invalid, then the partial specialization will be SFINAEd out, and if it's valid, it'll evaluate to `void` due to the `void_t`. This successfully abstracts away the implementation of the detection and allows us to focus on what we want to detect.
+Let's start with that last alias template. We take a variadic template template parameter (yes really) called `Trait` and any number of other type template arguments. We forward these to our `detail::is_detected` helper with an extra `void` argument which will act as the `class=void` construct from the previous section on `void_t`[^4]. We then have a primary template which will "return" false as the result of the trait. The magic then happens in the following partial specialization. `Trait<Args...>>` is evaluated inside `void_t`. If instantiating `Traits` with `Args...` is invalid, then the partial specialization will be SFINAEd out, and if it's valid, it'll evaluate to `void` due to the `void_t`. This successfully abstracts away the implementation of the detection and allows us to focus on what we want to detect.
 
 ------------
 
