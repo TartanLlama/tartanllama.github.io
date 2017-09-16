@@ -215,7 +215,7 @@ If `T` is integral, then the second overload will be SFINAEd out, so the first i
 namespace detail {
   template <class T>
   auto calculate_foo_factor (const T& t, int)
-    -> decltype(std::declval<T>().to_foo()) {
+    -> decltype(std::declval<T>().get_foo()) {
     return t.get_foo();
   }
 
@@ -231,7 +231,7 @@ int calculate_foo_factor (const T& t) {
 }
 {% endhighlight %}
 
-The first overload will be SFINAEd out if calling `to_foo` on an instance of `T` is invalid. The difficulty here is that *both* overloads will be valid if the `too_foo` call is valid. For this reason, we add some dummy parameters to the overloads (`int` and `...`) to specify an order for overload resolution to follow[^2].
+The first overload will be SFINAEd out if calling `get_foo` on an instance of `T` is invalid. The difficulty here is that *both* overloads will be valid if the `get_foo` call is valid. For this reason, we add some dummy parameters to the overloads (`int` and `...`) to specify an order for overload resolution to follow[^2].
 
 [^2]: Have a look [here](https://github.com/rmartinho/flamingdangerzone/blob/master/_posts/cxx11/2013-03-11-overload-ranking.md) for a better way to do this.
 
@@ -276,7 +276,7 @@ namespace detail {
 
 template <template <class...> class Trait, class... Args>
 using is_detected = typename detail::is_detected<Trait, void, Args...>::type;
-{% endhighlight %}        
+{% endhighlight %}
 
 Let's start with that last alias template. We take a variadic template template parameter (yes really) called `Trait` and any number of other type template arguments. We forward these to our `detail::is_detected` helper with an extra `void` argument which will act as the `class=void` construct from the previous section on `void_t`[^4]. We then have a primary template which will "return" false as the result of the trait. The magic then happens in the following partial specialization. `Trait<Args...>>` is evaluated inside `void_t`. If instantiating `Traits` with `Args...` is invalid, then the partial specialization will be SFINAEd out, and if it's valid, it'll evaluate to `void` due to the `void_t`. This successfully abstracts away the implementation of the detection and allows us to focus on what we want to detect.
 
