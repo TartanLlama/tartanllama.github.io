@@ -6,7 +6,7 @@ tags:
  - c++
 ---
 
-[Concepts](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4641.pdf) is a proposed C++ feature which allows succinct, expressive, and powerful constraining of templates. They have been threatening to get in to C++ for a long time now, with the first proposal being rejected for C++11. They were finally [merged in to C++20](https://herbsutter.com/2017/07/15/trip-report-summer-iso-c-standards-meeting-toronto/) a few months ago, which means we need to hold on for another few years before they're in the official standard rather than a [Technical Specification](https://stackoverflow.com/questions/21342077/what-is-c-technical-specification). In the mean time, there have been various attempts to implement parts of concepts as a library so that we can have access to some of the power of Concepts without waiting for the new standard. The [detection idiom](http://en.cppreference.com/w/cpp/experimental/is_detected), which is part of the [Library Fundamentals 2 Technical Specification](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/n4617.pdf), is one such solution. This post will outline the utility of it, and show the techniques which underlie its implementation.
+[Concepts](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4641.pdf) is a proposed C++ feature which allows succinct, expressive, and powerful constraining of templates. They have been threatening to get in to C++ for a long time now, with the first proposal being rejected for C++11. They were finally [merged in to C++20](https://herbsutter.com/2017/07/15/trip-report-summer-iso-c-standards-meeting-toronto/) a few months ago, which means we need to hold on for another few years before they're in the official standard rather than a [Technical Specification](https://stackoverflow.com/questions/21342077/what-is-c-technical-specification). In the mean time, there have been various attempts to implement parts of concepts as a library so that we can have access to some of the power of Concepts without waiting for the new standard. The [detection idiom](http://en.cppreference.com/w/cpp/experimental/is_detected) -- designed by [Walter Brown](http://open-std.org/JTC1/SC22/WG21/docs/papers/2015/n4502.pdf) and part of the [Library Fundamentals 2 Technical Specification](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/n4617.pdf) -- is one such solution. This post will outline the utility of it, and show the techniques which underlie its implementation.
 
 ------------------
 
@@ -282,7 +282,13 @@ Let's start with that last alias template. We take a variadic template template 
 
 ------------
 
-That covers it for the detection idiom. This is a handy utility for clearing up some hairy metaprogramming, and is even more useful since it can be implemented in old versions of the standard. Let me know if there are any other parts of the code you'd like explained down in the comments or on [Twitter](https://twitter.com/TartanLlama).
+That covers it for the detection idiom. This is a handy utility for clearing up some hairy metaprogramming, and is even more useful since it can be implemented in old versions of the standard. Let me know if there are any other parts of the code you'd like explained down in the comments or on [Twitter](https://twitter.com/TartanLlama). If you want some more resources on the detection idiom, you might want to watch the conference talks given by Walter Brown[^5] [^6], Marshall Clow[^7] [^8], and Isabella Muerte[^9].
+
+[^5]: [CppCon 2014: Walter E. Brown "Modern Template Metaprogramming: A Compendium, Part I"](https://www.youtube.com/watch?v=Am2is2QCvxY)
+[^6]: [CppCon 2014: Walter E. Brown "Modern Template Metaprogramming: A Compendium, Part II"](https://www.youtube.com/watch?v=a0FliKwcwXE)
+[^7]: [ACCU 2017: The Detection Idiom - a simpler way to SFINAE - Marshall Clow](https://www.youtube.com/watch?v=o1ekBpEFcPc)
+[^8]: [C++Now 2017: Marshall Clow “The 'Detection idiom:' A Better Way to SFINAE"](https://www.youtube.com/watch?v=U3jGdnRL3KI)
+[^9]: [CppCon 2016: Isabella Muerte “No Concepts Beyond This Point: The Detection Idiom"](https://www.youtube.com/watch?v=VctviQl-SR4)
 
 ------------
 
