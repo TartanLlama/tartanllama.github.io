@@ -63,7 +63,7 @@ Here's a possible solution using [expression SFINAE](https://stackoverflow.com/q
 namespace detail {
   template <class T>
   auto calculate_foo_factor (const T& t, int)
-    -> decltype(std::declval<T>().get_foo()) {
+    -> decltype(t.get_foo()) {
     return t.get_foo();
   }
 
@@ -80,7 +80,7 @@ int calculate_foo_factor (const T& t) {
 }
 {% endhighlight %}
 
-Well, it works, but it's not exactly clear. What's the `int` and `...` there for? What's `std::declval`? Why do we need an extra overload? The answers are not the important part here; what is important is that unless you've got a reasonable amount of metaprogramming experience, it's unlikely you'll be able to write this code offhand, or even copy-paste it without error.
+Well, it works, but it's not exactly clear. What's the `int` and `...` there for? Why do we need an extra overload? The answers are not the important part here; what is important is that unless you've got a reasonable amount of metaprogramming experience, it's unlikely you'll be able to write this code offhand, or even copy-paste it without error.
 
 The code could be improved by abstracting out the check for the presence of the member function into its own metafunction:
 
