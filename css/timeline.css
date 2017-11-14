@@ -114,6 +114,23 @@ header h1 {
     margin-left: 5px !important;
 }
 
+.cd-timeline-lpgpu2 {
+    width: 90% !important;
+    top: 20% !important;
+    margin-left: 5px !important;
+}
+
+.cd-timeline-meetingcpp {
+    width: 80% !important;
+    top: 20% !important;
+    margin-left: 5px !important;
+}
+
+.cd-timeline-cppedinburgh {
+    width: 80% !important;
+    top: 10% !important;
+    margin-left: 5px !important;
+}
 
 .cd-timeline-img img {
   display: block;
