@@ -7,7 +7,7 @@ tags:
  - c++
 ---
 
-In software things can go wrong. Sometimes we might expect them to go wrong, sometimes it's a surprise. In most cases we want to build in some way of handling these misfortunes. Let's call them [disappointments](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0157r0.html). I'm going to exhibit how to use `std::optional` and the proposed `std::expected` to handle disappointments, and show how the types can be extended with concepts from functional programming to make the handling concise and expressive.
+In software things can go wrong. Sometimes we might expect them to go wrong. Sometimes it's a surprise. In most cases we want to build in some way of handling these misfortunes. Let's call them [disappointments](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0157r0.html). I'm going to exhibit how to use `std::optional` and the proposed `std::expected` to handle disappointments, and show how the types can be extended with concepts from functional programming to make the handling concise and expressive.
 
 One way to express and handle disappointments is exceptions:
 
@@ -41,7 +41,7 @@ A common operation in feline cutification programs is to locate cats in a given 
 image_view find_cat (image_view img);
 {% endhighlight %}
 
-This function takes a view of an image and returns a smaller view which contains the first cat it finds. If it does not find a cat, then it throws an exception. If we're going to be throwing this function a million images, half of which do not contain cats, then that's a *lot* of exceptions being thrown. In fact, we're pretty much using exceptions for control flow at that point, which is [A Bad Thing](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#e3-use-exceptions-for-error-handling-only)&trade;.
+This function takes a view of an image and returns a smaller view which contains the first cat it finds. If it does not find a cat, then it throws an exception. If we're going to be giving this function a million images, half of which do not contain cats, then that's a *lot* of exceptions being thrown. In fact, we're pretty much using exceptions for control flow at that point, which is [A Bad Thing](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#e3-use-exceptions-for-error-handling-only)&trade;.
 
 What we really want to express is a function which either returns a cat if it finds one, or it returns nothing. Enter `std::optional`.
 
@@ -73,7 +73,7 @@ my_view = *empty_view; //undefined behaviour
 Now we're ready to use our `find_cat` function along with some other friends from our library to make embarrassingly adorable pictures of cats:
 
 {% highlight cpp %}
-std::optional<image_view> get_cute_cat (image_view img) {e
+std::optional<image_view> get_cute_cat (image_view img) {
     auto cropped = find_cat(img);
     if (!cropped) {
       return std::nullopt;
@@ -103,7 +103,7 @@ I'll address these two points in turn.
 
 ### Why did something fail?
 
-`std::optional` is great for expressing that some operation produced no value, but it gives us no information to help us understand why this occurred; we're left to use whatever context we have available, or (God forbid) additional out parameters. What we want is a type which either contains a value, or contains some information about why the value isn't there. This is called `std::expected`.
+`std::optional` is great for expressing that some operation produced no value, but it gives us no information to help us understand why this occurred; we're left to use whatever context we have available, or (God forbid) output parameters. What we want is a type which either contains a value, or contains some information about why the value isn't there. This is called `std::expected`.
 
 Now don't go rushing off to cppreference to find out about `std::expected`; you won't find it there yet, because it's currently a [standards proposal](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0323r3.pdf) rather than a part of C++ proper. However, its interface follows `std::optional` pretty closely, so you already understand most of it. Again, here are the most common operations:
 
@@ -240,12 +240,74 @@ I didn't make up `map` and `and_then` off the top of my head; other languages ha
 
 I won't attempt to explain all the relevant concepts in this post, as others have done it far better than I could. The basic idea is that `map` comes from the concept of a *functor*, and `and_then` comes from *monads*. These two functions are called `fmap` and `>>=` (bind) in Haskell. The best description of these concepts which I have read is [Functors, Applicatives' And Monads In Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html) by Aditya Bhargava. Give it a read if you'd like to learn more about these ideas.
 
+### A note on overload sets
+
+One use-case which is annoyingly verbose is passing overloaded functions to `map` or `and_then`. For example:
+
+{% highlight cpp %}
+int foo (int);
+
+tl::optional<int> o;
+o.map(foo);
+{% endhighlight %}
+
+The above code works fine. But as soon as we add another overload to `foo`:
+
+{% highlight cpp %}
+int foo (int);
+int foo (double);
+
+tl::optional<int> o;
+o.map(foo);
+{% endhighlight %}
+
+then it fails to compile with a rather unhelpful error message:
+
+```
+test.cpp:7:3: error: no matching member function for call to 'map'
+o.map(foo);
+~~^~~
+/home/simon/projects/optional/optional.hpp:759:52: note: candidate template ignored: couldn't infer template argument 'F'
+  template <class F> TL_OPTIONAL_11_CONSTEXPR auto map(F &&f) & {
+                                                   ^
+/home/simon/projects/optional/optional.hpp:765:52: note: candidate template ignored: couldn't infer template argument 'F'
+  template <class F> TL_OPTIONAL_11_CONSTEXPR auto map(F &&f) && {
+                                                   ^
+/home/simon/projects/optional/optional.hpp:771:37: note: candidate template ignored: couldn't infer template argument 'F'
+  template <class F> constexpr auto map(F &&f) const & {
+                                    ^
+/home/simon/projects/optional/optional.hpp:777:37: note: candidate template ignored: couldn't infer template argument 'F'
+  template <class F> constexpr auto map(F &&f) const && {
+                                    ^
+1 error generated.
+```
+
+One solution for this is to use a generic lambda:
+
+{% highlight cpp %}
+tl::optional<int> o;
+o.map([](auto x){return foo(x);});
+{% endhighlight %}
+
+Another is a `LIFT` macro:
+
+{% highlight cpp %}
+#define FWD(...) std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__)
+#define LIFT(f) \
+    [](auto&&... xs) noexcept(noexcept(f(FWD(xs)...))) -> decltype(f(FWD(xs)...)) \
+    { return f(FWD(xs)...); }
+
+tl::optional<int> o;
+o.map(LIFT(foo));
+{% endhighlight %}
+
+Personally I hope to see [overload set lifting](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0834r0.html) get into the standard so that we don't need to bother with the above solutions.
 
 ### Current status
 
 Maybe I've persuaded you that these extensions to `std::optional` and `std::expected` are useful and you would like to use them in your code. Fortunately I have written implementations of both with the extensions shown in this post, among others. [`tl::optional`](https://github.com/TartanLlama/optional) and [`tl::expected`](https://github.com/TartanLlama/expected) are on GitHub as single-header libraries under the [CC0](https://creativecommons.org/share-your-work/public-domain/cc0/) license, so they should be easy to integrate with projects new and old.
 
-As far as the standard goes, there are a few avenues being entertained for adding this functionality. I have a [proposal](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0798r0.html) to extend `std::optional` with new member functions. Vicente Escribá has a [proposal](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0650r1.pdf) for a generalised monadic interface for C++. Niall Douglas' [`operator try()`](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0779r0.pdf) paper suggests an analogue to Rust's [try!](https://doc.rust-lang.org/1.9.0/std/macro.try!.html) macro for removing some of the boilerplate associated with this style of programming. I'd also be interested in evaluating how [Ranges](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4685.pdf) could be leveraged for these goals.
+As far as the standard goes, there are a few avenues being entertained for adding this functionality. I have a [proposal](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0798r0.html) to extend `std::optional` with new member functions. Vicente Escribá has a [proposal](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0650r1.pdf) for a generalised monadic interface for C++. Niall Douglas' [`operator try()`](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0779r0.pdf) paper suggests an analogue to Rust's [try!](https://doc.rust-lang.org/1.9.0/std/macro.try!.html) macro for removing some of the boilerplate associated with this style of programming. It turns out that you can use [coroutines](https://github.com/toby-allsopp/coroutine_monad) for doing this stuff, although my gut feeling puts this more to the "abuse" end of the spectrum. I'd also be interested in evaluating how [Ranges](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4685.pdf) could be leveraged for these goals.
 
 Ultimately I don't care how we achieve this as a community so long as we have *some* standardised solution available. As C++ programmers we're constantly finding new ways to leverage the power of the language to make expressive libraries, thus improving the quality of the code we write day to day. Let's apply this to `std::optional` and `std::expected`. They deserve it.
 
