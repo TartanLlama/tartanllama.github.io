@@ -231,7 +231,7 @@ tl::optional<image_view> get_cute_cat (image_view img) {
 }
 {% endhighlight %}
 
-With these two functions we've successfully pushed the error handling off to the side, allowing us to express a series of operations which may fail without interrupting the flow of logic to test an `optional`.
+With these two functions we've successfully pushed the error handling off to the side, allowing us to express a series of operations which may fail without interrupting the flow of logic to test an `optional`. For more discussion about this code and the equivalent exception-based code, I'd recommend reading [Vittorio Romeo](https://twitter.com/supahvee1234)'s [Why choose sum types over exceptions?](https://vittorioromeo.info/index/blog/adts_over_exceptions.html) article.
 
 ### A theoretical aside
 
