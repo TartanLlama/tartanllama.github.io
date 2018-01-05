@@ -196,7 +196,9 @@ if (opt_widget) {
 }
 {% endhighlight %}
 
-The real power of this comes when we begin to chain operations together. Let's look at that original `get_cute_cat` implementation again:
+`and_then` and `map` for `expected` acts in much the same way an for `optional`: if there is an expected value then the given function will be called with that value, otherwise the stored unexpected value will be returned. Additionally, we could add a `map_error` function which allows mapping functions over unexpected values.
+
+The real power of these functions comes when we begin to chain operations together. Let's look at that original `get_cute_cat` implementation again:
 
 {% highlight cpp %}
 std::optional<image_view> get_cute_cat (image_view img) {e
@@ -232,6 +234,7 @@ tl::optional<image_view> get_cute_cat (image_view img) {
 {% endhighlight %}
 
 With these two functions we've successfully pushed the error handling off to the side, allowing us to express a series of operations which may fail without interrupting the flow of logic to test an `optional`. For more discussion about this code and the equivalent exception-based code, I'd recommend reading [Vittorio Romeo](https://twitter.com/supahvee1234)'s [Why choose sum types over exceptions?](https://vittorioromeo.info/index/blog/adts_over_exceptions.html) article.
+
 
 ### A theoretical aside
 
