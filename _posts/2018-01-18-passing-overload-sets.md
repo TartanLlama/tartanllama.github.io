@@ -6,11 +6,11 @@ tags:
  - c++ 
 ---
 
-Passing functions to functions is becoming increasingly prevalent in C++. With common advice being to prefer algorithms to loops, new library features like `std::visit`, lambdas being incrementally beefed up[^1][^2] and C++ function programming talks consistently being given at conferences, it's something that almost all C++ programmers will need to do at some point. Unfortunately, passing overload sets or function templates to functions is not very well supported by the language. In this post I'll discuss a few solutions to this problem.
+Passing functions to functions is becoming increasingly prevalent in C++. With common advice being to prefer algorithms to loops, new library features like `std::visit`, lambdas being incrementally beefed up[^1][^2] and C++ function programming talks consistently being given at conferences, it's something that almost all C++ programmers will need to do at some point. Unfortunately, passing overload sets or function templates to functions is not very well supported by the language. In this post I'll discuss a few solutions and show how C++ still has a way to go in supporting this well.
 
 ## An example
 
-We have some generic operation called `foo`. We want a way of specifying this function with two key requirements to ensure that it's clean to use.
+We have some generic operation called `foo`. We want a way of specifying this function which fulfils two key usability requirements.
 
 1- It should be callable directly without requiring manually specifying template arguments:
 
@@ -274,9 +274,9 @@ Now we can use `lift::foo` instead of `lib::foo` and it'll fit the requirements 
 
 ### Conclusion
 
-I've given you a few solutions to the problem I showed at the start, so what's my conclusion? C++ still has a way to go to support this paradigm of programming, and teaching these ideas is a nightmare. If a beginner or even intermediate programmer asks how to pass overloaded functions around -- something which sounds like it should be fairly easy -- it's a real shame that the best answers I can come up with are "Copy this macro which you have no chance of understanding", or "Make function objects, but make sure you do it this way for reasons which I can't explain unless you understand the subtleties of ODR[^5]". If we as a community see value in strengthening the viability of clear functional programming in C++, 
+I've given you a few solutions to the problem I showed at the start, so what's my conclusion? C++ still has a way to go to support this paradigm of programming, and teaching these ideas is a nightmare. If a beginner or even intermediate programmer asks how to pass overloaded functions around -- something which sounds like it should be fairly easy -- it's a real shame that the best answers I can come up with are "Copy this macro which you have no chance of understanding", or "Make function objects, but make sure you do it this way for reasons which I can't explain unless you understand the subtleties of ODR[^5]". I feel like the language could be doing more to support these use cases.
 
-Maybe for some people "Do it this way and don't ask why" is an okay answer, but that's not very satisfactory to me. Maybe I lack imagination and there's a better way to do this. Send me your suggestions or heckles on Twitter [@TartanLlama](https://twitter.com/TartanLlama).
+Maybe for some people "Do it this way and don't ask why" is an okay answer, but that's not very satisfactory to me. Maybe I lack imagination and there's a better way to do this with what's already available in the language. Send me your suggestions or heckles on Twitter [@TartanLlama](https://twitter.com/TartanLlama).
 
 ---------------
 
