@@ -16,10 +16,10 @@ We have some generic operation called `foo`. We want a way of specifying this fu
 1- It should be callable directly without requiring manually specifying template arguments:
 
 {% highlight cpp %}
-auto x = foo(42);           //good
-auto y = foo("hello");      //good
-auto z = foo<double>(42.0); //bad
-auto z = foo{}(42.0);       //bad
+auto a = foo(42);           //good
+auto b = foo("hello");      //good
+auto c = foo<double>(42.0); //bad
+auto d = foo{}(42.0);       //bad
 {% endhighlight %}
 
 2- Passing it to a higher-order function should not require manually specifying template arguments:
