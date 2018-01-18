@@ -80,6 +80,18 @@ auto x = foo{}(42.0);
 auto x = foo()(42.0);      
 {% endhighlight %}
 
+We have similar problems when we have multiple overloads, even when we're not using templates:
+
+{% highlight cpp %}
+int foo (int);
+float foo (float);
+
+std::transform(first, last, target, foo); //doesn't compile
+// ew ew ew ew ew ew ew
+std::transform(first, last, target, static_cast<int(*)(int)>(foo)); 
+{% endhighlight %}
+
+
 We're going to need a different solution.
 
 --------------
@@ -160,8 +172,13 @@ You might recall from a number of examples ago that the problem with using funct
 
 {% highlight cpp %}
 struct foo_impl {
+    //template
     template<class T>
-    T operator()(T t) { ... }
+    T operator()(T t) { /*...*/ }
+
+   //overloads
+   int operator()(int) { /*...*/ }
+   float operator()(float) { /*...*/ }   
 };
 
 extern const foo_impl foo;
@@ -175,7 +192,7 @@ This works if you're able to have a single translation unit with the definition 
 {% highlight cpp %}
 struct foo_impl {
     template<class T>
-    T operator()(T t) { ... }
+    T operator()(T t) { /*...*/ }
 };
 
 static constexpr foo_impl foo;
