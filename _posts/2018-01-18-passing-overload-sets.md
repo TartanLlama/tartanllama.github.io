@@ -7,7 +7,7 @@ tags:
  - c++ 
 ---
 
-Passing functions to functions is becoming increasingly prevalent in C++. With common advice being to prefer algorithms to loops, new library features like `std::visit`, lambdas being incrementally beefed up[^1][^2] and C++ function programming talks consistently being given at conferences, it's something that almost all C++ programmers will need to do at some point. Unfortunately, passing overload sets to functions is not very well supported by the language. In this post I'll discuss a few solutions to this problem.
+Passing functions to functions is becoming increasingly prevalent in C++. With common advice being to prefer algorithms to loops, new library features like `std::visit`, lambdas being incrementally beefed up[^1][^2] and C++ function programming talks consistently being given at conferences, it's something that almost all C++ programmers will need to do at some point. Unfortunately, passing overload sets or function templates to functions is not very well supported by the language. In this post I'll discuss a few solutions to this problem.
 
 ## An example
 
