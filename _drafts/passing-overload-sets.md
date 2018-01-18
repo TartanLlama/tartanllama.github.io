@@ -2,17 +2,18 @@
 layout:     post
 title:      "Passing overload sets to functions"
 category:   c++
+pubdraft:   true
 tags:
  - c++ 
 ---
 
-Passing functions to functions is becoming increasingly prevalant in C++. With common advice being to prefer algorithms to loops, new library features like `std::visit`, lambdas being incrementally beefed up[^1][^2] and C++ function programming talks consistently being given at conferences, it's something that almost all C++ programmers will need to do at some point. Unfortunately, passing overload sets to functions is not very well supported by the language. In this post I'll discuss a few solutions to this problem.
+Passing functions to functions is becoming increasingly prevalent in C++. With common advice being to prefer algorithms to loops, new library features like `std::visit`, lambdas being incrementally beefed up[^1][^2] and C++ function programming talks consistently being given at conferences, it's something that almost all C++ programmers will need to do at some point. Unfortunately, passing overload sets to functions is not very well supported by the language. In this post I'll discuss a few solutions to this problem.
 
 ## An example
 
 We have some generic operation called `foo`. We want a way of specifying this function with two key requirements to ensure that it's clean to use.
 
-1. It should be callable directly without requiring manually specifying template arguments:
+1- It should be callable directly without requiring manually specifying template arguments:
 
 {% highlight cpp %}
 auto x = foo(42);           //good
@@ -21,7 +22,7 @@ auto z = foo<double>(42.0); //bad
 auto z = foo{}(42.0);       //bad
 {% endhighlight %}
 
-2. Passing it to a higher-order function should not require manually specifying template arguments:
+2- Passing it to a higher-order function should not require manually specifying template arguments:
 
 {% highlight cpp %}
 std::transform(first, last, target, foo);      //good
@@ -65,7 +66,7 @@ A second option is to write `foo` as a function object with a call operator temp
 {% highlight cpp %}
 struct foo {
     template<class T>
-    T operator()(T t) { ... }
+    T operator()(T t) { /*...*/ }
 };
 {% endhighlight %}
 
@@ -118,13 +119,13 @@ Okay, it's getting pretty crazy and expert-only at this point. And we're not eve
 
 Okay, so the solution is to write this every time we want to pass an overloaded function to another function. That's probably a good way to make your code reviewer cry.
 
-What would be nice is if [Abbreviated lambdas](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0573r2.html) and [Forward without forward](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0644r0.html) were accepted into the language. That'd let us write this:
+What would be nice is if [P0573: Abbreviated Lambdas for Fun and Profit](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0573r2.html) and [P0644: Forward without `forward`](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0644r0.html) were accepted into the language. That'd let us write this:
 
 {% highlight cpp %}
 [](xs...) => foo(>>xs...)
 {% endhighlight %}
 
-The above is functionally equivalent to the triplicated montrosity in the example before. Even better, if [Lifting overload sets into objects](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0834r0.html) was accepted, we could just write:
+The above is functionally equivalent to the triplicated monstrosity in the example before. Even better, if [P0834: Lifting overload sets into objects](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0834r0.html) was accepted, we could just write:
 
 {% highlight cpp %}
 []foo
@@ -177,10 +178,10 @@ struct foo_impl {
     T operator()(T t) { ... }
 };
 
-static foo_impl foo;
+static constexpr foo_impl foo;
 {% endhighlight %}
 
-This might look innocent, but it can lead to One-Definition Rule (ODR) violations:
+This might look innocent, but it can lead to One-Definition Rule (ODR) violations[^3]:
 
 {% highlight cpp %}
 //test.h header
@@ -189,7 +190,7 @@ struct foo_impl {
     T operator()(T t) const { return t; }
 };
 
-static const foo_impl foo;
+static constexpr foo_impl foo;
 
 template <class T>
 int oh_no(T t) {
@@ -210,7 +211,7 @@ int also_sad() {
 }
 {% endhighlight %}
 
-Since `foo` is declared `static`, each Translation Unit (TU) will get its own definition of the variable. However, `sad` and `also_sad` will instantiate `oh_no` which will get different definitions of `foo` for `&foo`.
+Since `foo` is declared `static`, each Translation Unit (TU) will get its own definition of the variable. However, `sad` and `also_sad` will instantiate `oh_no` which will get different definitions of `foo` for `&foo`. This is undefined behaviour by [`[basic.def.odr]/12.2`](http://eel.is/c++draft/basic.def.odr#12.2).
 
 In C++17 the solution is simple:
 
@@ -218,14 +219,56 @@ In C++17 the solution is simple:
 inline constexpr foo_impl foo{};
 {% endhighlight %}
 
-[^1]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0315r4.pdf
-[^2]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0624r2.pdf
+The `inline` allows the variable to be multiply-defined, and the linker will throw away all but one of the definitions.
 
+If you can't use C++17, there are a few solutions given in [N4424: Inline Variables](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4424.pdf). The [Ranges V3 library](https://github.com/ericniebler/range-v3/blob/8ccd974b5cbb91dc9de7ab969abd568fcf569019/include/range/v3/detail/config.hpp#L412) uses a reference to a static member of a template class:
 
-Thanks to Michael Maier for the motivation to write this post.
+{% highlight cpp %}
+template<class T>
+struct static_const {
+    static constexpr T value{};
+};
 
-http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0834r0.html
-https://github.com/ericniebler/range-v3/blob/8ccd974b5cbb91dc9de7ab969abd568fcf569019/include/range/v3/size.hpp
-https://github.com/ericniebler/range-v3/blob/8ccd974b5cbb91dc9de7ab969abd568fcf569019/include/range/v3/detail/config.hpp#L412
-http://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/
-http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
+template <class T>
+constexpr T static_const<T>::value;
+
+constexpr auto& foo = static_const<foo_impl>::value;
+{% endhighlight %}
+
+An advantage of the function object approach is that function objects designed carefully make for much better customisation points than the traditional techniques used in the standard library. See Eric Niebler's [blog post](http://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/) and [standards paper](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html) for more information.
+
+A disadvantage is that now we need to write all of the functions we want to use this way as function objects, which is not great at the best of times, and even worse if we want to use external libraries. One possible solution would be to combine the two techniques we've already seen:
+
+{% highlight cpp %}
+// This could be in an external library
+namespace lib {
+    template <class T>
+    T foo(T t) { /*...*/ }
+}
+
+namespace lift {
+    inline constexpr auto foo = +LIFT(lib::foo);
+}
+{% endhighlight %}
+
+Now we can use `lift::foo` instead of `lib::foo` and it'll fit the requirements I laid out at the start of the post. The unary `+` in front of `LIFT` is there to decay the closure to a function pointer type to avoid some other possible ODR violations[^4]. Of course, you could also make a macro out of this construct if you find yourself needing to do it for a lot of overload sets.
+
+---------------
+
+### Conclusion
+
+I've given you a few solutions to the problem I showed at the start, so what's my conclusion? C++ still has a way to go to support this paradigm of programming, and teaching these ideas is a nightmare. If a beginner or even intermediate programmer asks how to pass overloaded functions around -- something which sounds like it should be fairly easy -- it's a real shame that the best answers I can come up with are "Copy this macro which you have no chance of understanding", or "Make function objects, but make sure you do it this way for reasons which I can't explain unless you understand the subtleties of ODR[^5]".
+
+Maybe for some people "Do it this way and don't ask why" is an okay answer, but that's not very satisfactory to me. Maybe I just lack imagination and there's a better way to do this. Send me your suggestions or heckles on Twitter [@TartanLlama](https://twitter.com/TartanLlama).
+
+---------------
+
+[^1]: [P0315: Lambdas in unevaluated contexts](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0315r2.pdf)
+[^2]: [P0624: Default constructible and assignable stateless lambdas](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0624r2.pdf)
+[^3]: Example lovingly stolen from [n4381](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html).
+[^4]: At least I *think* this avoids ODR violations that could come from different closure types in different TUs. Hit me up if I'm wrong.
+[^5]: Disclaimer: I don't understand all the subtleties of ODR.
+
+Thanks to Michael Maier for the motivation to write this post; Jayesh Badwaik, Ben Craig, Michał Dominiak and Kévin Boissonneault for discussion on ODR violations; and Eric Niebler, Barry Revzin, Louis Dionne, and Michał Dominiak (again) for their work on the libraries and standards papers I referenced.
+
+------------------
