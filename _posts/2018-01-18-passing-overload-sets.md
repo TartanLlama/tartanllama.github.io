@@ -2,7 +2,6 @@
 layout:     post
 title:      "Passing overload sets to functions"
 category:   c++
-pubdraft:   true
 tags:
  - c++ 
 ---
@@ -258,7 +257,7 @@ Now we can use `lift::foo` instead of `lib::foo` and it'll fit the requirements 
 
 ### Conclusion
 
-I've given you a few solutions to the problem I showed at the start, so what's my conclusion? C++ still has a way to go to support this paradigm of programming, and teaching these ideas is a nightmare. If a beginner or even intermediate programmer asks how to pass overloaded functions around -- something which sounds like it should be fairly easy -- it's a real shame that the best answers I can come up with are "Copy this macro which you have no chance of understanding", or "Make function objects, but make sure you do it this way for reasons which I can't explain unless you understand the subtleties of ODR[^5]".
+I've given you a few solutions to the problem I showed at the start, so what's my conclusion? C++ still has a way to go to support this paradigm of programming, and teaching these ideas is a nightmare. If a beginner or even intermediate programmer asks how to pass overloaded functions around -- something which sounds like it should be fairly easy -- it's a real shame that the best answers I can come up with are "Copy this macro which you have no chance of understanding", or "Make function objects, but make sure you do it this way for reasons which I can't explain unless you understand the subtleties of ODR[^5]". If we as a community see value in strengthening the viability of clear functional programming in C++, 
 
 Maybe for some people "Do it this way and don't ask why" is an okay answer, but that's not very satisfactory to me. Maybe I just lack imagination and there's a better way to do this. Send me your suggestions or heckles on Twitter [@TartanLlama](https://twitter.com/TartanLlama).
 
