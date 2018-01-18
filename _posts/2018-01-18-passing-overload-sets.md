@@ -69,7 +69,7 @@ struct foo {
 };
 {% endhighlight %}
 
-We are now required to create an instance of this type whenever we want to use the function, which is okay for passing to other functions, but not great if we just want to call it directly:
+We are now required to create an instance of this type whenever we want to use the function, which is okay for passing to other functions, but not great if we want to call it directly:
 
 {% highlight cpp %}
 //this looks okay
@@ -129,7 +129,7 @@ Okay, it's getting pretty crazy and expert-only at this point. And we're not eve
 }
 {% endhighlight %}
 
-Okay, so the solution is to write this every time we want to pass an overloaded function to another function. That's probably a good way to make your code reviewer cry.
+So the solution is to write this every time we want to pass an overloaded function to another function. That's probably a good way to make your code reviewer cry.
 
 What would be nice is if [P0573: Abbreviated Lambdas for Fun and Profit](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0573r2.html) and [P0644: Forward without `forward`](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0644r0.html) were accepted into the language. That'd let us write this:
 
@@ -137,7 +137,7 @@ What would be nice is if [P0573: Abbreviated Lambdas for Fun and Profit](http://
 [](xs...) => foo(>>xs...)
 {% endhighlight %}
 
-The above is functionally equivalent to the triplicated monstrosity in the example before. Even better, if [P0834: Lifting overload sets into objects](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0834r0.html) was accepted, we could just write:
+The above is functionally equivalent to the triplicated monstrosity in the example before. Even better, if [P0834: Lifting overload sets into objects](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0834r0.html) was accepted, we could write:
 
 {% highlight cpp %}
 []foo
@@ -168,7 +168,7 @@ Okay, so there's a macro in there, but it's not *too* bad (you know we're in tro
 
 ## Making function objects work for us
 
-You might recall from a number of examples ago that the problem with using function object types was the need to construct an instance whenever we needed to call the function. What if we just make a global instance of the function object?
+You might recall from a number of examples ago that the problem with using function object types was the need to construct an instance whenever we needed to call the function. What if we make a global instance of the function object?
 
 {% highlight cpp %}
 struct foo_impl {
@@ -276,7 +276,7 @@ Now we can use `lift::foo` instead of `lib::foo` and it'll fit the requirements 
 
 I've given you a few solutions to the problem I showed at the start, so what's my conclusion? C++ still has a way to go to support this paradigm of programming, and teaching these ideas is a nightmare. If a beginner or even intermediate programmer asks how to pass overloaded functions around -- something which sounds like it should be fairly easy -- it's a real shame that the best answers I can come up with are "Copy this macro which you have no chance of understanding", or "Make function objects, but make sure you do it this way for reasons which I can't explain unless you understand the subtleties of ODR[^5]". If we as a community see value in strengthening the viability of clear functional programming in C++, 
 
-Maybe for some people "Do it this way and don't ask why" is an okay answer, but that's not very satisfactory to me. Maybe I just lack imagination and there's a better way to do this. Send me your suggestions or heckles on Twitter [@TartanLlama](https://twitter.com/TartanLlama).
+Maybe for some people "Do it this way and don't ask why" is an okay answer, but that's not very satisfactory to me. Maybe I lack imagination and there's a better way to do this. Send me your suggestions or heckles on Twitter [@TartanLlama](https://twitter.com/TartanLlama).
 
 ---------------
 
