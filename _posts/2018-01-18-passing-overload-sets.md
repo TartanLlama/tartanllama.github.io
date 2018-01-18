@@ -90,7 +90,8 @@ We're going to need a different solution.
 As an intermediate step, we could use the normal function template approach, but wrap it in a lambda whenever we want to pass it to another function:
 
 {% highlight cpp %}
-std::transform(first, last, target, [](const auto&... xs) { return foo(xs...); });
+std::transform(first, last, target,
+               [](const auto&... xs) { return foo(xs...); });
 {% endhighlight %}
 
 That's not great. It'll work in some contexts where we don't know what template arguments to supply, but it's not yet suitable for all cases. One improvement would be to add perfect forwarding:
