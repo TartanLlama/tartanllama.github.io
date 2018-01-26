@@ -14,13 +14,13 @@ You shouldn't believe everything you see on the internet.
 
 Of course, `inline` has mandatory effects on linkage and whatnot, but this post is only interested in whether or not compilers might change the decision to inline a function or not based on whether you write `inline` in the declaration.
 
-However, the point of this article isn't to give you good rules for when to use `inline`, because as much as I like to debate technical minutiae, your compiler will likely be a better judge than you anyway. Instead I want to show that if you want to know how compilers or standard libraries implement things, you can just go look! It might be scary the first time, but getting a knack for finding things in large code bases and understanding your tools can pay off. I'll be diving into the codebases for Clang and GCC to see how they handle inlining hints and hopefully convince you that you can do the same for questions which you have about your tools.
+However, the point of this article isn't to give you good rules for when to use `inline`, because as much as I like to debate technical minutiae, your compiler will likely be a better judge than you anyway. Instead I want to show that if you want to know how compilers or standard libraries implement things, you can just go look! It might be daunting the first time, but getting a knack for finding things in large code bases and understanding your tools can pay off. I'll be diving into the codebases for Clang and GCC to see how they handle inlining hints and hopefully convince you that you can do the same for questions which you have about your tools.
 
 --------
 
 ### Clang
 
-Let's do this bottom-up. Clang is a compiler frontend for LLVM, which means that it takes C-family languages, translates them to LLVM Intermediate Representation, and LLVM handles generating assembly/binaries from that. So we can dig around in LLVM to see if we can find code which deals with inlining. I found the following code in `llvm/lib/Analysis/InlineCost.cpp`:
+Let's do this bottom-up. Clang is a compiler frontend for LLVM, which means that it takes C-family languages, translates them to LLVM Intermediate Representation, and LLVM handles generating assembly/binaries from that. So we can dig around in LLVM to see if we can find code which deals with inlining. I armed myself with a text editor and `grep` and found the following code in `llvm/lib/Analysis/InlineCost.cpp`:
 
 {% highlight cpp %}
   // Adjust the threshold based on inlinehint attribute and profile based
