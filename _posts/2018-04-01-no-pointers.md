@@ -7,6 +7,8 @@ tags:
  - c++20
 ---
 
+**This was an April Fools post.**
+
 One of the major changes at the most recent C++ standards meeting in Jacksonville was the decision to [deprecate raw pointers in C++20](https://arne-mertz.de/2018/04/raw-pointers-are-gone/), moving to remove them completely in C++23. This came as a surprise to many, with a lot of discussion as to how we'll get by without this fundamental utility available any more. In this post I'll look at how we can replace some of the main use-cases of raw pointers in C++20.
 
 Three of the main reasons people use raw pointers are:
