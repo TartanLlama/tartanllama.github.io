@@ -22,7 +22,7 @@ I'll deal with these points in turn, but first, an answer to the main question p
 
 ## The elephant in the room
 
-What about legacy code? Don't worry, the committee have come up with a way to both move forward the language boldly
+What about legacy code? Don't worry, the committee have come up with a way to boldly move the language
 forward without breaking all the millions of lines of C++ which people have written over the years: opt-in extensions.
 
 If you want to opt-in to C++20's no-pointers feature, you use `#feature`.
