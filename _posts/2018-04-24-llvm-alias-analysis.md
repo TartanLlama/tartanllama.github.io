@@ -112,7 +112,7 @@ void TARPassConfig::addIRPasses() {
       AAR.addAAResult(WrapperPass->getResult());
     }
   }; 
-  addPass(createExternalAAWrapperPass(AliasCallback));
+  addPass(createExternalAAWrapperPass(AnalysisCallback));
   TargetPassConfig::addIRPasses();
 }
 {% endhighlight %}
