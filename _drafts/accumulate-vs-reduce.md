@@ -110,7 +110,7 @@ An operation is _commutative_ if:
 
 x &lowast; y = y &lowast; x
 
-Unfortunately there's no way for the compiler to reliably check that some operation is associative and commutative[^1], so we're stuck with having `std::reduce` as a separate algorithm. In [concepts speak, this is called an axiom](http://stroustrup.com/sle2011-concepts.pdf): a requirement imposed on semantics which cannot generally be statically verified.
+Unfortunately there's no way for the compiler to reliably check that some operation is associative and commutative, so we're stuck with having `std::reduce` as a separate algorithm. In [concepts speak, this is called an axiom](http://stroustrup.com/sle2011-concepts.pdf): a requirement imposed on semantics which cannot generally be statically verified.
 
 ### Input vs. Forward Iterators
 
@@ -130,8 +130,3 @@ That covers the differences between `std::reduce` and `std::accumulate`. My thre
 - Use `std::reduce` when you want your accumulation to run in parallel
 - Ensure that the operation you want to use is both associative and commutative
 - Remember that the default initial value is produced by default construction, and that this may not be correct for your operation
-
-
-------------------
-
-[^1]: It could be possible if there were some support for expressing axioms which are checked by the compiler.
