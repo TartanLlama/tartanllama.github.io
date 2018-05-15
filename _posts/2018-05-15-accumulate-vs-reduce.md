@@ -137,7 +137,7 @@ Now you know how and when to use `std::reduce` over `std::accumulate`. More gene
 
 ### Acknowledgements
 
-Thanks to Christopher Di Bella for reviewing this post and linking me to p0467r2. Thanks to
+Thanks to Christopher Di Bella for reviewing this post and linking me to p0467r2. Thanks to Ben Steffan, Ben Deane, and TemplateRex for discussion about commutativity.
 
 -----------
 
