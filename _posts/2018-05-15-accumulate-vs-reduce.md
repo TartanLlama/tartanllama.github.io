@@ -7,7 +7,7 @@ tags:
  - c++17
 ---
 
-[`std::accumulate`](http://en.cppreference.com/w/cpp/algorithm/accumulate) has been a part of the standard library since C++98. It provides a way to fold a binary operation (such as addition) over an iterator range, resulting in a single value. [`std::reduce`](http://en.cppreference.com/w/cpp/algorithm/reduce) was added in C++17 and looks remarkably similar. This post will explain the difference between the two and when to use one or the other. 
+[`std::accumulate`](http://en.cppreference.com/w/cpp/algorithm/accumulate) has been a part of the standard library since C++98. It provides a way to fold a binary operation (such as addition) over an iterator range, resulting in a single value. [`std::reduce`](http://en.cppreference.com/w/cpp/algorithm/reduce) was added in C++17 and looks remarkably similar. This post will explain the difference between the two and when to use one or the other.
 
 Let's start by looking at their interfaces, beginning with `std::accumulate`.
 
@@ -110,13 +110,15 @@ An operation is _commutative_ if:
 
 x &lowast; y = y &lowast; x
 
-Unfortunately there's no way for the compiler to reliably check that some operation is associative and commutative, so we're stuck with having `std::reduce` as a separate algorithm. In [concepts speak, this is called an axiom](http://stroustrup.com/sle2011-concepts.pdf)[^1]: a requirement imposed on semantics which cannot generally be statically verified.
+Associativity lets the algorithm compute reduction steps on arbitrary adjacent pairs of elements. Commutativity allows carrying out the operation on intermediate results in whatever order they are produced in, rather than having to preserve the original ordering. Some people (e.g. [here](https://twitter.com/BiCapitalize/status/996386539742679040) and [here](https://twitter.com/template_rex/status/996415576624025601) find that commutativity is too strong a requirement on `std::reduce`, because it denies use for common fold operations like string concatenation, which is associative but not commutative. I agree that it's a shame we don't have a step between `std::accumulate` and `std::reduce` which only requires associativity, but maybe in the future!
+
+We can understand how associativity and commutativity affect our algorithm as much as we want, but there's no way for the compiler to reliably check this. As such, we're stuck with having `std::reduce` as a separate algorithm. In [concepts speak, these are called axioms](http://stroustrup.com/sle2011-concepts.pdf)[^1]: requirements imposed on semantics which cannot generally be statically verified.
 
 ### Input vs. Forward Iterators
 
-I couldn't find any reasoning in the original standards papers for the separate overloads for input and forward iterators. However, my educated guess is that this is to allow library implementors to chunk up the data in order to distribute it to a thread pool. Indeed, this appears to be what MSVC's implementation does.
+The forward iterator overloads allow the implementation to chunk up the data and dispatch these subranges to different threads. The idea is that input iterators are single-pass, whereas forward iterators can be iterated through multiple times. An algorithm couldn't chunk up data indexed by input iterators because by the time it had gone through the range to work out the sub-range boundaries, the iterators will have been invalidated and can't be passed on.
 
-The idea is that input iterators are single-pass, whereas forward iterators can be iterated through multiple times. An algorithm couldn't chunk up data indexed by input iterators because by the time it had gone through the range to work out the sub-range boundaries, the data from the iterator could have already been consumed.
+For more information on iterator types and parallel algorithms, see [p0467r2](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0467r2.html#2.2).
 
 ### Optional Initial Element
 
@@ -132,6 +134,10 @@ That covers the differences between `std::reduce` and `std::accumulate`. My thre
 - Remember that the default initial value is produced by default construction, and that this may not be correct for your operation
 
 Now you know how and when to use `std::reduce` over `std::accumulate`. More generally, the differences show some of the technical aspects you need to consider when parallelising any kind of algorithm. Keep in mind how your operations act with respect to common mathematical properties and you might save yourself some debugging down the line.
+
+### Acknowledgements
+
+Thanks to Christopher Di Bella for reviewing this post and linking me to p0467r2. Thanks to
 
 -----------
 
