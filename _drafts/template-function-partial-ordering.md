@@ -23,7 +23,7 @@ We expect `f(p)` to call `(2)`, because `p` is a `int const*`. In order to decid
 > Partial ordering selects which of two function templates is more specialized than the other by transforming each template in turn (see next paragraph) and performing template argument deduction using the function type.
 {:.standards para="[temp.func.order]/2"}
 
-This is not so complicated. Unfortunately, the "next paragraph" and the sections which it references are almost impossible to parse without a lot of background knowledge and re-readings, so I shall step through the algorithm rather than pasting the rules for you to cry over.
+This is not so complicated, even if the terms may be unfamiliar. Unfortunately, the "next paragraph" and the sections which it references are almost impossible to parse without a lot of background knowledge and re-readings, so I shall step through the algorithm rather than pasting the rules for you to cry over.
 
 There are two stages which we to have work through:
 {:.listhead}
