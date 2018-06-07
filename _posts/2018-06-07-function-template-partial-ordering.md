@@ -6,9 +6,9 @@ tags:
  - c++ 
 ---
 
-C++ function overloading rules are complex. C++ template rules are complex. Put the two together, and you unfortunately do not get something simple; you get a hideous monster of standardese which requires great patience and knowledge to defeat. However, since C++ is mostly corner-cases, it can pay to understand how the rules apply for those times where you just can't work out why your code won't compile. This post will present a few examples of partial ordering of function templates step-by-step in order to arm you for these times of need.
+C++ function overloading rules are complex. C++ template rules are complex. Put the two together, and you unfortunately do not get something simple; you get a hideous monster of standardese which requires great patience and knowledge to defeat. However, since C++ is mostly corner-cases, it can pay to understand how the rules apply for those times where you just can't work out why your code won't compile. This post will present a few step-by-step examples of how partial ordering of function templates works in order to arm you for these times of need.
 
-Partial ordering of function templates is a step of function overload resolution. It occurs when you call a function template which is overloaded and the compiler needs to decide which one is more specialized than the other. Consider this code:
+Partial ordering of function templates is a step of overload resolution. It occurs when you call a function template which is overloaded and the compiler needs to decide which one is more specialized than the other. Consider this code:
 
 ```cpp
 template<class T> void f(T);        //(1)
@@ -18,25 +18,29 @@ int const* p = nullptr;
 f(p);
 ```
 
-We expect `f(p)` to call `(2)`, because `p` is a `int const*`. In order to decide that `(2)` is more specialized than `(1)`, the compiler needs to execute the function template partial ordering rules. Let's see what the standard has to say.
+We expect `f(p)` to call `(2)`, because `p` is a `int const*`. In order to decide that `(2)` is more specialized than `(1)`, the compiler needs to follow the function template partial ordering rules. Let's see what the standard has to say.
 
 > Partial ordering selects which of two function templates is more specialized than the other by transforming each template in turn (see next paragraph) and performing template argument deduction using the function type.
 {:.standards para="[temp.func.order]/2"}
 
 This is not so complicated, even if the terms may be unfamiliar. Unfortunately, the "next paragraph" and the sections which it references are almost impossible to parse without a lot of background knowledge and re-readings, so I shall step through the algorithm rather than pasting the rules for you to cry over.
 
-There are two stages which we to have work through:
+There are four steps which we to have work through:
 {:.listhead}
-1. Transforming `(1)` and performing deduction on `(2)`.
-2. Transforming `(2)` and performing deduction on `(1)`.
+1. Transforming `(1)`.
+2. Performing deduction on `(2)` with the transformed template from step 1.
+3. Transforming `(2)`.
+4. Performing deduction on `(1)` with the transformed template from step 3.
 
-Let's transform `(1)` first. The rules state that for each template parameter, we create some unique type to use in its stead[^1]. Let's call this unique type `type_0`. You can pretend that this was defined somewhere like `class type_0{};`. Now we take our function template `template <class T> void f(T)` and substitute in `type_0` for `T`. This gives us `void f(type_0)`. The transformation is complete.
+If one and only one of the deductions succeeds, then the template with which the deduction was performed is _more specialized_ than the other.
 
-Now that we have transformed `template <class T> void f(T)` into `void f(type_0)`, we will perform deduction on `(2)` using the transformed function type. To do this, we imagine a call to `(2)` where the arguments have the type of the parameters for `(1)`. Concretely, it would look like this:
+Step 1: The rules state that for each template parameter, we create some unique type to use in its stead[^1]. Let's call this unique type `type_0`. You can pretend that this was defined somewhere like `class type_0{};`. Now we take our function template `template <class T> void f(T)` and substitute in `type_0` for `T`. This gives us `void f(type_0)`. The transformation is complete.
+
+Step 2: Now that we have transformed `template <class T> void f(T)` into `void f(type_0)`, we will perform deduction on `(2)` using the transformed function type. To do this, we imagine a call to `(2)` where the arguments have the type of the parameters for `(1)`. Concretely, it would look like this:
 
 ```cpp
 template <class T> void func_2(T const*);
-func_2(type_0{});
+func_2(type_0{}); //derived from void f(type_0)
 ```
 
 Would this call succeed? We can put it into our compiler to find out. [GCC 8.1 says](https://godbolt.org/g/dFKVVs):
@@ -57,7 +61,9 @@ Would this call succeed? We can put it into our compiler to find out. [GCC 8.1 s
 
 So deduction from `(1)` to `(2)` fails, because the invented type `type_0` cannot be used to deduce `const T*`.
 
-Let's try from `(2)` to `(1)`. Again, we'll transform `(2)` from `template <class T> void f(T const*)` to `void f(type_0 const*)`. Now we attempt deduction:
+Step 3: Let's try from `(2)` to `(1)`. Again, we'll transform `(2)` from `template <class T> void f(T const*)` to `void f(type_0 const*)`.
+
+Step 4: Now we attempt deduction:
 
 ```cpp
 template <class T> void func_1(T);
@@ -65,7 +71,7 @@ type_0 const* arg = nullptr;
 func_1(arg);
 ```
 
-[This succeeds](https://godbolt.org/g/dFKVVs) because a `type_0 const*` can be used to deduce `T`. Since deduction from `(1)` to `(2)` fails, but deduction from `(2)` to `(1)` succeeds, `(2)` is *more specialized than* `(1)` and will be chosen by overload resolution.
+[This succeeds](https://godbolt.org/g/dFKVVs) because a `type_0 const*` can be used to deduce `T`. Since deduction from `(1)` to `(2)` fails, but deduction from `(2)` to `(1)` succeeds, `(2)` is *more specialized* than `(1)` and will be chosen by overload resolution.
 
 --------------------
 
@@ -150,7 +156,7 @@ In the example from the last section deduction succeeded both ways so the call w
 
 --------------------------
 
-That's the last of the examples. Of course, there are a bunch of rules which I didn't cover here, like Concepts, parameter packs, non-type/template template parameters, and cases where both the argument and parameter types are references. Hopefully you now have enough of an intuition that you can understand what the standard says when you inevitably hit those corner cases.
+That's the last of the examples. Of course, there are a bunch of rules which I didn't cover here, like Concepts, parameter packs, non-type/template template parameters, and cases where both the argument and parameter types are references. Hopefully you now have enough of an intuition that you can understand what the standard says when you inevitably hit those corner cases. If you have any partial ordering conundrums, drop them down in the comments below or send them to me on [Twitter](http://www.twitter.com/TartanLlama).
 
 --------------------------
 
