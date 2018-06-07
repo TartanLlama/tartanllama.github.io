@@ -6,7 +6,7 @@ tags:
  - c++ 
 ---
 
-C++ function overloading rules are complex. C++ template rules are complex. Put the two together, and you unfortunately do not get something simple; you get a hideous monster of standardese which requires great patience and knowledge to defeat. However, since C++ is mostly corner-cases, it can pay to understand how the rules apply for those times where you just can't work out why your code won't compile. This post will present a few step-by-step examples of how partial ordering of function templates works in order to arm you for these times of need.
+C++ function overloading rules are complex. C++ template rules are complex. Put the two together, and you unfortunately do not get something simple; you get a hideous monster of standardese which requires great patience and knowledge to overcome. However, since C++ is mostly corner-cases, it can pay to understand how the rules apply for those times where you just can't work out why your code won't compile. This post will present a few step-by-step examples of how partial ordering of function templates works in order to arm you for these times of need.
 
 Partial ordering of function templates is a step of overload resolution. It occurs when you call a function template which is overloaded and the compiler needs to decide which one is more specialized than the other. Consider this code:
 
