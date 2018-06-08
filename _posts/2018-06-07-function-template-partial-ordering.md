@@ -141,7 +141,7 @@ template<class T, class U> void func_2(T, A<U>);
 func_2(type_0{}, type_1{});
 ```
 
-This [fails](https://godbolt.org/g/D8LBrF) because we can't match `type_1` against `A<U>`.
+This [fails](https://godbolt.org/g/uVGj3U) because we can't match `type_1` against `A<U>`.
 
 `(2)` transforms to `void h(type_0, A<type_1>)`. Try deduction against `(1)`:
 
