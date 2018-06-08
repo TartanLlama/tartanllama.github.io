@@ -3,7 +3,7 @@ layout:     post
 title:      "Function Template Partial Ordering: Worked Examples"
 category:   c++
 tags:
- - c++ 
+ - c++
 ---
 
 C++ function overloading rules are complex. C++ template rules are complex. Put the two together, and you unfortunately do not get something simple; you get a hideous monster of standardese which requires great patience and knowledge to overcome. However, since C++ is mostly corner-cases, it can pay to understand how the rules apply for those times where you just can't work out why your code won't compile. This post will present a few step-by-step examples of how partial ordering of function templates works in order to arm you for these times of need.
@@ -56,7 +56,7 @@ Would this call succeed? We can put it into our compiler to find out. [GCC 8.1 s
 <source>:1:25: note:   template argument deduction/substitution failed:
 <source>:4:18: note:   mismatched types 'const T*' and 'type_0'
    func_2(type_0{});
-                  ^   
+                  ^
 ```
 
 So deduction from `(1)` to `(2)` fails, because the invented type `type_0` cannot be used to deduce `const T*`.
@@ -114,7 +114,7 @@ Since deduction succeeded in both directions, the call is ambiguous. Sure enough
                         ^
 <source>:2:24: note: candidate: 'void g(T&) [with T = int]'
  template<class T> void g(T&); //(2)
-                        ^ 
+                        ^
 ```
 
 This is why the algorithm is a _partial_ ordering: sometimes two function templates are not ordered.
@@ -134,14 +134,14 @@ h<int>(0,A<void>{});
 
 `identity` here just evaluates to its template argument, but the important thing to note is that `typename identity<T>::type` is a [non-deduced context](https://stackoverflow.com/questions/25245453/what-is-a-nondeduced-context), so `T` cannot be deduced from the argument for that parameter.
 
-`(1)` transforms to `void h(typename identity<type_0>::type, type_0)`, which is `void h(type_0, type_0)`. Attempt deduction on `(2)`:
+`(1)` transforms to `void h(typename identity<type_0>::type, type_1)`, which is `void h(type_0, type_1)`. Attempt deduction on `(2)`:
 
 ```cpp
 template<class T, class U> void func_2(T, A<U>);
-func_2(type_0{}, type_0{});
+func_2(type_0{}, type_1{});
 ```
 
-This [fails](https://godbolt.org/g/D8LBrF) because we can't match `type_0` against `A<U>`.
+This [fails](https://godbolt.org/g/D8LBrF) because we can't match `type_1` against `A<U>`.
 
 `(2)` transforms to `void h(type_0, A<type_1>)`. Try deduction against `(1)`:
 
