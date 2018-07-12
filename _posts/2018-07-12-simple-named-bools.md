@@ -35,7 +35,7 @@ auto c = make_cake(K(with_dairy), !K(chocolate_sauce), !K(poison));
 auto c = make_cake(K(with_dairy), not K(chocolate_sauce), not K(poison));
 ```
 
-Of course, it's up to you whether you think using a macro for this kind of thing is worth it, or if you think that macro should have a name which is less likely to collide. There are much better solutions when you own the interface, but for the times when you don't, I think this is a neat trick to solve the issue in a low-overhead manner.
+Of course, it's up to you whether you think using a macro for this kind of thing is worth it, or if you think that macro should have a name which is less likely to collide. There's also the issue that this _looks_ a bit like Python named parameters, where you can pass them in any order, but the order matters here. There are much better solutions when you own the interface, but for the times when you don't, I think this is a neat trick to solve the issue in a low-overhead manner.
 
 A guess I need to come up with a marketing name for this. Since we already have [X Macros](https://en.wikipedia.org/wiki/X_Macro), I hereby dub this trick "K Macros".
 
