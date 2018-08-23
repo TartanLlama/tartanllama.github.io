@@ -7,7 +7,7 @@ tags:
  - c++20
 ---
 
-You write a class. It has a bunch of member data. At some point, you realise that you need to be able to compare objects of this type. You sigh and resign yourself to writing six operator overloads for every type of comparison you need to make. Afterwards your fingers ache and your previously clean code is lost in a sea of functions which do essentially the same thing. If this sounds familiar, then C++20's spaceship operator is for you. This post will look at how the spaceship operator allows you to describe the strength of relations, write your own three-way comparisons, have them be automatically generated, and how correct, efficient two-way conversions are automatically rewritten to use them.
+You write a class. It has a bunch of member data. At some point, you realise that you need to be able to compare objects of this type. You sigh and resign yourself to writing six operator overloads for every type of comparison you need to make. Afterwards your fingers ache and your previously clean code is lost in a sea of functions which do essentially the same thing. If this sounds familiar, then C++20's spaceship operator is for you. This post will look at how the spaceship operator allows you to describe the strength of relations, write your own overloads, have them be automatically generated, and how correct, efficient two-way comparisons are automatically rewritten to use them.
 
 ## Relation strength
 
@@ -19,13 +19,13 @@ The spaceship operator looks like `<=>` and its official C++ name is the "three-
 (a <=> b) == 0 //true if a is equal/equivalent to b
 ```
 
-One might think that `<=>` will simply return `-1`, `0`, or `1`, similar to `strcmp`. This being C++, the reality is a fair bit more complex, but it's also a fair bit more powerful.
+One might think that `<=>` will simply return `-1`, `0`, or `1`, similar to `strcmp`. This being C++, the reality is a fair bit more complex, but it's also substantially more powerful.
 
 Not all equality relations were created equal. C++'s spaceship operator doesn't just let you express orderings and equality between objects, but also the characteristics of those relations. Let's look at two examples.
 
 ### Example 1: Ordering rectangles
 
-We have a `rectangle` class and want to define comparison operators for it based on its size. But what does it mean for one rectangle to be smaller than another? Clearly if one rectangle is 1cm by 1cm, it is smaller than one which is 10cm by 10cm. But what about one rectangle which is 1cm by 5cm and another which is 5cm by 1cm+ These are clearly not equal, but they're also not less than or greater than each other. But speaking practically, having all of `<`, `<=`, `==`, `>`, and `>=` return `false` for this case is not particularly useful, and it breaks some common assumptions at these operators, such as `(a == b || a < b || a > b) == true`. Instead, we can say that `==` in this case models _equivalence_ rather than true equality. This is known as a _weak ordering_.
+We have a `rectangle` class and want to define comparison operators for it based on its size. But what does it mean for one rectangle to be smaller than another? Clearly if one rectangle is 1cm by 1cm, it is smaller than one which is 10cm by 10cm. But what about one rectangle which is 1cm by 5cm and another which is 5cm by 1cm? These are clearly not equal, but they're also not less than or greater than each other. But speaking practically, having all of `<`, `<=`, `==`, `>`, and `>=` return `false` for this case is not particularly useful, and it breaks some common assumptions at these operators, such as `(a == b || a < b || a > b) == true`. Instead, we can say that `==` in this case models _equivalence_ rather than true equality. This is known as a _weak ordering_.
 
 ### Example 2: Ordering squares
 
@@ -57,7 +57,7 @@ struct foo {
 
 Note that whereas two-way comparisons should be non-member functions so that implicit conversions are done on both sides of the operator, this is not necessary for `operator<=>`; we can make it a member and it'll do the right thing.
 
-Sometimes you may find that you want to do `<=>` on types which don't have an `operator<=>` defined. The compiler won't try to work out a definition for `<=>` based on the other operators, but you can use `std::compare_3way` instead, which will fall back on two-way comparisons if there is no three-way version available. For example, if we were to write a three-way comparison operator for a `pair` type:
+Sometimes you may find that you want to do `<=>` on types which don't have an `operator<=>` defined. The compiler won't try to work out a definition for `<=>` based on the other operators, but you can use `std::compare_3way` instead, which will fall back on two-way comparisons if there is no three-way version available. For example, we could write a three-way comparison operator for a `pair` type like so:
 
 ```cpp
 template<class T, class U>
@@ -76,16 +76,10 @@ struct pair {
 
 `std::common_comparison_category_t` there determines the weakest relation given a number of them. E.g. `std::common_comparison_category_t<std::strong_ordering, std::partial_ordering>` is `std::partial_ordering`.
 
-## Automatically-generated three-way comparisons
-
 If you found the previous example a bit too complex, you might be glad to know that C++20 will support automatic generation of comparison operators. All we need to do is `=default` our `operator<=>`:
 
 ```cpp
-struct foo {
-  int i;
-
-  auto operator<=>(foo const&) = default;
-};
+auto operator<=>(x const&) = default;
 ```
 
 Simple! This will carry out a lexicographic comparison for each base, then member of the type, in order of declaration.
