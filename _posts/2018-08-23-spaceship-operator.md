@@ -88,7 +88,7 @@ Simple! This will carry out a lexicographic comparison for each base, then membe
 
 Although `<=>` is very powerful, most of the time we just want to know if some object is less than another, or equal to another. To facilitate this, two-way comparisons like `<` can be rewritten by the compiler to use `<=>` if a better match is not found.
 
-The basic idea is that for some operator `@`, an expression `a @ b` can be rewritten as `a <=> b @ 0`. It can even be rewritten as `0 @ b <=> a` if that is a better match, which means we get symmetry for free.
+The basic idea is that for some operator `@`, an expression `a @ b` can be rewritten as `a <=> b @ 0`. For example, `a < b` is rewritten as `a <=> b < 0`. These can even be rewritten as `0 @ b <=> a` if that is a better match, which means we get symmetry for free.
 
 In some cases, this can actually provide a performance benefit. Quite often comparison operators are implemented by writing `==` and `<`, then writing the other operators in terms of those rather than duplicating the code. This can lead to situations where we want to check `<=` and end up doing an expensive comparison twice. This automatic rewriting can avoid that cost, since it will only call the one `operator<=>` rather than both `operator<` and `operator==`.
 
