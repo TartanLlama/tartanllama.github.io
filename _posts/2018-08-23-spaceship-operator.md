@@ -67,9 +67,9 @@ struct pair {
 
   auto operator<=> (pair const& rhs) const
     -> std::common_comparison_category_t<
-         decltype(std::compare3_way(t, rhs.t)),
-         decltype(std::compare3_way(u, rhs.u)> {
-    if (auto cmp = std::compare3_way(t, rhs.t); cmp != 0) return cmp;
+         decltype(std::compare_3way(t, rhs.t)),
+         decltype(std::compare_3way(u, rhs.u)> {
+    if (auto cmp = std::compare_3way(t, rhs.t); cmp != 0) return cmp;
     return std::compare3_way(u, rhs.u);
   }
 ```
