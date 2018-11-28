@@ -17,7 +17,7 @@ In spite of the name of the paper and what you might read on the Internet, the n
 
 ## Value Categories
 
-To understand the before-and-after, we first need to understand what value categories are. Continuing the theme of C++ misnomers, value categories are *not* categories of values. They are characteristics of expressions. Every expression in C++ has one of three value categories: *lvalue*, *prvalue* (pure rvalue), or *xvalue* (eXpring value). There are then two parent categories: all *lvalues* and *xvalues* are *glvalues*, and all *prvalues and *xvalues* are *prvalues*.
+To understand the before-and-after, we first need to understand what value categories are. Continuing the theme of C++ misnomers, value categories are *not* categories of values. They are characteristics of expressions. Every expression in C++ has one of three value categories: *lvalue*, *prvalue* (pure rvalue), or *xvalue* (eXpring value). There are then two parent categories: all lvalues and xvalues are *glvalues*, and all prvalues and xvalues are *prvalues*.
 
 [diagram]
 
@@ -58,7 +58,7 @@ What are the properties of the expression `std::string{"hewwo"}`?
 
 Think about it for a minute.
 
-It's a *prvalue*. Its type is `std::string`. It has the value `"hewwo"`. It's a temporary.
+It's a prvalue. Its type is `std::string`. It has the value `"hewwo"`. It's a temporary.
 
 That last one is the key point I want to talk about, and it's the real difference between the C++11 rules and C++17. In C++11, `std::string{"hewwo"}` is indeed a temporary.
 
