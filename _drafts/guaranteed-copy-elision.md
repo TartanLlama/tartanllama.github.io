@@ -58,9 +58,9 @@ What are the properties of the expression `std::string{"hewwo"}`?
 
 Think about it for a minute.
 
-It's a prvalue. Its type is `std::string`. It has the value `"hewwo"`. It's a temporary.
+It's a prvalue. Its type is `std::string`. It has the value `"hewwo"`. It names a temporary.
 
-That last one is the key point I want to talk about, and it's the real difference between the C++11 rules and C++17. In C++11, `std::string{"hewwo"}` is indeed a temporary.
+That last one is the key point I want to talk about, and it's the real difference between the C++11 rules and C++17. In C++11, `std::string{"hewwo"}` does indeed name a temporary.
 
 From `C++11 [class.temporary]/1`:
 
