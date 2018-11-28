@@ -17,7 +17,7 @@ In spite of the name of the paper and what you might read on the Internet, the n
 
 ## Value Categories
 
-To understand the before-and-after, we first need to understand what value categories are. Continuing the theme of C++ misnomers, value categories are *not* categories of values. They are characteristics of expressions. Every expression in C++ has one of three value categories: *lvalue*, *prvalue* (pure rvalue), or *xvalue* (eXpring value). There are then two parent categories: all lvalues and xvalues are *glvalues*, and all prvalues and xvalues are *prvalues*.
+To understand the before-and-after, we first need to understand what value categories are. Continuing the theme of C++ misnomers, value categories are *not* categories of values. They are characteristics of expressions. Every expression in C++ has one of three value categories: *lvalue*, *prvalue* (pure rvalue), or *xvalue* (eXpring value). There are then two parent categories: all lvalues and xvalues are *glvalues*, and all prvalues and xvalues are *rvalues*.
 
 [diagram]
 
