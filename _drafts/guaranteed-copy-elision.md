@@ -122,7 +122,7 @@ As noted in the value category descriptions earlier, prvalues exist for purposes
 
 That's a better name for this feature. Not guaranteed copy elision. **Deferred temporary materialization**.
 
-Temporary materialization creates a temporary object from a prvalue, resulting in an xvalue. The most common places it occurs are when binding a reference to, or performing member access on a prvalue. 
+Temporary materialization creates a temporary object from a prvalue, resulting in an xvalue. The most common places it occurs are when binding a reference to, or performing member access on a prvalue. If a prvalue initializes a class type of the same type as the prvalue, then the destination object is initialized directly; no temporary required. 
 
 Some examples:
 
