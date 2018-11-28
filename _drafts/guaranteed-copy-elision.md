@@ -10,7 +10,7 @@ C++17 merged in a paper called [Guaranteed copy elision through simplified value
 
 ```cpp
 non_moveable make() { return {}; }
-auto x = make(); //compiles in C++17
+auto x = make(); //compiles in C++17, error in C++11/14
 ```
 
 In spite of the name of the paper and what you might read on the Internet, the new rules *do not guarantee copy-elision*. Instead, the new value category rules are defined such that no copy exists in the first place. Understanding this nuance gives a deeper understanding of the current C++ object model, so I will explain the pre-C++17 rules, what changes were made, and how they solve real-world problems.
