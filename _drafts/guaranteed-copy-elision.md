@@ -194,6 +194,6 @@ is identical to `auto x = /* expression */;`. For any `T`.
 
 The "guaranteed copy elision" feature guarantees no copy elision, instead making the copy never exist by purifying prvalues even further. Next time you hear or read about "guaranteed copy elision", think instead about *deferred temporary materialization*.   
 
+## Relevant Standards Passages
 
-
-
+*TODO*
