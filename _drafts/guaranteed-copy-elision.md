@@ -146,7 +146,7 @@ That covers the most important points of the new rules. If you'd like more detai
 
 I said at the start that understanding the new rules would grant a deeper understanding of the C++17 object model. I'd like to expand on that a bit.
 
-The key point is that in C++11, prvalues are not "pure" in a sense. That is, the expression `std::string{"hewwo"}` represents some temporary `std::string` object with the contents `"hewwo"`. It's not the pure notion of the list of characters "hewwo". It's not the Platonic ideal of "hewwo".
+The key point is that in C++11, prvalues are not "pure" in a sense. That is, the expression `std::string{"hewwo"}` names some temporary `std::string` object with the contents `"hewwo"`. It's not the pure notion of the list of characters "hewwo". It's not the Platonic ideal of "hewwo".
 
 In C++17, however, `std::string{"hewwo"}` *is* the Platonic ideal of "hewwo". It's not a real object in C++'s object model, it's some elusive, amorphous idea which can be passed around your program, only being given form when initializing some result object, or materializing a temporary. **C++17's prvalues are purer prvalues**.
 
