@@ -17,7 +17,7 @@ In spite of the name of the paper and what you might read on the Internet, the n
 
 ## Value Categories
 
-To understand the before-and-after, we first need to understand what value categories are. Continuing the theme of C++ misnomers, value categories are *not* categories of values. They are characteristics of expressions. Every expression in C++ has one of three value categories: *lvalue*, *prvalue* (pure rvalue), or *xvalue* (eXpring value). There are then two parent categories: all lvalues and xvalues are *glvalues*, and all prvalues and xvalues are *rvalues*.
+To understand the before-and-after, we first need to understand what value categories are. Continuing the theme of C++ misnomers, value categories are *not* categories of values. They are characteristics of expressions. Every expression in C++ has one of three value categories: *lvalue*, *prvalue* (pure rvalue), or *xvalue* (eXpiring value). There are then two parent categories: all lvalues and xvalues are *glvalues*, and all prvalues and xvalues are *rvalues*.
 
 [diagram]
 
@@ -64,7 +64,7 @@ That last one is the key point I want to talk about, and it's the real differenc
 
 From `C++11 [class.temporary]/1`:
 
-Temporaries of class type are created in various contexts: binding a reference to a prvalue, returning a prvalue, a conversion that creates a prvalue, throwing an exception, entering a handler, and in some initializations. 
+> Temporaries of class type are created in various contexts: binding a reference to a prvalue, returning a prvalue, a conversion that creates a prvalue, throwing an exception, entering a handler, and in some initializations. 
 
 Let's look at how this interacts with this code:
 
@@ -102,7 +102,7 @@ then we get a compiler error:
 
 Aside from returning non-moveable types by value, this presents other issues:
 
-1. Use of [Almost Always Auto](https://herbsutter.com/2013/08/12/gotw-94-solution-aaa-style-almost-always-auto/) style is prevented for immobile types:
+1. Use of [Almost Always Auto](https://herbsutter.com/2013/08/12/gotw-94-solution-aaa-style-almost-always-auto/) style is prevented for immoveable types:
 
 ```cpp
 auto x = non_moveable{}; //compiler error
