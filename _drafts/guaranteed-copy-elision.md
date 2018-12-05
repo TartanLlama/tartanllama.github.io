@@ -102,7 +102,7 @@ then we get a compiler error:
 
 Aside from returning non-moveable types by value, this presents other issues:
 
-1. Use of [Almost Always Auto](https://herbsutter.com/2013/08/12/gotw-94-solution-aaa-style-almost-always-auto/) style is prevented for immoveable types:
+1. Use of [Almost Always Auto](https://herbsutter.com/2013/08/12/gotw-94-solution-aaa-style-almost-always-auto/) style is prevented for immobile types:
 
 ```cpp
 auto x = non_moveable{}; //compiler error
