@@ -27,7 +27,7 @@ Despite the name of the paper and what you might read on the Internet, **the new
 
 To understand the before-and-after, we first need to understand what value categories are (I'll explain copy elision in the next section). Continuing the theme of C++ misnomers, value categories are *not* categories of values. They are characteristics of expressions. Every expression in C++ has one of three value categories: *lvalue*, *prvalue* (pure rvalue), or *xvalue* (eXpring value). There are then two parent categories: all lvalues and xvalues are *glvalues*, and all prvalues and xvalues are *rvalues*.
 
-[diagram]
+![diagram expressing the taxonomy described above](/assets/valcat.png)
 
 For an explanation of what these are, we can look at the standard ([`C++17 [basic.lval]/1`](http://eel.is/c++draft/basic.lval#1)):
 
@@ -105,15 +105,15 @@ then we get a compiler error:
 
 Aside from returning non-moveable types by value, this presents other issues:
 
-1. Use of [Almost Always Auto](https://herbsutter.com/2013/08/12/gotw-94-solution-aaa-style-almost-always-auto/) style is prevented for immobile types:
+- Use of [Almost Always Auto](https://herbsutter.com/2013/08/12/gotw-94-solution-aaa-style-almost-always-auto/) style is prevented for immobile types:
 
 ```cpp
 auto x = non_moveable{}; //compiler error
 ```
 
-2. The language makes no guarantees that the constructors won't be called (in practice this isn't too much of a worry, but guarantees are more convincing than optional optimizations).
-3. If we want to support some of these use-cases, we need to write copy/move constructors for types which they don't make sense for (and do what? Throw? Abort? Linker error?)
-4. You can't pass non-moveable types to functions by value, in case you have some use-case which that would help with.
+- The language makes no guarantees that the constructors won't be called (in practice this isn't too much of a worry, but guarantees are more convincing than optional optimizations).
+- If we want to support some of these use-cases, we need to write copy/move constructors for types which they don't make sense for (and do what? Throw? Abort? Linker error?)
+- You can't pass non-moveable types to functions by value, in case you have some use-case which that would help with.
 
 What's the solution? Should the standard just say "oh, if you elide all copies, you don't need those constructors"? Maybe, but then all this language about constructing temporaries is really a lie and building an intuition about the object model becomes even harder.
 
@@ -195,4 +195,4 @@ is identical to `auto x = /* expression */;`. For any `T`.
 
 ## Closing
 
-The "guaranteed copy elision" rules do not guarantee copy elision; instead they purify prvalues such that the copy doesn't exist in the first place. Next time you hear or read about "guaranteed copy elision", think instead about *deferred temporary materialization*.   
+The "guaranteed copy elision" rules do not guarantee copy elision; instead they purify prvalues such that the copy doesn't exist in the first place. Next time you hear or read about "guaranteed copy elision", think instead about *deferred temporary materialization*.
