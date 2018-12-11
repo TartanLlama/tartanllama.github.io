@@ -7,7 +7,7 @@ tags:
  - c++17
 ---
 
-_This post is also available at the [Microsoft Visual C++ Team Blog](https://blogs.msdn.microsoft.com/vcblog/2018/12/10/guaranteed-copy-elision-does-not-elide-copies/)_
+_This post is also available at the [Microsoft Visual C++ Team Blog](https://blogs.msdn.microsoft.com/vcblog/2018/12/11/guaranteed-copy-elision-does-not-elide-copies/)_
 
 C++17 merged in a paper called [Guaranteed copy elision through simplified value categories](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0135r0.html). The changes mandate that no copies or moves take place in some situations where they were previously allowed, e.g.:
 
