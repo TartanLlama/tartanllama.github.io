@@ -4,6 +4,7 @@ title:      "Guaranteed Copy Elision Does Not Elide Copies"
 category:   c++
 tags:
  - c++
+ - c++17
 ---
 
 _This post is also available at the [Microsoft Visual C++ Team Blog](https://blogs.msdn.microsoft.com/vcblog/2018/12/10/guaranteed-copy-elision-does-not-elide-copies/)_
