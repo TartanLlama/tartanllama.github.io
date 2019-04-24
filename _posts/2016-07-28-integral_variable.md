@@ -284,7 +284,7 @@ int main() {
   auto var = make_integral_variable();
   static_assert(var.get() == 0, "wat");
      
-  setVar(v);
+  setVar(var);
   static_assert(var.get() == 4, "wat");
 }
 {% endhighlight %}
