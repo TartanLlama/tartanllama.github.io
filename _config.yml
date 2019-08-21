@@ -1,11 +1,11 @@
 # Site settings
-title: "Simon Brand"
+title: "Sy Brand"
 email: tartanllama@gmail.com
-description: "Personal blog and CV for Simon Brand"
+description: "Personal blog and CV for Sy Brand"
 baseurl: ""
 url: https://blog.tartanllama.xyz
 enforse_ssl: blog.tartanllama.xyz
-title_description: "Programming blog and CV for Simon Brand, AKA TartanLlama. Expect C++ template metaprogramming."
+title_description: "Programming blog and CV for Sy Brand, AKA TartanLlama. Expect C++ template metaprogramming."
 title_image: "https://s.gravatar.com/avatar/c425873f547d93f4079ca252b42a886d?s=500"
 post_limit: 5
 
@@ -19,7 +19,7 @@ google_analytics: "UA-86837989-1"
 
 # Footer
 footer_right: "<a href=\"https://github.com/jacobtomlinson/carte-noire\">Carte Noir</a> theme by <a href=\"https://twitter.com/_JacobTomlinson\">Jacob Tomlinson</a>"
-footer_center: "&copy; 2017 <a href=\"https://twitter.com/TartanLlama\">Simon Brand</a>"
+footer_center: "&copy; 2017 <a href=\"https://twitter.com/TartanLlama\">Sy Brand</a>"
 footer_left: "&lt;/&gt; on <a href=\"https://github.com/tartanllama/tartanllama.github.io\">Github</a> &nbsp;<i class=\"fa fa-github-alt\"></i>"
 
 # Build settings
@@ -32,7 +32,7 @@ permalink: pretty
 exclude: [vendor]
 
 #RSS
-name: "Simon Brand's Blog"
+name: "Sy Brand's Blog"
 
 redirects: yes
 permalink: /:title/
