@@ -9,11 +9,13 @@ redirect_from:
   - /writing-a-linux-debugger-setup.html
 ---
 
-Anyone who has written more than a hello world program should have used a debugger at some point (if you haven't, drop what you're doing and learn how to use one). However, although these tools are in such widespread use, there aren't a lot of resources which tell you how they work and how to write one[^1], especially when compared to other toolchain technologies like compilers. In this post series we'll learn what makes debuggers tick and write one for debugging Linux programs.
+Debuggers are one of the most valuable tools in any developer's kit. However, although these tools are in such widespread use, there aren't a lot of resources which tell you how they work and how to write one[^1], especially when compared to other toolchain technologies like compilers. In this post series we'll learn what makes debuggers tick and write one for debugging Linux programs.
+
+This tutorial is split into 10 parts and you can find the final code, along with branches for each part, [on GitHub](https://github.com/TartanLlama/minidbg).
 
 If you're on Windows, you can still follow along using [WSL](https://aka.ms/wsl).
 
-We'll support the following features:
+Our debugger will support the following features:
 {:.listhead}
 
 - Launch, halt, and continue execution
