@@ -67,9 +67,9 @@ With these functions added we can begin to implement our source-level stepping f
 
 ### Implementing the steps
 
-We're going to write very simple versions of these functions, but real debuggers tend to have the concept of a *thread plan* which encapsulates all of the stepping information. For example, a debugger might have some complex logic to determine breakpoint sites, then have some callback which determines whether or not the step operation has completed. This is a lot of infrastructure to get in place, so we'll just take a naive approach. We might end up accidentally stepping over breakpoints, but you can spend some time getting all the details right if you like.
+We're going to write very pared-down versions of these functions, but real debuggers tend to have the concept of a *thread plan* which encapsulates all of the stepping information. For example, a debugger might have some complex logic to determine breakpoint sites, then have some callback which determines whether or not the step operation has completed. This is a lot of infrastructure to get in place, so we'll take a naive approach. We might end up accidentally stepping over breakpoints, but you can spend some time getting all the details right if you like.
 
-For `step_out`, we'll just set a breakpoint at the return address of the function and continue. I don't want to get into the details of stack unwinding yet -- that'll come in a later part -- but it suffices to say for now that the return address is stored 8 bytes after the start of a stack frame. So we'll just read the frame pointer and read a word of memory at the relevant address:
+For `step_out`, we'll set a breakpoint at the return address of the function and continue. I don't want to get into the details of stack unwinding yet -- that'll come in a later part -- but it suffices to say for now that the return address is stored 8 bytes after the start of a stack frame. So we'll read the frame pointer and read a word of memory at the relevant address:
 
 {% highlight cpp %}
 void debugger::step_out() {
@@ -105,57 +105,36 @@ Next is `step_in`. A simple algorithm is to just keep on stepping over instructi
 
 {% highlight cpp %}
 void debugger::step_in() {
-   auto line = get_line_entry_from_pc(get_pc())->line;
+   auto line = get_line_entry_from_pc(get_offset_pc())->line;
 
-    while (get_line_entry_from_pc(get_pc())->line == line) {
-        single_step_instruction_with_breakpoint_check();
-    }
+   while (get_line_entry_from_pc(get_offset_pc())->line == line) {
+      single_step_instruction_with_breakpoint_check();
+   }
 
-    auto line_entry = get_line_entry_from_pc(get_pc());
-    print_source(line_entry->file->path, line_entry->line);
+   auto line_entry = get_line_entry_from_pc(get_offset_pc());
+   print_source(line_entry->file->path, line_entry->line);
+}
+
+uint64_t debugger::get_offset_pc() {
+   return offset_load_address(get_pc());
 }
 {% endhighlight %}
 
-`step_over` is the most difficult of the three for us. Conceptually, the solution is to just set a breakpoint at the next source line, but what is the next source line? It might not be the one directly succeeding the current line, as we could be in a loop, or some conditional construct. Real debuggers will often examine what instruction is being executed and work out all of the possible branch targets, then set breakpoints on all of them. I'd rather not implement or integrate an x86 instruction emulator for such a small project, so we'll need to come up with a simpler solution. A couple of horrible options are to just keep stepping until we're at a new line in the current function, or to just set a breakpoint at every line in the current function. The former would be ridiculously inefficient if we're stepping over a function call, as we'd need to single step through every single instruction in that call graph, so I'll go for the second solution.
+`step_over` is the most difficult of the three for us. Conceptually, the solution is to set a breakpoint at the next source line, but what is the next source line? It might not be the one directly succeeding the current line, as we could be in a loop, or some conditional construct. Real debuggers will often examine what instruction is being executed and work out all of the possible branch targets, then set breakpoints on all of them. I'd rather not implement or integrate an x86 instruction emulator for such a small project, so we'll need to come up with a simpler solution. A couple of horrible options are to keep stepping until we're at a new line in the current function, or to set a breakpoint at every line in the current function. The former would be ridiculously inefficient if we're stepping over a function call, as we'd need to single step through every single instruction in that call graph, so I'll go for the second solution.
+
+First we'll need a helper to offset addresses from DWARF info by the load address:
+
+{% highlight cpp %}
+uint64_t debugger::offset_dwarf_address(uint64_t addr) {
+   return addr + m_load_address;
+}
+{% endhighlight %}
+
+Now we can write our stepper. This function is a bit more complex, so I'll break it down a bit.
 
 {% highlight cpp %}
 void debugger::step_over() {
-    auto func = get_function_from_pc(get_pc());
-    auto func_entry = at_low_pc(func);
-    auto func_end = at_high_pc(func);
-
-    auto line = get_line_entry_from_pc(func_entry);
-    auto start_line = get_line_entry_from_pc(get_pc());
-
-    std::vector<std::intptr_t> to_delete{};
-
-    while (line->address < func_end) {
-        if (line->address != start_line->address && !m_breakpoints.count(line->address)) {
-            set_breakpoint_at_address(line->address);
-            to_delete.push_back(line->address);
-        }
-        ++line;
-    }
-
-    auto frame_pointer = get_register_value(m_pid, reg::rbp);
-    auto return_address = read_memory(frame_pointer+8);
-    if (!m_breakpoints.count(return_address)) {
-        set_breakpoint_at_address(return_address);
-        to_delete.push_back(return_address);
-    }
-
-    continue_execution();
-
-    for (auto addr : to_delete) {
-        remove_breakpoint(addr);
-    }
-}
-{% endhighlight %}
-
-This function is a bit more complex, so I'll break it down a bit.
-
-{% highlight cpp %}
-    auto func = get_function_from_pc(get_pc());
+    auto func = get_function_from_pc(get_offset_pc());
     auto func_entry = at_low_pc(func);
     auto func_end = at_high_pc(func);
 {% endhighlight %}
@@ -164,20 +143,21 @@ This function is a bit more complex, so I'll break it down a bit.
 
 {% highlight cpp %}
     auto line = get_line_entry_from_pc(func_entry);
-    auto start_line = get_line_entry_from_pc(get_pc());
+    auto start_line = get_line_entry_from_pc(get_offset_pc());
 
-    std::vector<std::intptr_t> breakpoints_to_remove{};
+    std::vector<std::intptr_t> to_delete{};
 
     while (line->address < func_end) {
-        if (line->address != start_line->address && !m_breakpoints.count(line->address)) {
-            set_breakpoint_at_address(line->address);
-            breakpoints_to_remove.push_back(line->address);
+        auto load_address = offset_dwarf_address(line->address);
+        if (line->address != start_line->address && !m_breakpoints.count(load_address)) {
+            set_breakpoint_at_address(load_address);
+            to_delete.push_back(load_address);
         }
         ++line;
     }
 {% endhighlight %}
 
-We'll need to remove any breakpoints we set so that they don't leak out of our step function, so we keep track of them in a `std::vector`. To set all the breakpoints, we loop over the line table entries until we hit one which is outside the range of our function. For each one, we make sure that it's not the line we are currently on, and that there's not already a breakpoint set at that location.
+We'll need to remove any breakpoints we set so that they don't leak out of our step function, so we keep track of them in a `std::vector`. To set all the breakpoints, we loop over the line table entries until we hit one which is outside the range of our function. For each one, we make sure that it's not the line we are currently on, and that there's not already a breakpoint set at that location. We also need to offset the addresses we get from the DWARF information by the load address to set breakpoints.
 
 {% highlight cpp %}
     auto frame_pointer = get_register_value(m_pid, reg::rbp);
@@ -196,11 +176,47 @@ Here we are setting a breakpoint on the return address of the function, just lik
     for (auto addr : to_delete) {
         remove_breakpoint(addr);
     }
+}
 {% endhighlight %}
 
 Finally, we continue until one of those breakpoints has been hit, then remove all the temporary breakpoints we set.
 
-It ain't pretty, but it'll do for now.
+It ain't pretty, but it'll do for now. Here's the whole function:
+
+{% highlight cpp %}
+void debugger::step_over() {
+    auto func = get_function_from_pc(get_offset_pc());
+    auto func_entry = at_low_pc(func);
+    auto func_end = at_high_pc(func);
+
+    auto line = get_line_entry_from_pc(func_entry);
+    auto start_line = get_line_entry_from_pc(get_offset_pc());
+
+    std::vector<std::intptr_t> to_delete{};
+
+    while (line->address < func_end) {
+        auto load_address = offset_dwarf_address(line->address);
+        if (line->address != start_line->address && !m_breakpoints.count(load_address)) {
+            set_breakpoint_at_address(load_address);
+            to_delete.push_back(load_address);
+        }
+        ++line;
+    }
+
+    auto frame_pointer = get_register_value(m_pid, reg::rbp);
+    auto return_address = read_memory(frame_pointer+8);
+    if (!m_breakpoints.count(return_address)) {
+        set_breakpoint_at_address(return_address);
+        to_delete.push_back(return_address);
+    }
+
+    continue_execution();
+
+    for (auto addr : to_delete) {
+        remove_breakpoint(addr);
+    }
+}
+{% endhighlight %}
 
 Of course, we also need to add this new functionality to our UI:
 
@@ -260,3 +276,5 @@ int main() {
 You should be able to set a breakpoint on the address of `main` and then in, over, and out all over the program. Expect things to break if you try to step out of `main` or into some dynamically linked library.
 
 You can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_dwarf_step). Next time we'll use our newfound DWARF expertise to implement source-level breakpoints.
+
+[Next post]({% post_url 2017-06-19-writing-a-linux-debugger-source-break %})

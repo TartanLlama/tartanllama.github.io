@@ -44,9 +44,9 @@ Setting breakpoints on function names can be complex if you want to take overloa
 < 0><0x0000000b>  DW_TAG_compile_unit
                     DW_AT_producer              clang version 3.9.1 (tags/RELEASE_391/final)
                     DW_AT_language              DW_LANG_C_plus_plus
-                    DW_AT_name                  /super/secret/path/MiniDbg/examples/variable.cpp
+                    DW_AT_name                  /path/to/variable.cpp
                     DW_AT_stmt_list             0x00000000
-                    DW_AT_comp_dir              /super/secret/path/MiniDbg/build
+                    DW_AT_comp_dir              /path/to/
                     DW_AT_low_pc                0x00400670
                     DW_AT_high_pc               0x0040069c
 
@@ -74,7 +74,7 @@ void debugger::set_breakpoint_at_function(const std::string& name) {
                 auto low_pc = at_low_pc(die);
                 auto entry = get_line_entry_from_pc(low_pc);
                 ++entry; //skip prologue
-                set_breakpoint_at_address(entry->address);
+                set_breakpoint_at_address(offset_dwarf_address(entry->address));
             }
         }
     }
@@ -97,17 +97,17 @@ NS new statement, BB new basic block, ET end of text sequence
 PE prologue end, EB epilogue begin
 IS=val ISA number, DI=val discriminator value
 <pc>        [lno,col] NS BB ET PE EB IS= DI= uri: "filepath"
-0x004004a7  [   1, 0] NS uri: "/super/secret/path/a.hpp"
+0x004004a7  [   1, 0] NS uri: "/path/to/a.hpp"
 0x004004ab  [   2, 0] NS
 0x004004b2  [   3, 0] NS
 0x004004b9  [   4, 0] NS
 0x004004c1  [   5, 0] NS
-0x004004c3  [   1, 0] NS uri: "/super/secret/path/b.hpp"
+0x004004c3  [   1, 0] NS uri: "/path/to/b.hpp"
 0x004004c7  [   2, 0] NS
 0x004004ce  [   3, 0] NS
 0x004004d5  [   4, 0] NS
 0x004004dd  [   5, 0] NS
-0x004004df  [   4, 0] NS uri: "/super/secret/path/ab.cpp"
+0x004004df  [   4, 0] NS uri: "/path/to/ab.cpp"
 0x004004e3  [   5, 0] NS
 0x004004e8  [   6, 0] NS
 0x004004ed  [   7, 0] NS
@@ -123,7 +123,7 @@ void debugger::set_breakpoint_at_source_line(const std::string& file, unsigned l
 
             for (const auto& entry : lt) {
                 if (entry.is_stmt && entry.line == line) {
-                    set_breakpoint_at_address(entry.address);
+                    set_breakpoint_at_address(offset_dwarf_address(entry.address));
                     return;
                 }
             }
@@ -139,7 +139,7 @@ My `is_suffix` hack is there so you can type `c.cpp` for `a/b/c.cpp`. Of course 
 
 ## Symbol lookup
 
-When we get down to the level of object files, symbols are king. Functions are named with symbols, global variables are named with symbols, you get a symbol, we get a symbol, everyone gets a symbol. In a given object file, some symbols might reference other object files or shared libraries, where the linker will patch things up to create an executable program from the symbol reference spaghetti.
+When we get down to the level of object files, symbols are everywhere. Functions are named with symbols, global variables are named with symbols, you get a symbol, we get a symbol, everyone gets a symbol. In a given object file, some symbols might reference other object files or shared libraries, where the linker will patch things up to create an executable program from the symbol reference spaghetti.
 
 Symbols can be looked up in the aptly-named symbol table, which is stored in ELF sections in the binary. Fortunately, `libelfin` has a fairly nice interface for doing this, so we don't need to deal with all of the ELF nonsense ourselves. To give you an idea of what we're dealing with, here is a dump of the `.symtab` section of a binary, produced with `readelf`:
 
@@ -186,7 +186,7 @@ Num:    Value          Size Type    Bind   Vis      Ndx Name
 38: 0000000000600e20     0 OBJECT  LOCAL  DEFAULT   16 __do_global_dtors_aux_fin
 39: 0000000000400640     0 FUNC    LOCAL  DEFAULT   10 frame_dummy
 40: 0000000000600e18     0 OBJECT  LOCAL  DEFAULT   15 __frame_dummy_init_array_
-41: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS /super/secret/path/MiniDbg/
+41: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS /path/to/
 42: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c
 43: 0000000000400818     0 OBJECT  LOCAL  DEFAULT   14 __FRAME_END__
 44: 0000000000600e28     0 OBJECT  LOCAL  DEFAULT   17 __JCR_END__
@@ -244,7 +244,7 @@ struct symbol {
 };
 {% endhighlight %}
 
-We'll need to map between the symbol type we get from `libelfin` and our enum since we don't want the dependency poisoning this interface. Fortunately I picked the same names for everything, so this is dead easy:
+We'll need to map between the symbol type we get from `libelfin` and our enum since we don't want the dependency poisoning this interface. Fortunately I picked the same names for everything, so this is a straightforward map:
 
 {% highlight cpp %}
 symbol_type to_symbol_type(elf::stt sym) {
@@ -329,3 +329,5 @@ Symbol lookup can be tested by adding some functions or global variables to your
 That's all for this post. Next time I'll show how to add stack unwinding support to the debugger.
 
 You can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_source_break).
+
+[Next post]({% post_url 2017-06-24-writing-a-linux-debugger-unwinding %})

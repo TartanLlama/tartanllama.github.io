@@ -30,7 +30,7 @@ In the last post we added simple address breakpoints to our debugger. This time 
 
 ### Registering our registers
 
-Before we actually read any registers, we need to teach our debugger a bit about our target, which is x86_64. Alongside sets of general and special purpose registers, x86_64 has floating point and vector registers available. I'll be omitting the latter two for simplicity, but you can choose to support them if you like. x86_64 also allows you to access some 64 bit registers as 32, 16, or 8 bit registers, but I'll just be sticking to 64. Due to these simplifications, for each register we just need its name, its DWARF register number, and where it is stored in the structure returned by `ptrace`. I chose to have a scoped enum for referring to the registers, then I laid out a global register descriptor array with the elements in the same order as in the `ptrace` register structure.
+Before we actually read any registers, we need to teach our debugger a bit about our target, which is x86_64. Alongside sets of general and special purpose registers, x86_64 has floating point and vector registers available. I'll be omitting the latter two for simplicity, but you can choose to support them if you like. x86_64 also allows you to access some 64 bit registers as 32, 16, or 8 bit registers, but I'll be sticking to 64. Due to these simplifications, for each register we need its name, its DWARF register number, and where it is stored in the structure returned by `ptrace`. I chose to have a scoped enum for referring to the registers, then I laid out a global register descriptor array with the elements in the same order as in the `ptrace` register structure.
 
 {% highlight cpp %}
 enum class reg {
@@ -95,22 +95,22 @@ uint64_t get_register_value(pid_t pid, reg r) {
 }
 {% endhighlight %}
 
-Again, `ptrace` gives us easy access to the data we want. We just construct an instance of `user_regs_struct` and give that to `ptrace` alongside the `PTRACE_GETREGS` request.
+Again, `ptrace` gives us easy access to the data we want. We construct an instance of `user_regs_struct` and give that to `ptrace` alongside the `PTRACE_GETREGS` request.
 
-Now we want to read `regs` depending on which register was requested. We could write a big switch statement, but since we've laid out our `g_register_descriptors` table in the same order as `user_regs_struct`, we can just search for the index of the register descriptor, and access `user_regs_struct` as an array of `uint64_t`s.[^2]
+Now we want to read `regs` depending on which register was requested. We could write a big switch statement, but since we've laid out our `g_register_descriptors` table in the same order as `user_regs_struct`, we can search for the index of the register descriptor, and access `user_regs_struct` as an array of `uint64_t`s.[^2]
 
 [^2]: You could also reorder the `reg` enum and cast them to the underlying type to use as indexes, but I wrote it this way in the first place, it works, and I'm too lazy to change it.
 
 {% highlight cpp %}
-        auto it = std::find_if(begin(g_register_descriptors), end(g_register_descriptors),
-                               [r](auto&& rd) { return rd.r == r; });
+auto it = std::find_if(begin(g_register_descriptors), end(g_register_descriptors),
+                        [r](auto&& rd) { return rd.r == r; });
 
-        return *(reinterpret_cast<uint64_t*>(&regs) + (it - begin(g_register_descriptors)));
+return *(reinterpret_cast<uint64_t*>(&regs) + (it - begin(g_register_descriptors)));
 {% endhighlight %}
 
 The cast to `uint64_t` is safe because `user_regs_struct` is a standard layout type, but I think the pointer arithmetic is technically UB. No current compilers even warn about this and I'm lazy, but if you want to maintain utmost correctness, write a big switch statement.
 
-`set_register_value` is much the same, we just write to the location and write the registers back at the end:
+`set_register_value` is much the same, we write to the location and write the registers back at the end:
 
 {% highlight cpp %}
 void set_register_value(pid_t pid, reg r, uint64_t value) {
@@ -154,7 +154,7 @@ reg get_register_from_name(const std::string& name) {
 }
 {% endhighlight %}
 
-And finally we'll add a simple helper to dump the contents of all registers:
+And finally we'll add a helper to dump the contents of all registers:
 
 {% highlight cpp %}
 void debugger::dump_registers() {
@@ -196,7 +196,7 @@ All we need to do here is add a new command to the `handle_command` function. Wi
 
 ### Where is my mind?
 
-We've already read from and written to memory when setting our breakpoints, so we just need to add a couple of functions to hide the `ptrace` call a bit.
+We've already read from and written to memory when setting our breakpoints, so we need to add a couple of functions to hide the `ptrace` call a bit.
 
 {% highlight cpp %}
 uint64_t debugger::read_memory(uint64_t address) {
@@ -208,7 +208,7 @@ void debugger::write_memory(uint64_t address, uint64_t value) {
 }
 {% endhighlight %}
 
-You might want to add support for reading and writing more than a word at a time, which you can do by just incrementing the address each time you want to read another word. You could also use [`process_vm_readv` and `process_vm_writev`](http://man7.org/linux/man-pages/man2/process_vm_readv.2.html) or `/proc/<pid>/mem` instead of `ptrace` if you like.
+You might want to add support for reading and writing more than a word at a time, which you can do by incrementing the address each time you want to read another word. You could also use [`process_vm_readv` and `process_vm_writev`](http://man7.org/linux/man-pages/man2/process_vm_readv.2.html) or `/proc/<pid>/mem` instead of `ptrace` if you like.
 
 Now we'll add commands for our UI:
 
@@ -298,21 +298,24 @@ void debugger::continue_execution() {
 Now that we can read and modify registers, we can have a bit of fun with our hello world program. As a first test, try setting a breakpoint on the call instruction again and continue from it. You should see `Hello world` being printed out. For the fun part, set a breakpoint just after the output call, continue, then write the address of the call argument setup code to the program counter (`rip`) and continue. You should see `Hello world` being printed a second time due to this program counter manipulation. Just in case you aren't sure where to set the breakpoint, here's my `objdump` output from the last post again:
 
 ```
-0000000000400936 <main>:
-  400936:	55                   	push   rbp
-  400937:	48 89 e5             	mov    rbp,rsp
-  40093a:	be 35 0a 40 00       	mov    esi,0x400a35
-  40093f:	bf 60 10 60 00       	mov    edi,0x601060
-  400944:	e8 d7 fe ff ff       	call   400820 <_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc@plt>
-  400949:	b8 00 00 00 00       	mov    eax,0x0
-  40094e:	5d                   	pop    rbp
-  40094f:	c3                   	ret
+0000000000001189 <main>:
+    1189:       f3 0f 1e fa             endbr64
+    118d:       55                      push   %rbp
+    118e:       48 89 e5                mov    %rsp,%rbp
+    1191:       48 8d 35 6d 0e 00 00    lea    0xe6d(%rip),%rsi        # 2005 <_ZStL19piecewise_construct+0x1>
+    1198:       48 8d 3d 81 2e 00 00    lea    0x2e81(%rip),%rdi        # 4020 <_ZSt4cerr@@GLIBCXX_3.4>
+    119f:       e8 dc fe ff ff          callq  1080 <_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc@plt>
+    11a4:       b8 00 00 00 00          mov    $0x0,%eax
+    11a9:       5d                      pop    %rbp
+    11aa:       c3                      retq
 ```
 
-You'll want to move the program counter back to `0x40093a` so that the `esi` and `edi` registers are set up properly.
+You'll want to move the program counter back to `0x1191` offset from the base address so that the `rsi` and `rdi` registers are set up properly.
 
 In the next post, we'll take our first look at DWARF information and add various kinds of single stepping to our debugger. After that, we'll have a mostly functioning tool which can step through code, set breakpoints wherever we like, modify data and so forth. As always, drop a comment below if you have any questions!
 
 You can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_registers).
+
+[Next post]({% post_url 2017-04-05-writing-a-linux-debugger-elf-dwarf %})
 
 -------------------------------

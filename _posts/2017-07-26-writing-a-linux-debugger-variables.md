@@ -9,7 +9,7 @@ redirect_from:
   - /writing-a-linux-debugger-variables.html
 ---
 
-Variables are sneaky. At one moment they'll be happily sitting in registers, but as soon as you turn your head they're spilled to the stack. Maybe the compiler completely throws them out of the window for the sake of optimization. Regardless of how often variables move around in memory, we need some way to track and manipulate them in our debugger. This post will teach you more about handling variables in your debugger and demonstrate a simple implementation using `libelfin`.
+Variables are sneaky. At one moment they'll be happily sitting in registers, but as soon as you turn your head they're spilled to the stack. Maybe the compiler completely throws them out of the window for the sake of optimization. Regardless of how often variables move around in memory, we need some way to track and manipulate them in our debugger. This post will teach you more about handling variables in your debugger and demonstrate a simplified implementation using `libelfin`.
 
 -------------------------------
 
@@ -96,7 +96,7 @@ DWARF's representation of types needs to be strong enough to give debugger users
 
 DWARF types are encoded in DIEs along with the majority of the other debug information. They can have attributes to indicate their name, encoding, size, endianness, etc. A myriad of type tags are available to express pointers, arrays, structures, typedefs, anything else you could see in a C or C++ program.
 
-Take this simple structure as an example:
+Take this small structure as an example:
 
 {% highlight cpp %}
 struct test{
@@ -213,7 +213,7 @@ The reading will be handled by a `read_variables` function in our `debugger` cla
 void debugger::read_variables() {
     using namespace dwarf;
 
-    auto func = get_function_from_pc(get_pc());
+    auto func = get_function_from_pc(get_offset_pc());
 
     //...
 }
@@ -250,9 +250,8 @@ Now that we've evaluated the expression, we need to read the contents of the var
                 case expr_result::type::address:
                 {
                     auto value = read_memory(result.value);
-                    std::cout << at_name(die) << " (0x" << std::hex << result.value << ") = "
+                    std::cout << at_name(die) << " (0x" << std::hex << result.value << ") = " 
                               << value << std::endl;
-                    break;
                 }
 
                 case expr_result::type::reg:
@@ -268,7 +267,7 @@ Now that we've evaluated the expression, we need to read the contents of the var
                 }
 {% endhighlight %}
 
-As you can see I've simply printed out the value without interpreting it based on the type of the variable. Hopefully from this code you can see how you could support writing variables, or searching for variables with a given name.
+As you can see I've printed out the value without interpreting it based on the type of the variable. Hopefully from this code you can see how you could support writing variables, or searching for variables with a given name.
 
 Finally we can add this to our command parser:
 
@@ -285,3 +284,5 @@ Write a few small functions which have some variables, compile it without optimi
 -------------------
 
 Nine posts down, one to go! Next time I'll be talking about some more advanced concepts which might interest you. For now you can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_variable)
+
+[Next post]({% post_url 2017-08-01-writing-a-linux-debugger-advanced-topics %})

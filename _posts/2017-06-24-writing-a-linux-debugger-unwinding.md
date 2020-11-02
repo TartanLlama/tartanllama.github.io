@@ -60,9 +60,9 @@ If the debugger is stopped at the `//stopped here` line, there are two ways whic
 
 ```
 
-This says that we are currently in function `a`, which we got to from function `b`, which we got to from `main` and so on. Those final two frames are just how the compiler has bootstrapped the `main` function.
+This says that we are currently in function `a`, which we got to from function `b`, which we got to from `main` and so on. Those final two frames are how the compiler has bootstrapped the `main` function.
 
-The question now is how we implement this on x86_64. The most robust way to do this is to parse the `.eh_frame` section of the ELF file and work out how to unwind the stack from there, but this is a pain. You could use `libunwind` or something similar to do it for you, but that's boring. Instead, we'll assume that the compiler has laid out the stack in a certain way and we'll just walk it manually. In order to do this, we first need to understand how the stack is laid out.
+The question now is how we implement this on x86_64. The most robust way to do this is to parse the `.eh_frame` section of the ELF file and work out how to unwind the stack from there, but this is a pain. You could use `libunwind` or something similar to do it for you, but that's boring. Instead, we'll assume that the compiler has laid out the stack in a certain way and we'll walk it manually. In order to do this, we first need to understand how the stack is laid out.
 
 ```
             High
@@ -104,7 +104,7 @@ Something to decide early is what format to print out the frame information in. 
 The first frame to print out will be the one which is currently being executed. We can get the information for this frame by looking up the current program counter in the DWARF:
 
 {% highlight cpp %}
-    auto current_func = get_function_from_pc(get_pc());
+    auto current_func = get_function_from_pc(offset_load_address(get_pc()));
     output_frame(current_func);
 {% endhighlight %}
 
@@ -115,11 +115,11 @@ Next we need to get the frame pointer and return address for the current functio
     auto return_address = read_memory(frame_pointer+8);
 {% endhighlight %}
 
-Now we have all the information we need to unwind the stack. I'm just going to keep unwinding until the debugger hits `main`, but you could also choose to stop when the frame pointer is `0x0`, which will get you the functions which your implementation called before `main` as well. We'll to grab the frame pointer and return address from each frame and print out the information as we go.
+Now we have all the information we need to unwind the stack. I'm going to keep unwinding until the debugger hits `main`, but you could also choose to stop when the frame pointer is `0x0`, which will get you the functions which your implementation called before `main` as well. We'll to grab the frame pointer and return address from each frame and print out the information as we go.
 
 {% highlight cpp %}
     while (dwarf::at_name(current_func) != "main") {
-        current_func = get_function_from_pc(return_address);
+        current_func = get_function_from_pc(offset_load_address(return_address));
         output_frame(current_func);
         frame_pointer = read_memory(frame_pointer);
         return_address = read_memory(frame_pointer+8);
@@ -168,3 +168,5 @@ A good way to test this functionality is by writing a test program with a bunch 
 -------------------
 
 We've come a long way from a program which can merely spawn and attach to other programs. The penultimate post in this series will finish up the implementation of the debugger by supporting the reading and writing of variables. Until then you can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_unwind).
+
+[Next post]({% post_url 2017-07-26-writing-a-linux-debugger-variables %})

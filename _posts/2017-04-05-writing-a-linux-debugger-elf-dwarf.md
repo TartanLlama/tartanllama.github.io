@@ -9,7 +9,7 @@ redirect_from:
   - /writing-a-linux-debugger-elf-dwarf.html
 ---
 
-Up until now you've heard whispers of dwarves, of debug information, of a way to understand the source code without just parsing the thing. Today we'll be going into the details of source-level debug information in preparation for using it in following parts of this tutorial.
+Up until now you've heard whispers of dwarves, of debug information, of a way to understand the source code without parsing the thing. Today we'll be going into the details of source-level debug information in preparation for using it in following parts of this tutorial.
 
 -------------------------------
 
@@ -73,7 +73,7 @@ Source lines (from CU-DIE at .debug_info offset 0x0000000b):
             PE prologue end, EB epilogue begin
             IS=val ISA number, DI=val discriminator value
 <pc>        [lno,col] NS BB ET PE EB IS= DI= uri: "filepath"
-0x00400670  [   1, 0] NS uri: "/home/simon/play/MiniDbg/examples/variable.cpp"
+0x00400670  [   1, 0] NS uri: "/path/to/test.cpp"
 0x00400676  [   2,10] NS PE
 0x0040067e  [   3,10] NS
 0x00400686  [   4,14] NS
@@ -84,17 +84,17 @@ Source lines (from CU-DIE at .debug_info offset 0x0000000b):
 0x0040069c  [   6, 1] NS ET
 ```
 
-The first bunch of lines is some information on how to understand the dump -- the main line number data starts at the line starting with `0x00400670`. Essentially this maps a code memory address with a line and column number in some file. `NS` means that the address marks the beginning of a new statement, which is often used for setting breakpoints or stepping. `PE` marks the end of the function prologue, which is helpful for setting function entry breakpoints. `ET` marks the end of the translation unit. The information isn't actually encoded like this; the real encoding is a very space-efficient program of sorts which can be executed to build up this line information.
+The first bunch of lines is some information on how to understand the dump -- the main line number data starts at the line starting with `00400670`. Essentially this maps a code memory address with a line and column number in some file. `NS` means that the address marks the beginning of a new statement, which is often used for setting breakpoints or stepping. `PE` marks the end of the function prologue, which is helpful for setting function entry breakpoints. `ET` marks the end of the translation unit. The information isn't actually encoded like this; the real encoding is a very space-efficient program of sorts which can be executed to build up this line information.
 
-So, say we want to set a breakpoint on line 4 of variable.cpp, what do we do? We look for entries corresponding to that file, then we look for a relevant line entry, look up the address which corresponds to it, and set a breakpoint there. In our example, that's this entry:
+So, say we want to set a breakpoint on line 4 of test.cpp, what do we do? We look for entries corresponding to that file, then we look for a relevant line entry, look up the address which corresponds to it, and set a breakpoint there. In our example, that's this entry:
 
 ```
-0x00400686  [   4,14] NS
+0x0040067e  [   3,10] NS
 ```
 
-So we want to set a breakpoint at address `0x00400686`. You could do so by hand with the debugger you've already written if you want to give it a try.
+So we want to set a breakpoint at address `0x0040067e` offset from the load address. You could do so by hand with the debugger you've already written if you want to give it a try.
 
-The reverse works just as well. If we have a memory location -- say, a program counter value -- and want to find out where that is in the source, we just find the closest mapped address in the line table information and grab the line from there.
+The reverse works just as well. If we have a memory location -- say, a program counter value -- and want to find out where that is in the source, we find the closest mapped address in the line table information and grab the line from there.
 
 ------------------------------
 
@@ -103,16 +103,15 @@ The reverse works just as well. If we have a memory location -- say, a program c
 The `.debug_info` section is the heart of DWARF. It gives us information about the types, functions, variables, hopes, and dreams present in our program. The fundamental unit in this section is the DWARF Information Entry, affectionately known as DIEs. A DIE consists of a tag telling you what kind of source-level entity is being represented, followed by a series of attributes which apply to that entity. Here's the `.debug_info` section for the simple example program I posted above:
 
 ```
-
 .debug_info
 
 COMPILE_UNIT<header overall offset = 0x00000000>:
 < 0><0x0000000b>  DW_TAG_compile_unit
                     DW_AT_producer              clang version 3.9.1 (tags/RELEASE_391/final)
                     DW_AT_language              DW_LANG_C_plus_plus
-                    DW_AT_name                  /super/secret/path/MiniDbg/examples/variable.cpp
+                    DW_AT_name                  /path/to/variable.cpp
                     DW_AT_stmt_list             0x00000000
-                    DW_AT_comp_dir              /super/secret/path/MiniDbg/build
+                    DW_AT_comp_dir              /path/to
                     DW_AT_low_pc                0x00400670
                     DW_AT_high_pc               0x0040069c
 
@@ -122,26 +121,26 @@ LOCAL_SYMBOLS:
                       DW_AT_high_pc               0x0040069c
                       DW_AT_frame_base            DW_OP_reg6
                       DW_AT_name                  main
-                      DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
+                      DW_AT_decl_file             0x00000001 /path/to/variable.cpp
                       DW_AT_decl_line             0x00000001
                       DW_AT_type                  <0x00000077>
                       DW_AT_external              yes(1)
 < 2><0x0000004c>      DW_TAG_variable
                         DW_AT_location              DW_OP_fbreg -8
                         DW_AT_name                  a
-                        DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
+                        DW_AT_decl_file             0x00000001 /path/to/variable.cpp
                         DW_AT_decl_line             0x00000002
                         DW_AT_type                  <0x0000007e>
 < 2><0x0000005a>      DW_TAG_variable
                         DW_AT_location              DW_OP_fbreg -16
                         DW_AT_name                  b
-                        DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
+                        DW_AT_decl_file             0x00000001 /path/to/variable.cpp
                         DW_AT_decl_line             0x00000003
                         DW_AT_type                  <0x0000007e>
 < 2><0x00000068>      DW_TAG_variable
                         DW_AT_location              DW_OP_fbreg -24
                         DW_AT_name                  c
-                        DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
+                        DW_AT_decl_file             0x00000001 /path/to/variable.cpp
                         DW_AT_decl_line             0x00000004
                         DW_AT_type                  <0x0000007e>
 < 1><0x00000077>    DW_TAG_base_type
@@ -154,22 +153,14 @@ LOCAL_SYMBOLS:
                       DW_AT_byte_size             0x00000008
 ```
 
-The first DIE represents a compilation unit (CU), which is essentially a source file with all of the `#includes` and such resolved. Here are the attributes annotated with their meaning:
+The first DIE represents a compilation unit (CU), which is essentially a source file with all of the `#includes` and such resolved. Here are the meanings of some attributes:
 
-```
-DW_AT_producer   clang version 3.9.1 (tags/RELEASE_391/final)    <-- The compiler which produced
-                                                                     this binary
-DW_AT_language   DW_LANG_C_plus_plus                             <-- The source language
-DW_AT_name       /super/secret/path/MiniDbg/examples/variable.cpp  <-- The name of the file which
-                                                                     this CU represents
-DW_AT_stmt_list  0x00000000                                      <-- An offset into the line table
-                                                                     which tracks this CU
-DW_AT_comp_dir   /super/secret/path/MiniDbg/build                  <-- The compilation directory
-DW_AT_low_pc     0x00400670                                      <-- The start of the code for
-                                                                     this CU
-DW_AT_high_pc    0x0040069c                                      <-- The end of the code for
-                                                                     this CU
-```
+- `DW_AT_producer`: the compiler which produced this binary
+- `DW_AT_language`: the source language
+- `DW_AT_name`: the name of the file which this CU represents
+- `DW_AT_comp_dir`: the compilation directory
+- `DW_AT_low_pc`: the start of the code for this CU
+- `DW_AT_high_pc`: the end of the code for this CU
 
 The other DIEs follow a similar scheme, and you can probably intuit what the different attributes mean.
 
@@ -177,7 +168,7 @@ Now we can try and solve a few practical problems with our new-found knowledge o
 
 ### Which function am I in?
 
-Say we have a program counter value and want to figure out what function we're in. A simple algorithm for this is:
+Say we have a program counter value and want to figure out what function we're in. An algorithm for this is:
 
 ```
 for each compile unit:
@@ -191,9 +182,9 @@ This will work for many purposes, but things get a bit more difficult in the pre
 
 ### How do I set a breakpoint on a function?
 
-Again, this depends on if you want to support member functions, namespaces and suchlike. For free functions you can just iterate over the functions in different compile units until you find one with the right name. If your compiler is kind enough to fill in the `.debug_pubnames` section, you can do this a lot more efficiently.
+Again, this depends on if you want to support member functions, namespaces and suchlike. For free functions you can iterate over the functions in different compile units until you find one with the right name. If your compiler is kind enough to fill in the `.debug_pubnames` section, you can do this a lot more efficiently.
 
-Once the function has been found, you can set a breakpoint on the memory address given by `DW_AT_low_pc`. However, that'll break at the start of the function prologue, but it's preferable to break at the start of the user code. Since the line table information can specify the memory address which specifies the prologue end, you could just lookup the value of `DW_AT_low_pc` in the line table, then keep reading until you get to the entry marked as the prologue end. Some compilers won't output this information though, so another option is to just set a breakpoint on the address given by the second line entry for that function.
+Once the function has been found, you can set a breakpoint on the memory address given by `DW_AT_low_pc`. However, that'll break at the start of the function prologue, but it's preferable to break at the start of the user code. Since the line table information can specify the memory address which specifies the prologue end, you could lookup the value of `DW_AT_low_pc` in the line table, then keep reading until you get to the entry marked as the prologue end. Some compilers won't output this information though, so another option is to set a breakpoint on the address given by the second line entry for that function.
 
 Say we want to set a breakpoint on `main` in our example program. We search for the function called `main`, and get this DIE:
 
@@ -203,7 +194,7 @@ Say we want to set a breakpoint on `main` in our example program. We search for 
                       DW_AT_high_pc               0x0040069c
                       DW_AT_frame_base            DW_OP_reg6
                       DW_AT_name                  main
-                      DW_AT_decl_file             0x00000001 /super/secret/path/MiniDbg/examples/variable.cpp
+                      DW_AT_decl_file             0x00000001 /path/to/variable.cpp
                       DW_AT_decl_line             0x00000001
                       DW_AT_type                  <0x00000077>
                       DW_AT_external              yes(1)
@@ -212,7 +203,7 @@ Say we want to set a breakpoint on `main` in our example program. We search for 
 This tells us that the function begins at `0x00400670`. If we look this up in our line table, we get this entry:
 
 ```
-0x00400670  [   1, 0] NS uri: "/super/secret/path/MiniDbg/examples/variable.cpp"
+0x00400670  [   1, 0] NS uri: "/path/to/variable.cpp"
 ```
 
 We want to skip the prologue, so we read ahead an entry:
@@ -221,7 +212,7 @@ We want to skip the prologue, so we read ahead an entry:
 0x00400676  [   2,10] NS PE
 ```
 
-Clang has included the prologue end flag on this entry, so we know to stop here and set a breakpoint on address `0x00400676`.
+Clang has included the prologue end flag on this entry, so we know to stop here and set a breakpoint on address `0x00400676`. Remember that if this were a position independent executable, this address would be an offset from where the binary was loaded in memory.
 
 ### How do I read the contents of a variable?
 
@@ -277,3 +268,5 @@ A location list gives different locations depending on where the program counter
 That's a lot of information to get your head round, but the good news is that in the next few posts we're going to have a library do the hard work for us. It's still useful to understand the concepts at play, particularly when something goes wrong or when you want to support some DWARF concept which isn't implemented in whatever DWARF library you use.
 
 If you want to learn more about DWARF, then you can grab the standard [here](http://dwarfstd.org/Download.php). At the time of writing, DWARF 5 has just been released, but DWARF 4 is more commonly supported.
+
+[Next post]({% post_url 2017-04-24-writing-a-linux-debugger-source-signal %})

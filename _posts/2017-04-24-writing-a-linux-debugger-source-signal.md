@@ -32,7 +32,7 @@ In the the last part we learned about DWARF information and how it can be used t
 
 As I noted way back at the start of this series, we'll be using [`libelfin`](https://github.com/TartanLlama/libelfin/tree/fbreg) to handle our DWARF information. Hopefully you got this set up in the first post, but if not, do so now, and make sure that you use the `fbreg` branch of my fork.
 
-Once you have `libelfin` building, it's time to add it to our debugger. The first step is to parse the ELF executable we're given and extract the DWARF from it. This is very easy with `libelfin`, just make these changes to `debugger`:
+Once you have `libelfin` building, it's time to add it to our debugger. The first step is to parse the ELF executable we're given and extract the DWARF from it. Make these changes to `debugger`:
 
 {% highlight cpp %}
 class debugger {
@@ -53,7 +53,7 @@ private:
 };
 {% endhighlight %}
 
-`open` is used instead of `std::ifstream` because the elf loader needs a UNIX file descriptor to pass to `mmap` so that it can just map the file into memory rather than reading it a bit at a time.
+`open` is used instead of `std::ifstream` because the elf loader needs a UNIX file descriptor to pass to `mmap` so that it can map the file into memory rather than reading it a bit at a time.
 
 ---------------------------
 
@@ -102,8 +102,45 @@ dwarf::line_table::iterator debugger::get_line_entry_from_pc(uint64_t pc) {
 }
 {% endhighlight %}
 
-Again, we simply find the correct compilation unit, then ask the line table to get us the relevant entry.
+Again, we find the correct compilation unit, then ask the line table to get us the relevant entry.
 
+The additional piece of infrastructure we need is an `offset_load_address` function. Remember that the program counter is using addresses based on where the binary was loaded, but the original binary may be position-independent and be using offsets as addresses. As such, we may need to offset the program counter so it's using the right base.
+
+We'll update `debugger::run` to find the load address of the program after the debuggee launches successfully:
+
+{% highlight cpp %}
+void debugger::run() {
+    wait_for_signal();
+    initialise_load_address();
+{% endhighlight %}
+
+Add a `uint64_t m_load_address;` member to the `debugger` type, then we can set it in `initialise_load_address` like so:
+
+{% highlight cpp %}
+void debugger::initialise_load_address() {
+   //If this is a dynamic library (e.g. PIE)
+   if (m_elf.get_hdr().type == elf::et::dyn) {
+      //The load address is found in /proc/&lt;pid&gt;/maps
+      std::ifstream map("/proc/" + std::to_string(m_pid) + "/maps");
+
+      //Read the first address from the file
+      std::string addr;
+      std::getline(map, addr, '-');
+
+      m_load_address = std::stoi(addr, 0, 16);
+   }
+}
+{% endhighlight %}
+
+I'm cheating by reading the first address from the file. We should really check to ensure that that address corresponds to the binary we're looking for instead of some other dynamically-loaded library, but since we've disabled address space layout randomization, the first entry is the one we need. If you find the load address is wrong, check the maps to ensure that this is the case.
+
+`offset_load_address` then subtracts the load address from whatever address we're given:
+
+{% highlight cpp %}
+uint64_t debugger::offset_load_address(uint64_t addr) {
+   return addr - m_load_address;
+}
+{% endhighlight %}
 
 -------------------------------
 
@@ -238,7 +275,8 @@ void debugger::handle_sigtrap(siginfo_t info) {
     {
         set_pc(get_pc()-1); //put the pc back where it should be
         std::cout << "Hit breakpoint at address 0x" << std::hex << get_pc() << std::endl;
-        auto line_entry = get_line_entry_from_pc(get_pc());
+        auto offset_pc = offset_load_address(get_pc()); //rember to offset the pc for querying DWARF
+        auto line_entry = get_line_entry_from_pc(offset_pc);
         print_source(line_entry->file->path, line_entry->line);
         return;
     }
@@ -277,3 +315,5 @@ void debugger::step_over_breakpoint() {
 Now you should be able to set a breakpoint at some address, run the program and see the source code printed out with the currently executing line marked with a cursor.
 
 Next time we'll be adding the ability to set source-level breakpoints. In the meantime, you can get the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_source).
+
+[Next post]({% post_url 2017-05-06-writing-a-linux-debugger-dwarf-step %})

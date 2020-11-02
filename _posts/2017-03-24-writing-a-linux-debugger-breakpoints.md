@@ -30,7 +30,7 @@ In the first part of this series we wrote a small process launcher as a base for
 
 ### How is breakpoint formed?
 
-There are two main kinds of breakpoints: hardware and software. Hardware breakpoints typically involve setting architecture-specific registers to produce your breaks for you, whereas software breakpoints involve modifying the code which is being executed on the fly. We'll be focusing solely on software breakpoints for this article, as they are simpler and you can have as many as you want. On x86 you can only have four hardware breakpoints set at a given time, but they give you the power to make them fire on just reading from or writing to a given address rather than only executing code there.
+There are two main kinds of breakpoints: hardware and software. Hardware breakpoints typically involve setting architecture-specific registers to produce your breaks for you, whereas software breakpoints involve modifying the code which is being executed on the fly. We'll be focusing solely on software breakpoints for this article, as they are simpler and you can have as many as you want. On x86 you can only have four hardware breakpoints set at a given time, but they give you the power to make them fire on reading from or writing to a given address rather than only executing code there.
 
 I said above that software breakpoints are set by modifying the executing code on the fly, so the questions are:
 {:.listhead}
@@ -76,7 +76,7 @@ private:
 
 Most of this is just tracking of state; the real magic happens in the `enable` and `disable` functions.
 
-As we've learned above, we need to replace the instruction which is currently at the given address with an `int 3` instruction, which is encoded as `0xcc`. We'll also want to save out what used to be at that address so that we can restore the code later; we don't want to just forget to execute the user's code!
+As we've learned above, we need to replace the instruction which is currently at the given address with an `int 3` instruction, which is encoded as `0xcc`. We'll also want to save out what used to be at that address so that we can restore the code later; we don't want to forget to execute the user's code!
 
 {% highlight cpp %}
 void breakpoint::enable() {
@@ -166,7 +166,7 @@ I've simply removed the first two characters of the string and called `std::stol
 
 ### Continuing from the breakpoint
 
-If you try this out, you might notice that if you continue from the breakpoint, nothing happens. That's because the breakpoint is still set in memory, so it's just hit repeatedly. The simple solution is to just disable the breakpoint, single step, re-enable it, then continue. Unfortunately we'd also need to modify the program counter to point back before the breakpoint, so we'll leave this until the next post where we'll learn about manipulating registers.
+If you try this out, you might notice that if you continue from the breakpoint, nothing happens. That's because the breakpoint is still set in memory, so it's hit repeatedly. The simple solution is to disable the breakpoint, single step, re-enable it, then continue. Unfortunately we'd also need to modify the program counter to point back before the breakpoint, so we'll leave this until the next post where we'll learn about manipulating registers.
 
 -----------------------------
 
@@ -174,23 +174,64 @@ If you try this out, you might notice that if you continue from the breakpoint, 
 
 Of course, setting a breakpoint on some address isn't very useful if you don't know what address to set it at. In the future we'll be adding the ability to set breakpoints on function names or source code lines, but for now, we can work it out manually.
 
-A simple way to test out your debugger is to write a hello world program which writes to `std::cerr` (to avoid buffering) and set a breakpoint on the call to the output operator. If you continue the debugee then hopefully the execution will stop without printing anything. You can then restart the debugger and set a breakpoint just after the call, and you should see the message being printed successfully.
+A way to test out your debugger is to write a hello world program which writes to `std::cerr` (to avoid buffering) and set a breakpoint on the call to the output operator. If you continue the debugee then hopefully the execution will stop without printing anything. You can then restart the debugger and set a breakpoint just after the call, and you should see the message being printed successfully.
 
 One way to find the address is to use `objdump`. If you open up a shell and execute `objdump -d <your program>`, then you should see the disassembly for your code. You should then be able to find the `main` function and locate the `call` instruction which you want to set the breakpoint on. For example, I built a hello world example, disassembled it, and got this as the disassembly for `main`:
 
 ```
-0000000000400936 <main>:
-  400936:	55                   	push   rbp
-  400937:	48 89 e5             	mov    rbp,rsp
-  40093a:	be 35 0a 40 00       	mov    esi,0x400a35
-  40093f:	bf 60 10 60 00       	mov    edi,0x601060
-  400944:	e8 d7 fe ff ff       	call   400820 <_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc@plt>
-  400949:	b8 00 00 00 00       	mov    eax,0x0
-  40094e:	5d                   	pop    rbp
-  40094f:	c3                   	ret
+0000000000001189 <main>:
+    1189:       f3 0f 1e fa             endbr64
+    118d:       55                      push   %rbp
+    118e:       48 89 e5                mov    %rsp,%rbp
+    1191:       48 8d 35 6d 0e 00 00    lea    0xe6d(%rip),%rsi        # 2005 <_ZStL19piecewise_construct+0x1>
+    1198:       48 8d 3d 81 2e 00 00    lea    0x2e81(%rip),%rdi        # 4020 <_ZSt4cerr@@GLIBCXX_3.4>
+    119f:       e8 dc fe ff ff          callq  1080 <_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc@plt>
+    11a4:       b8 00 00 00 00          mov    $0x0,%eax
+    11a9:       5d                      pop    %rbp
+    11aa:       c3                      retq
 ```
 
-As you can see, we would want to set a breakpoint on `0x400944` to see no output, and `0x400949` to see the output.
+As you can see, we would want to set a breakpoint on `0x1198` to see no output, and `0x119f` to see the output.
+
+However, these addresses may not be absolute. If the program is compiled as a [position independent executable](https://en.wikipedia.org/wiki/Position-independent_code), which is the default for some compilers, then they are offsets from the address which the binary is loaded at. And due to [address space layout randomization](https://en.wikipedia.org/wiki/Address_space_layout_randomization) this load address will change with each run of the program.
+
+You could compile everything with `-no-pie` and be done with it, but that's not a great solution, and won't work for some projects. Instead we'll disable address space layout randomization for the programs we launch, and look up the correct load address.
+
+To disable address space randomization, add a call to [`personality`](https://man7.org/linux/man-pages/man2/personality.2.html) before we call `execute_debugee` in the child process:
+
+{% highlight cpp %}
+if (pid == 0) {
+    //child
+    personality(ADDR_NO_RANDOMIZE);
+    execute_debugee(prog);
+}
+{% endhighlight %}
+
+To find the load address you can:
+
+1. Start debugging the program
+2. Note what the child process id is
+3. Read /proc/&lt;pid&gt;/maps to find the load address
+
+Here's the maps file for my program:
+
+```
+08000000-08001000 r--p 00000000 00:00 56882                      /path/to/hello
+08001000-08002000 r-xp 00001000 00:00 56882                      /path/to/hello
+08002000-08003000 r--p 00002000 00:00 56882                      /path/to/hello
+08003000-08005000 rw-p 00002000 00:00 56882                      /path/to/hello
+7fffff7b0000-7fffff7b1000 r--p 00000000 00:00 948077             /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7fffff7b1000-7fffff7d3000 r-xp 00001000 00:00 948077             /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7fffff7d3000-7fffff7d4000 r-xp 00023000 00:00 948077             /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7fffff7d4000-7fffff7db000 r--p 00024000 00:00 948077             /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7fffff7db000-7fffff7dc000 r--p 0002b000 00:00 948077             /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7fffff7dd000-7fffff7df000 rw-p 0002c000 00:00 948077             /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7fffff7df000-7fffff7e0000 rw-p 00000000 00:00 0
+7fffff7ef000-7ffffffef000 rw-p 00000000 00:00 0                  [stack]
+7ffffffef000-7fffffff0000 r-xp 00000000 00:00 0                  [vdso]
+```
+
+The important address is the first one noted for `/path/to/hello`, which is `0x08000000`. That's the load address of the binary. If you add the breakpoint offsets to that base address, you'll get the real addresses to set breakpoints at.
 
 ------------------------------
 
@@ -199,3 +240,5 @@ As you can see, we would want to set a breakpoint on `0x400944` to see no output
 You should now have a debugger which can launch a program and allow the user to set breakpoints on memory addresses. Next time we'll add the ability to read from and write to memory and registers. Again, let me know in the comments if you have any issues.
 
 You can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_break).
+
+[Next post]({% post_url 2017-03-31-writing-a-linux-debugger-registers %})

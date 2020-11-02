@@ -11,6 +11,8 @@ redirect_from:
 
 Anyone who has written more than a hello world program should have used a debugger at some point (if you haven't, drop what you're doing and learn how to use one). However, although these tools are in such widespread use, there aren't a lot of resources which tell you how they work and how to write one[^1], especially when compared to other toolchain technologies like compilers. In this post series we'll learn what makes debuggers tick and write one for debugging Linux programs.
 
+If you're on Windows, you can still follow along using [WSL](https://aka.ms/wsl).
+
 We'll support the following features:
 {:.listhead}
 
@@ -37,7 +39,7 @@ In the final part I'll also outline how you could add the following to your debu
 - Expression evaluation
 - Multi-threaded debugging support
 
-I'll be focusing on C and C++ for this project, but it should work just as well with any language which compiles down to machine code and outputs standard DWARF debug information (if you don't know what that is yet, don't worry, this will be covered soon). Additionally, my focus will be on just getting something up and running which works most of the time, so things like robust error handling will be eschewed in favour of simplicity.
+I'll be focusing on C and C++ for this project, but it should work just as well with any language which compiles down to machine code and outputs standard DWARF debug information (if you don't know what that is yet, don't worry, this will be covered soon). Additionally, my focus will be on getting something up and running which works most of the time, so things like robust error handling will be eschewed in favour of simplicity.
 
 -------------------------------
 
@@ -60,7 +62,7 @@ I'll be focusing on C and C++ for this project, but it should work just as well 
 
 Before we jump into things, let's get our environment set up. I'll be using two dependencies in this tutorial: [Linenoise](https://github.com/antirez/linenoise) for handling our command line input, and [libelfin](https://github.com/TartanLlama/libelfin/tree/fbreg) for parsing the debug information. You could use the more traditional libdwarf instead of libelfin, but the interface is nowhere near as nice, and libelfin also provides a mostly complete DWARF expression evaluator, which will save you a lot of time if you want to read variables. Make sure that you use the fbreg branch of my fork of libelfin, as it hacks on some extra support for reading variables on x86.
 
-Once you've either installed these on your system, or got them building as dependencies with whatever build system you prefer, it's time to get started. I just set them to build along with the rest of my code in my CMake files.
+Once you've either installed these on your system, or got them building as dependencies with whatever build system you prefer, it's time to get started. I set them to build along with the rest of my code in my CMake files.
 
 ------------------------------
 
@@ -105,24 +107,25 @@ long ptrace(enum __ptrace_request request, pid_t pid,
             void *addr, void *data);
 {% endhighlight %}
 
-`request` is what we would like to do to the traced process; `pid` is the process ID of the traced process; `addr` is a memory address, which is used in some calls to designate an address in the tracee; and `data` is some request-specific resource. The return value often gives error information, so you probably want to check that in your real code; I'm just omitting it for brevity. You can have a look at the man pages for more information.
+`request` is what we would like to do to the traced process; `pid` is the process ID of the traced process; `addr` is a memory address, which is used in some calls to designate an address in the tracee; and `data` is some request-specific resource. The return value often gives error information, so you probably want to check that in your real code; I'm omitting it for brevity. You can have a look at the man pages for more information.
 
 The request we send in the above code, `PTRACE_TRACEME`, indicates that this process should allow its parent to trace it. All of the other arguments are ignored, because API design isn't important /s.
 
 Next, we call `execl`, which is one of the many `exec` flavours. We execute the given program, passing the name of it as a command-line argument and a `nullptr` to terminate the list. You can pass any other arguments needed to execute your program here if you like.
 
-After we've done this, we're finished with the child process; we'll just let it keep running until we're finished with it.
+After we've done this, we're finished with the child process; we'll let it keep running until we're finished with it.
 
 
 ------------------------------
 
 ### Adding our debugger loop
 
-Now that we've launched the child process, we want to be able to interact with it. For this, we'll create a `debugger` class, give it a loop for listening to user input, and launch that from our parent fork of our `main` function.
+Now that we've launched the child process, we want to be able to interact with it. For this, we'll create a `debugger` class, give it a loop for listening to user input, and launch that from our parent fork of our `main` function. We'll also print out the child pid, as it'll come in useful in later articles.
 
 {% highlight cpp %}
 else if (pid >= 1)  {
     //parent
+    std::cout << "Started debugging process " << pid << '\n';
     debugger dbg{prog, pid};
     dbg.run();
 }
@@ -142,7 +145,7 @@ private:
 };
 {% endhighlight %}
 
-In our `run` function, we need to wait until the child process has finished launching, then just keep on getting input from linenoise until we get an EOF (ctrl+d).
+In our `run` function, we need to wait until the child process has finished launching, then keep on getting input from linenoise until we get an EOF (ctrl+d).
 
 {% highlight cpp %}
 void debugger::run() {
@@ -216,7 +219,7 @@ void debugger::continue_execution() {
 }
 {% endhighlight %}
 
-For now our `continue_execution` function will just use `ptrace` to tell the process to continue, then `waitpid` until it's signalled.
+For now our `continue_execution` function will use `ptrace` to tell the process to continue, then `waitpid` until it's signalled.
 
 ------------------------------
 
@@ -225,6 +228,8 @@ For now our `continue_execution` function will just use `ptrace` to tell the pro
 Now you should be able to compile some C or C++ program, run it through your debugger, see it halting on entry, and be able to continue execution from your debugger. In the next part we'll learn how to get our debugger to set breakpoints. If you come across any issues, please let me know in the comments!
 
 You can find the code for this post [here](https://github.com/TartanLlama/minidbg/tree/tut_setup).
+
+[Next post]({% post_url 2017-03-24-writing-a-linux-debugger-breakpoints %})
 
 ---------------------
 
