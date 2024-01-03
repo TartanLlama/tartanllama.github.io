@@ -58,7 +58,7 @@ The differences here are:
 {:.listhead}
 
 - You can optionally provide an [execution policy](http://en.cppreference.com/w/cpp/algorithm/execution_policy_tag_t).
-- `reduce` is overloaded for [input iterators](http://en.cppreference.com/w/cpp/concept/InputIterator) and [forward iterators](http://en.cppreference.com/w/cpp/concept/ForwardIterator).
+- `reduce` is overloaded for [input iterators](https://en.cppreference.com/w/cpp/named_req/InputIterator) and [forward iterators](https://en.cppreference.com/w/cpp/named_req/ForwardIterator).
 - Supplying the initial element is optional (default construction of the value type is used by default).
 
 I'll talk about these points in turn.
