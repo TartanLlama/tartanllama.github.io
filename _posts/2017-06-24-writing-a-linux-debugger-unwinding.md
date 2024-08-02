@@ -9,6 +9,8 @@ redirect_from:
   - /writing-a-linux-debugger-unwinding.html
 ---
 
+*This series has been expanded into a book! It covers many more topics in much greater detail. You can now pre-order [Building a Debugger](https://nostarch.com/building-a-debugger).*
+
 Sometimes the most important information you need to know about what your current program state is how it got there. This is typically provided with a `backtrace` command, which gives you the chain of function calls which have lead to the the program is right now. This post will show you how to implement stack unwinding on x86_64 to generate such a backtrace.
 
 -------------------------------
