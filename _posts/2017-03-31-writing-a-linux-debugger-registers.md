@@ -9,6 +9,8 @@ redirect_from:
   - /writing-a-linux-debugger-registers.html
 ---
 
+*This series has been expanded into a book! It covers many more topics in much greater detail. You can now pre-order [Building a Debugger](https://nostarch.com/building-a-debugger).*
+
 In the last post we added simple address breakpoints to our debugger. This time we'll be adding the ability to read and write registers and memory, which will allow us to screw around with our program counter, observe state and change the behaviour of our program.
 
 -------------------------------
