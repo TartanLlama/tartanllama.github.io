@@ -9,6 +9,8 @@ redirect_from:
   - /writing-a-linux-debugger-breakpoints.html
 ---
 
+*This series has been expanded into a book! It covers many more topics in much greater detail. You can now pre-order [Building a Debugger](https://nostarch.com/building-a-debugger).*
+
 In the first part of this series we wrote a small process launcher as a base for our debugger. In this post we'll learn how breakpoints work in x86 Linux and augment our tool with the ability to set them.
 
 -------------------------------
