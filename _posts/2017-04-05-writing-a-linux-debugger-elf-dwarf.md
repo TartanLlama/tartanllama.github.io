@@ -9,6 +9,8 @@ redirect_from:
   - /writing-a-linux-debugger-elf-dwarf.html
 ---
 
+*This series has been expanded into a book! It covers many more topics in much greater detail. You can now pre-order [Building a Debugger](https://nostarch.com/building-a-debugger).*
+
 Up until now you've heard whispers of dwarves, of debug information, of a way to understand the source code without parsing the thing. Today we'll be going into the details of source-level debug information in preparation for using it in following parts of this tutorial.
 
 -------------------------------
