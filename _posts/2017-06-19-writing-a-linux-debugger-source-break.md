@@ -9,6 +9,8 @@ redirect_from:
   - /writing-a-linux-debugger-source-break.html
 ---
 
+*This series has been expanded into a book! It covers many more topics in much greater detail. You can now pre-order [Building a Debugger](https://nostarch.com/building-a-debugger).*
+
 Setting breakpoints on memory addresses is all well and good, but it doesn't provide the most user-friendly tool. We'd like to be able to set breakpoints on source lines and function entry addresses as well, so that we can debug at the same abstraction level as our code.
 
 This post will add source-level breakpoints to our debugger. With all of the support we already have available to us, this is a lot easier than it may first sound. We'll also add a command to get the type and address of a symbol, which can be useful for locating code or data and understanding linking concepts.
