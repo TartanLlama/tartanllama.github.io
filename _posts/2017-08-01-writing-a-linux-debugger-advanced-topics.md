@@ -9,6 +9,8 @@ redirect_from:
   - /writing-a-linux-debugger-advanced-topics.html
 ---
 
+*This series has been expanded into a book! It covers many more topics in much greater detail. You can now pre-order [Building a Debugger](https://nostarch.com/building-a-debugger).*
+
 We're finally here at the last post of the series! This time I'll be giving a high-level overview of some more advanced concepts in debugging: remote debugging, shared library support, expression evaluation, and multi-threaded support. These ideas are more complex to implement, so I won't walk through how to do so in detail, but I'm happy to answer questions about these concepts if you have any.
 
 -------------------------------
