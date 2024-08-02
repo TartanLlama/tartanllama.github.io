@@ -9,6 +9,8 @@ redirect_from:
   - /writing-a-linux-debugger-source-signal.html
 ---
 
+*This series has been expanded into a book! It covers many more topics in much greater detail. You can now pre-order [Building a Debugger](https://nostarch.com/building-a-debugger).*
+
 In the the last part we learned about DWARF information and how it can be used to read variables and associate our high-level source code with the machine code which is being executed. In this part we'll put this into practice by implementing some DWARF primitives which will be used by the rest of our debugger. We'll also take this opportunity to get our debugger to print out the current source context when a breakpoint is hit.
 
 -------------------------------
