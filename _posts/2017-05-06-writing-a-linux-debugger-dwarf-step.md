@@ -9,6 +9,8 @@ redirect_from:
   - /writing-a-linux-debugger-dwarf-step.html
 ---
 
+*This series has been expanded into a book! It covers many more topics in much greater detail. You can now pre-order [Building a Debugger](https://nostarch.com/building-a-debugger).*
+
 A couple of posts ago we learned about DWARF information and how it lets us relate the machine code to the high-level source. This time we'll be putting this knowledge into practice by adding source-level stepping to our debugger.
 
 -------------------------------
