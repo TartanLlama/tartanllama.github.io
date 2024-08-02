@@ -9,6 +9,8 @@ redirect_from:
   - /writing-a-linux-debugger-setup.html
 ---
 
+*This series has been expanded into a book! It covers many more topics in much greater detail. You can now pre-order [Building a Debugger](https://nostarch.com/building-a-debugger).*
+
 Debuggers are one of the most valuable tools in any developer's kit. However, although these tools are in such widespread use, there aren't a lot of resources which tell you how they work and how to write one[^1], especially when compared to other toolchain technologies like compilers. In this post series we'll learn what makes debuggers tick and write one for debugging Linux programs.
 
 This tutorial is split into 10 parts and you can find the final code, along with branches for each part, [on GitHub](https://github.com/TartanLlama/minidbg).
